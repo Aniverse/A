@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 
-ScriptVersion=1.0.0.RC.3
+ScriptVersion=1.0.0.RC.4
 SCRIPTUPDATE=2018.05.18
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -259,7 +259,7 @@ processes=`ps aux | wc -l`
 # FH／SH 邻居信息 ------------------------------------------------------------------------------------------
 
 
-[[ ! $Seedbox == Unknown ]] && {
+[[ $Seedbox =~ (FH|SH) ]] && {
 echo -e "${bold}正在检查同盒子的邻居情况 ...${normal}"
 current_disk=`  echo $(pwd) | sed "s/\/$(whoami)//"  `
 
@@ -308,17 +308,17 @@ print_io() {
 	
 	writemb_size="$(( writemb / 2 ))MB"
 	if [[ $writemb_size == "1024MB" ]]; then
-		writemb_size="1.0GB"
+		writemb_size="1.0 GB"
 	fi
 
 	if [[ $writemb != "1" ]]; then
-		echo -n "  I/O 速度 ( $writemb_size )   : "
+		echo -n "  I/O 速度 ( $writemb_size )   "
 		io1=$( io_test $writemb )
 		echo -e "${yellow}$io1${normal}"
-		echo -n "  I/O 速度 ( $writemb_size )   : "
+		echo -n "  I/O 速度 ( $writemb_size )   "
 		io2=$( io_test $writemb )
 		echo -e "${yellow}$io2${normal}"
-		echo -n "  I/O 速度 ( $writemb_size )   : "
+		echo -n "  I/O 速度 ( $writemb_size )   "
 		io3=$( io_test $writemb )
 		echo -e "${yellow}$io3${normal}"
 		ioraw1=$( echo $io1 | awk 'NR==1 {print $1}' )
@@ -329,7 +329,7 @@ print_io() {
 		[ "`echo $io3 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw3=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
 		ioall=$( awk 'BEGIN{print '$ioraw1' + '$ioraw2' + '$ioraw3'}' )
 		ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 3}' )
-		echo -e "  I/O 速度 ( 平均  )   : ${yellow}$ioavg MB/s${normal}"
+		echo -e "  I/O 速度 (  平均  )   ${yellow}$ioavg MB/s${normal}"
 	else
 		echo -e " ${red}Not enough space!${normal}"
 	fi
