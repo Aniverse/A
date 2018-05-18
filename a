@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/inexistence
 # 方便盒子使用的一个没啥卵用的辣鸡脚本
 
-ScriptVersion=1.0.0.Beta.2
+ScriptVersion=1.0.0.RC.1
 SCRIPTUPDATE=2018.05.18
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -23,9 +23,15 @@ shanshuo=$(tput blink); wuguangbiao=$(tput civis); guangbiao=$(tput cnorm)
 
 
 
+clear
+
 # IP 信息相关 -------------------------------------------------------------------------------------------------
 
 
+
+
+function _ip() {
+echo -e "\n${bold}正在检查服务器的 IP 信息 ...${normal}"
 
 ### 是否为 IP 地址 ###
 function isValidIpAddress() { echo $1 | grep -qE '^[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?$' ; }
@@ -41,7 +47,7 @@ serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo 
 isInternalIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- v4.ipv6-test.com/api/myip.php )
 isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
 isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T7 -qO- ipecho.net/plain )
-isValidIpAddress    "$serveripv4" || { echo "${red}${shanshuo}ERROR ${jiacu}${underline}Failed to detect your public IPv4 address, use internal address instead${jiacu}" ; serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' ) ; }
+isValidIpAddress    "$serveripv4" || { echo "${red}${shanshuo}WARNING ${jiacu}${underline}Failed to detect your public IPv4 address, use internal address instead${jiacu}" ; serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' ) ; }
 
 # serveripv6=$( wget --no-check-certificate -qO- -t1 -T8 ipv6.icanhazip.com )
 serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -n1 )
@@ -79,11 +85,14 @@ asn=$(wget -qO- https://ipapi.co/asn/)
 Seedbox=Unknown ; [[ `  hostname -f | grep feral  ` ]] && Seedbox=FH ; [[ `  hostname -f | grep seedhost  ` ]] && Seedbox=SH
 serverfqdn=`  hostname -f  `
 
+showip=1
+}
 
 
 # 操作系统、内核等参数检测 ---------------------------------------------------------------------------------------
 
 
+echo -e "${bold}正在检查操作系统与内核 ...${normal}"
 
 if [[ -f /etc/redhat-release ]]; then faxingban="centos"
 elif cat /etc/issue | grep -Eqi "debian"; then faxingban="debian"
@@ -116,6 +125,7 @@ dpkg -l | grep linux-modules | awk '{print $2}' >> /tmp/system_kernel_list
 # TCP 信息相关 ---------------------------------------------------------------------------------------------------
 
 
+echo -e "${bold}正在检查 TCP 信息 ...${normal}"
 
 # tcp_control=` awk '{print $1}' /proc/sys/net/ipv4/tcp_available_congestion_control `
 tcp_control=` cat /proc/sys/net/ipv4/tcp_congestion_control `
@@ -161,6 +171,7 @@ if [[ `lsmod | grep -E "bbr|nanqinlang|tsunami"` ]] ; then bbrinuse="${green}是
 
 
 if [[ $EUID = 0 ]]; then
+echo -e "${bold}正在检查虚拟化技术 ...${normal}"
 virtualx=$(dmesg) 2>/dev/null
 if grep docker /proc/1/cgroup -qa; then
 virtual="Docker"
@@ -199,6 +210,7 @@ load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ 
 # 硬件信息 ----------------------------------------------------------------------------------------------
 
 
+echo -e "${bold}正在检查硬件信息 ...${normal}"
 
 # 硬盘
 calc_disk() {
@@ -212,7 +224,7 @@ for size in ${array[@]} ; do
 total_size=$( awk 'BEGIN{printf "%.1f", '$total_size' + '$size'}' )
 done ; echo ${total_size} ; }
 
-disk_num=`  df -lh | grep -E "/home[0-9]+|media" | wc -l  `
+disk_num=`  df -lh | grep -P "/home[0-9]+|media|/$" | wc -l  `
 disk_size1=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $2}' ))
 disk_size2=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $3}' ))
 disk_total_size=$( calc_disk ${disk_size1[@]} )
@@ -316,13 +328,14 @@ print_io() {
 		[ "`echo $io3 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw3=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
 		ioall=$( awk 'BEGIN{print '$ioraw1' + '$ioraw2' + '$ioraw3'}' )
 		ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 3}' )
-		echo -e "  I/O 速度 ( 平均 )    : ${yellow}$ioavg MB/s${normal}"
+		echo -e "  I/O 速度 ( 平均  )   : ${yellow}$ioavg MB/s${normal}"
 	else
 		echo -e " ${red}Not enough space!${normal}"
 	fi
-}
+echo ; }
 
 # Speedtest 以后再说
+
 print_speedtest() {
 	printf "%-18s%-18s%-20s%-12s\n" " Node Name" "Upload Speed" "Download Speed" "Latency"
     speed_test '' 'Speedtest.net'
@@ -402,7 +415,8 @@ speed_test(){
 
 
 
-
+# 主界面
+function _menu() { clear ; echo
 echo -e  " ${baizise}${bold}                               This is the choice of Steins;Gate                               ${jiacu} "
 
 echo
@@ -427,16 +441,17 @@ echo -e  "  运行时间                             ${cyan}$uptime1${jiacu}"
 echo -e  "  系统负载                             ${cyan}$load${jiacu}"
 echo
 
+[[ $showip == 1 ]] && {
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  盒子域名                             ${green}$serverfqdn${jiacu}"
 echo -e  "  IPv4 地址                            ${green}$serveripv4${jiacu}"
 [[ $serveripv6 ]] &&
 echo -e  "  IPv6 地址                            ${green}$serveripv6${jiacu}"
 echo -e  "  ASN／ISP                             ${green}$asn, $isp${jiacu}"
-echo -e  "  地理位置                             ${green}$city, $region, $country${jiacu}"
+echo -e  "  地理位置                             ${green}$city, $region, $country${jiacu}" ; }
 
 echo
-echo -e  "  当前操作系统                         ${green}$DISTRO $osversion $CODENAME (x$lbit)${jiacu}"
+echo -e  "  当前操作系统                         ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 echo -e  "  当前正在使用的 TCP 拥塞控制算法      ${green}$tcp_c_name${jiacu}"
 echo -e  "  当前可以使用的 TCP 拥塞控制算法      ${green}$tcp_control_all${jiacu}"
 echo -e  "  当前正在使用的系统内核               ${green}$running_kernel${jiacu}"
@@ -451,9 +466,14 @@ echo
 echo -e  "  当前系统内所有已安装的 kernel／headers／modules 列表\n"
 cat -n /tmp/system_kernel_list | sed 's/\t/ /g' | sed "s/ linux-/) ${green}linux-/g" | sed "s/     /  ${magenta}(0/g" | sed "s/    /  ${magenta}(/g"
 echo -e  "\n  ${jiacu}当前脚本版本：$ScriptVersion${normal}"
+echo ; }
 
-echo
+
+
+
+# 结构 ----------------------------------------------------------------------------------------------
+
+
+_ip
 print_io
-echo
-
 
