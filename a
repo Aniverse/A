@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 
-ScriptVersion=1.0.1
+ScriptVersion=1.0.1.1
 SCRIPTUPDATE=2018.05.18
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -471,7 +471,7 @@ echo -e  "  当前 BBR  是否已启用                 $bbrinuse"
 echo -e  "  当前 锐速 是否已启用                 $SSrunning"
 echo
 
-[[ $EUID = 0 ]] && [[ -e ~/system_kernel_list ]] {
+[[ $EUID = 0 ]] && [[ -e ~/system_kernel_list ]] && {
 echo -e  "  当前系统内所有已安装的 kernel／headers／modules 列表\n"
 cat -n ~/system_kernel_list | sed 's/\t/ /g' | sed "s/ linux-/) ${green}linux-/g" | sed "s/     /  ${magenta}(0/g" | sed "s/    /  ${magenta}(/g"
 echo
