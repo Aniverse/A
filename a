@@ -1,0 +1,366 @@
+#!/bin/bash
+# Author: Aniverse
+# https://github.com/Aniverse/inexistence
+# 方便盒子使用的一个没啥卵用的辣鸡脚本
+
+SCRIPTVER=1.0.0.Alpha
+SCRIPTUPDATE=2018.05.18
+
+# 颜色 --------------------------------------------------------------------------------------------------------
+
+
+
+black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
+blue=$(tput setaf 4); magenta=$(tput setaf 5); cyan=$(tput setaf 6); white=$(tput setaf 7);
+on_red=$(tput setab 1); on_green=$(tput setab 2); on_yellow=$(tput setab 3); on_blue=$(tput setab 4);
+on_magenta=$(tput setab 5); on_cyan=$(tput setab 6); on_white=$(tput setab 7); bold=$(tput bold);
+dim=$(tput dim); underline=$(tput smul); reset_underline=$(tput rmul); standout=$(tput smso);
+reset_standout=$(tput rmso); normal=$(tput sgr0); alert=${white}${on_red}; title=${standout};
+baihuangse=${white}${on_yellow}; bailanse=${white}${on_blue}; bailvse=${white}${on_green};
+baiqingse=${white}${on_cyan}; baihongse=${white}${on_red}; baizise=${white}${on_magenta};
+heibaise=${black}${on_white}; jiacu=${normal}${bold}
+shanshuo=$(tput blink); wuguangbiao=$(tput civis); guangbiao=$(tput cnorm)
+
+
+
+# IP 信息相关 -------------------------------------------------------------------------------------------------
+
+
+
+### 是否为 IP 地址 ###
+function isValidIpAddress() { echo $1 | grep -qE '^[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?$' ; }
+
+### 是否为内网 IP 地址 ###
+function isInternalIpAddress() { echo $1 | grep -qE '(192\.168\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(172\.((1[6-9])|(2\d)|(3[0-1]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(10\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))' ; }
+
+# IPv4 与 IPv6 地址检测
+serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' )
+isInternalIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- v4.ipv6-test.com/api/myip.php )
+isValidIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
+isValidIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T7 -qO- ipecho.net/plain )
+isValidIpAddress "$serveripv4" || { echo "${red}${shanshuo}ERROR ${jiacu}${underline}Failed to detect your public IPv4 address, use internal address instead${jiacu}" ; serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' ) ; }
+serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -n1 )
+
+# ASN、ISP、地理位置信息检测
+result=$( wget -qO- http://freeapi.ipip.net/$serveripv4 )
+country=$( echo $result | awk -F '"' '{print $2}' )
+region=$( echo $result | awk -F '"' '{print $4}' )
+city=$( echo $result | awk -F '"' '{print $6}' )
+isp=$( echo $result | awk -F '"' '{print $10}' )
+asn=$(wget -qO- https://ipapi.co/asn/)
+
+# 非常蛋疼的设计，有点自欺欺人
+[[ $isp == "online.net" ]] && isp="Online.net"
+[[ $isp == "digitalocean.com" ]] && isp="Digital Ocean"
+[[ $isp == "hetzner.de" ]] && isp="Hetzner"
+[[ $isp == "leaseweb.com" ]] && isp="LeaseWeb"
+[[ `hostname -A | grep vultr` ]] && isp="Vultr, Choopa"
+[[ `hostname -A | grep seedhost` ]] && isp="SeedHost, LeaseWeb"
+[[ $asn == AS200052 ]] && isp="Feral Hosting"
+[[ $isp == "" ]] && isp="未检测到 ISP"
+
+# 针对 FH／SH 设计的部分
+Seedbox=Unknown ; [[ `  hostname -f | grep feral  ` ]] && Seedbox=FH ; [[ `  hostname -f | grep seedhost  ` ]] && Seedbox=SH
+serverfqdn=`  hostname -f  `
+
+
+
+# 操作系统、内核等参数检测 ---------------------------------------------------------------------------------------
+
+
+if [[ -f /etc/redhat-release ]]; then faxingban="centos"
+elif cat /etc/issue | grep -Eqi "debian"; then faxingban="debian"
+elif cat /etc/issue | grep -Eqi "ubuntu"; then faxingban="ubuntu"
+elif cat /etc/issue | grep -Eqi "centos|red hat|redhat"; then faxingban="centos"
+elif cat /proc/version | grep -Eqi "debian"; then faxingban="debian"
+elif cat /proc/version | grep -Eqi "ubuntu"; then faxingban="ubuntu"
+elif cat /proc/version | grep -Eqi "centos|red hat|redhat"; then faxingban="centos" ; fi
+
+[ -f /etc/redhat-release ] && KNA=$(awk '{print $1}' /etc/redhat-release)
+[ -f /etc/os-release     ] && KNA=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
+[ -f /etc/lsb-release    ] && KNA=$(awk -F'[="]+' '/DISTRIB_ID/{print $2}' /etc/lsb-release)
+
+running_kernel=` uname -r `
+arch=$( uname -m ) # 架构，可以识别 ARM
+lbit=$( getconf LONG_BIT ) # 只显示多少位，无法识别 ARM
+
+DISTRO=`  awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release  `
+DISTROL=`  echo $DISTRO | tr 'A-Z' 'a-z'  `
+CODENAME=`  cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}'  `
+[[ $DISTRO == Ubuntu ]] && osversion=`  grep -oE  "[0-9.]+" /etc/issue  `
+[[ $DISTRO == Debian ]] && osversion=`  cat /etc/debian_version  `
+
+dpkg -l | grep linux-image   | awk '{print $2}' >  /tmp/system_kernel_list
+dpkg -l | grep linux-headers | awk '{print $2}' >> /tmp/system_kernel_list
+dpkg -l | grep linux-modules | awk '{print $2}' >> /tmp/system_kernel_list
+
+
+
+# TCP 信息相关 ---------------------------------------------------------------------------------------------------
+
+
+
+# tcp_control=` awk '{print $1}' /proc/sys/net/ipv4/tcp_available_congestion_control `
+tcp_control=` cat /proc/sys/net/ipv4/tcp_congestion_control `
+tcp_control_all=` cat /proc/sys/net/ipv4/tcp_available_congestion_control `
+# tcp_control_all=` cat /proc/sys/net/ipv4/tcp_allowed_congestion_control `
+
+tcp_c_name=$tcp_control
+[[ $tcp_control == reno ]] && tcp_c_name="reno (系统自带算法)"
+[[ $tcp_control == cubic ]] && tcp_c_name="cubic (系统自带算法)"
+[[ $tcp_control == westwood ]] && tcp_c_name="westwood (Xanmod 默认算法)"
+[[ $tcp_control == bbr ]] && tcp_c_name="bbr (原版 BBR)"
+[[ $tcp_control == bbr_powered ]] && tcp_c_name="bbr_powered (用 Vicer 脚本安装的 Yankee 版 魔改 BBR)"
+[[ $tcp_control == tsunami ]] && tcp_c_name="tsunami (Yankee 版 魔改 BBR)"
+[[ $tcp_control == nanqinlang ]] && tcp_c_name="nanqinlang (南琴浪 版 魔改 BBR)"
+
+# 检查理论上内核是否支持锐速
+SSKernel="${red}否${jiacu}"
+URLKernel='https://raw.githubusercontent.com/0oVicero0/serverSpeeder_kernel/master/serverSpeeder.txt'
+AcceVer=$(wget --no-check-certificate -qO- "$URLKernel" |grep "$KNA/" |grep "/x$KernelBit/" |grep "/$running_kernel/" |awk -F'/' '{print $NF}' |sort -n -k 2 -t '_' |tail -n 1)
+MyKernel=$(wget --no-check-certificate -qO- "$URLKernel" |grep "$KNA/" |grep "/x$KernelBit/" |grep "/$running_kernel/" |grep "$AcceVer" |tail -n 1)
+[[ ! -z "$MyKernel" ]] && SSKernel="${green}是${jiacu}"
+
+# 检查理论上内核是否支持原版 BBR
+function version_ge(){ test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1" ; }
+
+kernel_vvv=$( uname -r | cut -d- -f1 )
+if version_ge $kernel_vvv 4.9                                     ; then BBRKernel="${green}是${jiacu}" ; else BBRKernel="${red}否${jiacu}" ; fi
+if version_ge $kernel_vvv 4.10 && ! version_ge $kernel_vvv 4.16   ; then YKKernel="${green}是${jiacu}"  ; else YKKernel="${red}否${jiacu}"  ; fi
+if version_ge $kernel_vvv 4.9.3 && ! version_ge $kernel_vvv 4.16  ; then NQLKernel="${green}是${jiacu}" ; else NQLKernel="${red}否${jiacu}" ; fi
+
+# 检查 锐速 与 BBR 是否已启用
+[[ ` ps aux | grep appex | grep -v grep ` ]] && SSrunning="${green}是${jiacu}" || SSrunning="${red}否${jiacu}"
+export tcp_control=$( awk '{print $1}' /proc/sys/net/ipv4/tcp_available_congestion_control )
+# if [[ $tcp_control =~ ("nanqinlang"|"tsunami") ]]; then bbrinuse="${green}是${jiacu}"
+# elif [[ `echo $tcp_control | grep bbr` ]]; then bbrinuse="${green}是${jiacu}"
+# else bbrinuse="${red}否${jiacu}" ; fi
+if [[ `lsmod | grep -E "bbr|nanqinlang|tsunami"` ]] ; then bbrinuse="${green}是${jiacu}" ; else bbrinuse="${red}否${jiacu}" ; fi
+
+
+
+# Virt-what 相关 ----------------------------------------------------------------------------------------------
+
+
+
+if hash ifconfig 2>/dev/null; then
+eth=$(ifconfig)
+fi
+
+virtualx=$(dmesg) 2>/dev/null
+
+if grep docker /proc/1/cgroup -qa; then
+virtual="Docker"
+elif grep lxc /proc/1/cgroup -qa; then
+virtual="Lxc"
+elif grep -qa container=lxc /proc/1/environ; then
+virtual="Lxc"
+elif [[ -f /proc/user_beancounters ]]; then
+virtual="OpenVZ"
+elif [[ "$virtualx" == *kvm-clock* ]]; then
+virtual="Kernel-based Virtual Machine (KVM)"
+elif [[ "$virtualx" == *"VMware Virtual Platform"* ]]; then
+virtual="VMware"
+elif [[ "$virtualx" == *"Parallels Software International"* ]]; then
+virtual="Parallels"
+elif [[ "$virtualx" == *VirtualBox* ]]; then
+virtual="VirtualBox"
+elif [[ -e /proc/xen ]]; then
+virtual="Xen"
+else
+virtual="Dedicated"
+fi
+
+
+
+# 其他系统信息 ----------------------------------------------------------------------------------------------
+
+
+
+uptime1=$( awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d days %d hour %d min\n",a,b,c)}' /proc/uptime )
+uptime2=`uptime | grep -ohe 'up .*' | sed 's/,/\ hours/g' | awk '{ printf $2" "$3 }'`
+load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//' )
+
+
+
+# 硬件信息 ----------------------------------------------------------------------------------------------
+
+
+
+# 硬盘
+calc_disk() {
+local total_size=0 ; local array=$@
+for size in ${array[@]} ; do
+[ "${size}" == "0" ] && size_t=0 || size_t=`echo ${size:0:${#size}-1}`
+[ "`echo ${size:(-1)}`" == "K" ] && size=0
+[ "`echo ${size:(-1)}`" == "M" ] && size=$( awk 'BEGIN{printf "%.1f", '$size_t' / 1024}' )
+[ "`echo ${size:(-1)}`" == "T" ] && size=$( awk 'BEGIN{printf "%.1f", '$size_t' * 1024}' )
+[ "`echo ${size:(-1)}`" == "G" ] && size=${size_t}
+total_size=$( awk 'BEGIN{printf "%.1f", '$total_size' + '$size'}' )
+done ; echo ${total_size} ; }
+
+disk_num=`  df -lh | grep -E "/home[0-9]+|media" | wc -l  `
+disk_size1=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $2}' ))
+disk_size2=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $3}' ))
+disk_total_size=$( calc_disk ${disk_size1[@]} )
+disk_used_size=$( calc_disk ${disk_size2[@]} )
+
+
+# CPU
+cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
+cores=$( awk -F: '/model name/ {core++} END {print core}' /proc/cpuinfo )
+cpucores_single=$( grep 'core id' /proc/cpuinfo | sort -u | wc -l )
+freq=$( awk -F: '/cpu MHz/ {freq=$2} END {print freq}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
+#physical_cpu_number=$( grep 'physical id' /proc/cpuinfo | cut -c15-17 )
+cpu_percent=$( top -b -n 1|grep Cpu|awk '{print $2}'|cut -f 1 -d "." )
+cpunumbers=$( grep 'physical id' /proc/cpuinfo | sort -u | wc -l )
+cpucores=$( expr $cpucores_single \* $cpunumbers )
+cputhreads=$( grep 'processor' /proc/cpuinfo | sort -u | wc -l )
+[[ $cpunumbers == 2 ]] && CPUNum='双路 ' ; [[ $cpunumbers == 4 ]] && CPUNum='四路 ' ; [[ $cpunumbers == 8 ]] && CPUNum='八路 '
+
+# 内存
+tram=$( free -m | awk '/Mem/ {print $2}' )
+uram=$( free -m | awk '/Mem/ {print $3}' )
+swap=$( free -m | awk '/Swap/ {print $2}' )
+uswap=$( free -m | awk '/Swap/ {print $3}' )
+memory_usage=`free -m |grep -i mem | awk '{printf ("%.2f\n",$3/$2*100)}'`%
+
+
+
+
+
+
+users=`users | wc -w`
+date=$( date +%Y-%m-%d" "%H:%M:%S )
+processes=`ps aux | wc -l`
+
+
+
+
+
+
+
+
+# FH／SH 信息 ----------------------------------------------------------------------------------------------
+
+neighbors_same_disk_num=`  getent passwd | grep -v $(whoami) | grep $current_disk/ | wc -l  `
+neighbors_same_disk_name=`  getent passwd | grep -v $(whoami) | grep $current_disk/ | awk -F ":" '{print $1}'  `
+neighbors_all_num=`  getent passwd | grep -v $(whoami) | grep -E "home[0-9]+|media" | wc -l  `
+
+current_disk_size=($( LANG=C df -hPl | grep $current_disk | awk '{print $2}' ))
+current_disk_total_used=($( LANG=C df -hPl | grep $current_disk | awk '{print $3}' ))
+#current_disk_avai=($( LANG=C df -hPl | grep $current_disk | awk '{print $4}' ))
+#current_disk_perc=($( LANG=C df -hPl | grep $current_disk | awk '{print $5}' ))
+current_disk_self_used=` du -sh ~ | awk -F " " '{print $1}' `
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+io_test() {
+(LANG=C dd if=/dev/zero of=test_file_$$ bs=512K count=$1 conv=fdatasync && rm -f test_file_$$ ) 2>&1 | awk -F, '{io=$NF} END { print io}' | sed 's/^[ \t]*//;s/[ \t]*$//'
+}
+
+
+
+
+
+
+
+
+
+echo " ${bailanse}${bold}                                               系统信息                                            ${jiacu}"
+echo " ${bold}"
+
+
+
+
+
+echo -e  "  硬盘大小                           ${cyan}$disk_total_size GB ($disk_used_size GB Used)${jiacu}"
+echo -e  "  内存大小                           ${cyan}$tram MB ($uram MB Used) ($memory_usage)${jiacu}"
+echo -e  "  运行时间                           ${cyan}$uptime1${jiacu}"
+echo -e  "  系统负载                           ${cyan}$load${jiacu}"
+echo -e  "  操作系统                           ${cyan}$DISTRO $RELEASE $CODENAME ($lbit Bit)${jiacu}"
+echo -e  "  系统内核                           ${cyan}$kern${jiacu}"
+echo -e  "  虚拟化技术                         "
+
+
+
+
+
+
+
+echo -e  " ${baizise}${bold}                               This is the choice of Steins;Gate                               ${jiacu} "
+echo
+echo -e  "  CPU 型号                             ${cyan}$CPUNum$cname${jiacu}"
+echo -e  "  CPU 核心                             ${cyan}合计 ${cpucores} 核心，${cputhreads} 线程${jiacu}"
+echo -e  "  CPU 状态                             ${cyan}当前主频 ${freq} MHz，占用率 ${cpu_percent}%${jiacu}"
+echo -e  "  内存大小                             ${cyan}$tram MB ($uram MB 已用)${jiacu}"
+echo -e  "  交换分区                             ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
+echo -e  "  运行时间                             ${cyan}$uptime1${jiacu}"
+echo -e  "  系统负载                             ${cyan}$load${jiacu}"
+echo
+echo -e  "  总硬盘大小                           ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
+[[ ! $Seedbox == Unknown ]] &&
+echo -e  "  当前硬盘大小                         ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
+echo -e  "  邻居数量                             ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
+echo
+echo -e  "  服务器时间                           ${cyan}$date${jiacu}"
+
+
+
+
+
+echo -e  "  当前 CPU  调度方式                   ` cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1  `"
+echo -e  "  当前 硬盘 调度算法                   ` cat /sys/block/sda/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1  `"
+echo -e  "  当前 硬盘 文件系统                   ` cat /etc/fstab 2>/dev/null | grep -v ^# | grep -P " / |/home" | awk '{print $3}' `"
+echo -e  "  当前 硬盘 挂载方式                   ` cat /etc/fstab 2>/dev/null | grep -v ^# | grep -P " / |/home" | awk '{print $4}' `"
+
+
+echo
+[[ ! $Seedbox == Unknown ]] &&
+echo -e  "  盒子域名                             ${green}$serverfqdn${jiacu}"
+echo -e  "  IPv4 地址                            ${green}$serveripv4${jiacu}"
+[[ $serveripv6 ]] &&
+echo -e  "  IPv6 地址                            ${green}$serveripv6${jiacu}"
+echo -e  "  ASN／ISP                             ${green}$asn, $isp${jiacu}"
+echo -e  "  地理位置                             ${green}$city, $region, $country${jiacu}"
+echo
+
+echo -e  "  当前操作系统                         ${green}$DISTROU $osversion $CODENAME (x$lbit)${jiacu}"
+echo -e  "  当前正在使用的 TCP 拥塞控制算法      ${green}$tcp_c_name${jiacu}"
+echo -e  "  当前可以使用的 TCP 拥塞控制算法      ${green}$tcp_control_all${jiacu}"
+echo -e  "  当前正在使用的系统内核               ${green}$running_kernel${jiacu}"
+echo -e  "  当前内核是否支持 原版 BBR            $BBRKernel"
+echo -e  "  当前内核是否支持 Yankee 版魔改 BBR   $YKKernel"
+echo -e  "  当前内核是否支持 南琴浪 版魔改 BBR   $NQLKernel"
+echo -e  "  当前内核是否支持 Vicer  版锐速       $SSKernel"
+echo -e  "  当前 BBR  是否已启用                 $bbrinuse"
+echo -e  "  当前 锐速 是否已启用                 $SSrunning"
+echo
+
+echo -e  "  当前系统内所有已安装的 kernel／headers／modules 列表\n"
+cat -n /tmp/system_kernel_list | sed 's/\t/ /g' | sed "s/ linux-/) ${green}linux-/g" | sed "s/     /  ${magenta}(0/g" | sed "s/    /  ${magenta}(/g"
+echo -e  "\n  ${jiacu}当前脚本版本：$ScriptVersion"
+
+
+
+
+
