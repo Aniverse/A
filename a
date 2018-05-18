@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/inexistence
 # 方便盒子使用的一个没啥卵用的辣鸡脚本
 
-SCRIPTVER=1.0.0.Alpha.2
+SCRIPTVER=1.0.0.Beta.1
 SCRIPTUPDATE=2018.05.18
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -34,12 +34,24 @@ function isValidIpAddress() { echo $1 | grep -qE '^[0-9][0-9]?[0-9]?\.[0-9][0-9]
 function isInternalIpAddress() { echo $1 | grep -qE '(192\.168\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(172\.((1[6-9])|(2\d)|(3[0-1]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(10\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))' ; }
 
 # IPv4 与 IPv6 地址检测
+
+# serveripv4=$( ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:" )
+# serveripv4=$(ip route get 8.8.8.8 | awk '{print $3}' )
 serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' )
 isInternalIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- v4.ipv6-test.com/api/myip.php )
-isValidIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
-isValidIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T7 -qO- ipecho.net/plain )
-isValidIpAddress "$serveripv4" || { echo "${red}${shanshuo}ERROR ${jiacu}${underline}Failed to detect your public IPv4 address, use internal address instead${jiacu}" ; serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' ) ; }
+isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
+isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T7 -qO- ipecho.net/plain )
+isValidIpAddress    "$serveripv4" || { echo "${red}${shanshuo}ERROR ${jiacu}${underline}Failed to detect your public IPv4 address, use internal address instead${jiacu}" ; serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' ) ; }
+
+# serveripv6=$( wget --no-check-certificate -qO- -t1 -T8 ipv6.icanhazip.com )
 serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -n1 )
+
+# [ -n "$(grep 'eth0:' /proc/net/dev)" ] && wangka=eth0 || wangka=`cat /proc/net/dev |awk -F: 'function trim(str){sub(/^[ \t]*/,"",str); sub(/[ \t]*$/,"",str); return str } NR>2 {print trim($1)}'  |grep -Ev '^lo|^sit|^stf|^gif|^dummy|^vmnet|^vir|^gre|^ipip|^ppp|^bond|^tun|^tap|^ip6gre|^ip6tnl|^teql|^venet|^he-ipv6|^docker' |awk 'NR==1 {print $0}'`
+# wangka=` ifconfig -a | grep -B 1 $(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}') | head -n1 | awk '{print $1}' | sed "s/:$//"  `
+# wangka=`  ip route get 8.8.8.8 | awk '{print $5}'  `
+# serverlocalipv6=$( ip addr show dev $wangka | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | head -n1 )
+
+
 
 # ASN、ISP、地理位置信息检测
 result=$( wget -qO- http://freeapi.ipip.net/$serveripv4 )
@@ -48,6 +60,8 @@ region=$( echo $result | awk -F '"' '{print $4}' )
 city=$( echo $result | awk -F '"' '{print $6}' )
 isp=$( echo $result | awk -F '"' '{print $10}' )
 asn=$(wget -qO- https://ipapi.co/asn/)
+
+
 
 # 非常蛋疼的设计，有点自欺欺人
 [[ $isp == "online.net" ]] && isp="Online.net"
@@ -59,6 +73,8 @@ asn=$(wget -qO- https://ipapi.co/asn/)
 [[ $asn == AS200052 ]] && isp="Feral Hosting"
 [[ $isp == "" ]] && isp="未检测到 ISP"
 
+
+
 # 针对 FH／SH 设计的部分
 Seedbox=Unknown ; [[ `  hostname -f | grep feral  ` ]] && Seedbox=FH ; [[ `  hostname -f | grep seedhost  ` ]] && Seedbox=SH
 serverfqdn=`  hostname -f  `
@@ -66,6 +82,7 @@ serverfqdn=`  hostname -f  `
 
 
 # 操作系统、内核等参数检测 ---------------------------------------------------------------------------------------
+
 
 
 if [[ -f /etc/redhat-release ]]; then faxingban="centos"
@@ -81,7 +98,7 @@ elif cat /proc/version | grep -Eqi "centos|red hat|redhat"; then faxingban="cent
 [ -f /etc/lsb-release    ] && KNA=$(awk -F'[="]+' '/DISTRIB_ID/{print $2}' /etc/lsb-release)
 
 running_kernel=` uname -r `
-arch=$( uname -m ) # 架构，可以识别 ARM
+arch=$( uname -m )         # 架构，可以识别 ARM
 lbit=$( getconf LONG_BIT ) # 只显示多少位，无法识别 ARM
 
 DISTRO=`  awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release  `
@@ -149,6 +166,7 @@ fi
 
 virtualx=$(dmesg) 2>/dev/null
 
+# 以下部分从 SuperBench 抄来的
 if grep docker /proc/1/cgroup -qa; then
 virtual="Docker"
 elif grep lxc /proc/1/cgroup -qa; then
@@ -169,23 +187,28 @@ elif [[ -e /proc/xen ]]; then
 virtual="Xen"
 # 以下部分从 virt-what 里抄来的
 elif cat "/proc/self/status" | grep -q "VxID: [0-9]*"; then
-if grep -q "VxID: 0$" "${root}/proc/self/status"; then
+
+if grep -q "VxID: 0$" "/proc/self/status"; then
     virtual="Linux VServer Host"
 else
     virtual="Linux VServer Guest"
 fi
-elif grep -q 'UML' "${root}/proc/cpuinfo"; then
+
+elif grep -q 'UML' "/proc/cpuinfo"; then
 virtual="UML"
 elif grep -q '^vendor_id.*PowerVM Lx86' "/proc/cpuinfo"; then
 virtual="PowerVM Lx86"
 elif [ grep -q '^vendor_id.*IBM/S390' "/proc/cpuinfo" ]; then
 virtual="IBM SystemZ"
-if [ -f "${root}/proc/sysinfo" ]; then
-{ if grep -q 'VM.*Control Program.*z/VM' "${root}/proc/sysinfo"; then virtual="IBM SystemZ ZVM"
-elif grep -q '^LPAR' "${root}/proc/sysinfo"; then virtual="IBM SystemZ LPAR"
+if [ -f "/proc/sysinfo" ]; then
+
+{ if grep -q 'VM.*Control Program.*z/VM' "/proc/sysinfo"; then virtual="IBM SystemZ ZVM"
+elif grep -q '^LPAR' "/proc/sysinfo"; then virtual="IBM SystemZ LPAR"
 else virtual="IBM SystemZ Direct" ; fi ; } ; fi 
+
 elif echo "$dmi" | grep -q 'Manufacturer.*HITACHI' && echo "$dmi" | grep -q 'Product.* LPAR'; then
 virtual="Virtage"
+# 懒得抄了……
 else
 virtual="未检测到虚拟化技术（可能是独立服务器）"
 fi
@@ -244,23 +267,17 @@ swap=$( free -m | awk '/Swap/ {print $2}' )
 uswap=$( free -m | awk '/Swap/ {print $3}' )
 memory_usage=`free -m |grep -i mem | awk '{printf ("%.2f\n",$3/$2*100)}'`%
 
-
-
-
-
-
 users=`users | wc -w`
 date=$( date +%Y-%m-%d" "%H:%M:%S )
 processes=`ps aux | wc -l`
 
 
 
-
-
-
-
-
 # FH／SH 信息 ----------------------------------------------------------------------------------------------
+
+
+
+current_disk=`  echo $(pwd) | sed "s/\/$(whoami)//"  `
 
 neighbors_same_disk_num=`  getent passwd | grep -v $(whoami) | grep $current_disk/ | wc -l  `
 neighbors_same_disk_name=`  getent passwd | grep -v $(whoami) | grep $current_disk/ | awk -F ":" '{print $1}'  `
@@ -274,67 +291,169 @@ current_disk_self_used=` du -sh ~ | awk -F " " '{print $1}' `
 
 
 
+# 测试 ----------------------------------------------------------------------------------------------
 
 
 
+# dd IO 测试
+io_test() { (LANG=C dd if=/dev/zero of=test_file_$$ bs=512K count=$1 conv=fdatasync && rm -f test_file_$$ ) 2>&1 | awk -F, '{io=$NF} END { print io}' | sed 's/^[ \t]*//;s/[ \t]*$//' ; }
 
+# 检查剩余空间
+freedisk() {
+	freespace=$( df -m . | awk 'NR==2 {print $4}' )
+	if [[ $freespace -gt 1024 ]]; then
+		printf "%s" $((1024*2))
+	elif [[ $freespace -gt 512 ]]; then
+		printf "%s" $((512*2))
+	elif [[ $freespace -gt 256 ]]; then
+		printf "%s" $((256*2))
+	elif [[ $freespace -gt 128 ]]; then
+		printf "%s" $((128*2))
+	else
+		printf 1
+	fi
+}
 
+# 显示 IO 测试结果
+print_io() {
+	if [[ $1 == "fast" ]]; then
+		writemb=$((128*2))
+	else
+		writemb=$(freedisk)
+	fi
+	
+	writemb_size="$(( writemb / 2 ))MB"
+	if [[ $writemb_size == "1024MB" ]]; then
+		writemb_size="1.0GB"
+	fi
 
+	if [[ $writemb != "1" ]]; then
+		echo -n " I/O 速度 ( $writemb_size )   : "
+		io1=$( io_test $writemb )
+		echo -e "${yellow}$io1${normal}"
+		echo -n " I/O 速度 ( $writemb_size )   : "
+		io2=$( io_test $writemb )
+		echo -e "${yellow}$io2${normal}"
+		echo -n " I/O 速度 ( $writemb_size )   : "
+		io3=$( io_test $writemb )
+		echo -e "${yellow}$io3${normal}"
+		ioraw1=$( echo $io1 | awk 'NR==1 {print $1}' )
+		[ "`echo $io1 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw1=$( awk 'BEGIN{print '$ioraw1' * 1024}' )
+		ioraw2=$( echo $io2 | awk 'NR==1 {print $1}' )
+		[ "`echo $io2 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw2=$( awk 'BEGIN{print '$ioraw2' * 1024}' )
+		ioraw3=$( echo $io3 | awk 'NR==1 {print $1}' )
+		[ "`echo $io3 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw3=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
+		ioall=$( awk 'BEGIN{print '$ioraw1' + '$ioraw2' + '$ioraw3'}' )
+		ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 3}' )
+		echo -e " 平均 I/O 速度        : ${yellow}$ioavg MB/s${normal}"
+	else
+		echo -e " ${red}Not enough space!${normal}"
+	fi
+}
 
+# Speedtest 以后再说
+print_speedtest() {
+	printf "%-18s%-18s%-20s%-12s\n" " Node Name" "Upload Speed" "Download Speed" "Latency"
+    speed_test '' 'Speedtest.net'
+    # 法国节点
+    speed_test '6027'  'FDC Servers  Paris       FRA'
+	speed_test '5022'  'Online.net   Paris       FRA'
+	speed_test '5022'  'Ikoula       Reims       FRA'
+    # 英国节点
+	speed_test '6032'  'FDC Servers  London      GER'
+	speed_test '' '          '
+	speed_test '' '          '
+	speed_test '' '          '
+    # 德国节点
+	speed_test '3585' 'LeaseWeb      Frankfurt   DEU'
+	speed_test '' '          '
+	speed_test '' '          '
+	speed_test '' '          '
+	speed_test '' '          '
+	speed_test '' '          '
+    # 荷兰节点
+	speed_test '3587'  'LeaseWeb     Haarlem     NLD'
+	speed_test '6554'  'WorldStream  Naaldwijk   NLD'
+	speed_test '13218' 'XS4ALL       Amsterdam   NLD'
+    speed_test '9913'  'FDC Servers  Amsterdam   NLD'
+	speed_test '2438'  'i3D          Amsterdam   NLD' # 这节点老挂
+	speed_test '3386'  'NFOrce       Amsterdam   NLD'
+	rm -rf speedtest.py
+}
 
+speed_test(){
+	if [[ $1 == '' ]]; then
+		temp=$(python speedtest.py --share 2>&1)
+		is_down=$(echo "$temp" | grep 'Download') 
+		if [[ ${is_down} ]]; then
+	        local REDownload=$(echo "$temp" | awk -F ':' '/Download/{print $2}')
+	        local reupload=$(echo "$temp" | awk -F ':' '/Upload/{print $2}')
+	        local relatency=$(echo "$temp" | awk -F ':' '/Hosted/{print $2}')
+	        local nodeName=$2
 
+	        temp=$(echo "${REDownload}" | awk -F ' ' '{print $1}')
+	        if [[ $(awk -v num1=${temp} -v num2=0 'BEGIN{print(num1>num2)?"1":"0"}') -eq 1 ]]; then
+	        	printf "${yellow}%-17s${GREEN}%-18s${RED}%-20s${SKYBLUE}%-12s${PLAIN}\n" " ${nodeName}" "${reupload}" "${REDownload}" "${relatency}"
+	        fi
+		else
+	        local cerror="ERROR"
+		fi
+	else
+		temp=$(python speedtest.py --server $1 --share 2>&1)
+		is_down=$(echo "$temp" | grep 'Download') 
+		if [[ ${is_down} ]]; then
+	        local REDownload=$(echo "$temp" | awk -F ':' '/Download/{print $2}')
+	        local reupload=$(echo "$temp" | awk -F ':' '/Upload/{print $2}')
+	        local relatency=$(echo "$temp" | awk -F ':' '/Hosted/{print $2}')
+	        #local relatency=$(pingtest $3)
+	        temp=$(echo "$relatency" | awk -F '.' '{print $1}')
+        	if [[ ${temp} -gt 1000 ]]; then
+            	relatency=" 000.000 ms"
+        	fi
+	        local nodeName=$2
 
-
-
-
-
-
-
-
-
-
-io_test() {
-(LANG=C dd if=/dev/zero of=test_file_$$ bs=512K count=$1 conv=fdatasync && rm -f test_file_$$ ) 2>&1 | awk -F, '{io=$NF} END { print io}' | sed 's/^[ \t]*//;s/[ \t]*$//'
+	        temp=$(echo "${REDownload}" | awk -F ' ' '{print $1}')
+	        if [[ $(awk -v num1=${temp} -v num2=0 'BEGIN{print(num1>num2)?"1":"0"}') -eq 1 ]]; then
+	        	printf "${yellow}%-17s${GREEN}%-18s${RED}%-20s${SKYBLUE}%-12s${PLAIN}\n" " ${nodeName}" "${reupload}" "${REDownload}" "${relatency}"
+			fi
+		else
+	        local cerror="ERROR"
+		fi
+	fi
 }
 
 
 
 
 
+# 正文 ----------------------------------------------------------------------------------------------
+
 
 
 
 
 echo -e  " ${baizise}${bold}                               This is the choice of Steins;Gate                               ${jiacu} "
+
 echo
 echo -e  "  CPU 型号                             ${cyan}$CPUNum$cname${jiacu}"
 echo -e  "  CPU 核心                             ${cyan}合计 ${cpucores} 核心，${cputhreads} 线程${jiacu}"
 echo -e  "  CPU 状态                             ${cyan}当前主频 ${freq} MHz，占用率 ${cpu_percent}%${jiacu}"
 echo -e  "  内存大小                             ${cyan}$tram MB ($uram MB 已用)${jiacu}"
 echo -e  "  交换分区                             ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
-echo -e  "  虚拟化技术                           ${cyan}$virtual${jiacu}"
-
-echo -e  "  运行时间                             ${cyan}$uptime1${jiacu}"
-echo -e  "  系统负载                             ${cyan}$load${jiacu}"
 echo
+
 echo -e  "  总硬盘大小                           ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  当前硬盘大小                         ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
-echo -e  "  邻居数量                             ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
+echo -e  "  共享盒子邻居数量                     ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
+
 echo
+echo -e  "  虚拟化技术                           ${cyan}$virtual${jiacu}"
 echo -e  "  服务器时间                           ${cyan}$date${jiacu}"
-
-
-
-
-
-echo -e  "  当前 CPU  调度方式                   ` cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1  `"
-echo -e  "  当前 硬盘 调度算法                   ` cat /sys/block/sda/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1  `"
-echo -e  "  当前 硬盘 文件系统                   ` cat /etc/fstab 2>/dev/null | grep -v ^# | grep -P " / |/home" | awk '{print $3}' `"
-echo -e  "  当前 硬盘 挂载方式                   ` cat /etc/fstab 2>/dev/null | grep -v ^# | grep -P " / |/home" | awk '{print $4}' `"
-
-
+echo -e  "  运行时间                             ${cyan}$uptime1${jiacu}"
+echo -e  "  系统负载                             ${cyan}$load${jiacu}"
 echo
+
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  盒子域名                             ${green}$serverfqdn${jiacu}"
 echo -e  "  IPv4 地址                            ${green}$serveripv4${jiacu}"
@@ -342,8 +461,8 @@ echo -e  "  IPv4 地址                            ${green}$serveripv4${jiacu}"
 echo -e  "  IPv6 地址                            ${green}$serveripv6${jiacu}"
 echo -e  "  ASN／ISP                             ${green}$asn, $isp${jiacu}"
 echo -e  "  地理位置                             ${green}$city, $region, $country${jiacu}"
-echo
 
+echo
 echo -e  "  当前操作系统                         ${green}$DISTROU $osversion $CODENAME (x$lbit)${jiacu}"
 echo -e  "  当前正在使用的 TCP 拥塞控制算法      ${green}$tcp_c_name${jiacu}"
 echo -e  "  当前可以使用的 TCP 拥塞控制算法      ${green}$tcp_control_all${jiacu}"
@@ -360,7 +479,8 @@ echo -e  "  当前系统内所有已安装的 kernel／headers／modules 列表\
 cat -n /tmp/system_kernel_list | sed 's/\t/ /g' | sed "s/ linux-/) ${green}linux-/g" | sed "s/     /  ${magenta}(0/g" | sed "s/    /  ${magenta}(/g"
 echo -e  "\n  ${jiacu}当前脚本版本：$ScriptVersion"
 
-
-
+echo
+print_io
+echo
 
 
