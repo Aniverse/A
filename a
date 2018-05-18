@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 
-ScriptVersion=1.0.0.2
+ScriptVersion=1.0.0.3
 SCRIPTUPDATE=2018.05.18
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -154,7 +154,6 @@ if version_ge $kernel_vvv 4.9.3 && ! version_ge $kernel_vvv 4.16  ; then NQLKern
 
 # 检查 锐速 与 BBR 是否已启用
 [[ ` ps aux | grep appex | grep -v grep ` ]] && SSrunning="${green}是${jiacu}" || SSrunning="${red}否${jiacu}"
-export tcp_control=$( awk '{print $1}' /proc/sys/net/ipv4/tcp_available_congestion_control )
 if [[ $tcp_control =~ (nanqinlang|tsunami) ]]; then bbrinuse="${green}是${jiacu}"
 elif [[ `echo $tcp_control | grep bbr` ]]; then bbrinuse="${green}是${jiacu}"
 else bbrinuse="${red}否${jiacu}" ; fi
