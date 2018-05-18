@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/inexistence
 # 方便盒子使用的一个没啥卵用的辣鸡脚本
 
-SCRIPTVER=1.0.0.Alpha
+SCRIPTVER=1.0.0.Alpha.2
 SCRIPTUPDATE=2018.05.18
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -167,8 +167,27 @@ elif [[ "$virtualx" == *VirtualBox* ]]; then
 virtual="VirtualBox"
 elif [[ -e /proc/xen ]]; then
 virtual="Xen"
+# 以下部分从 virt-what 里抄来的
+elif cat "/proc/self/status" | grep -q "VxID: [0-9]*"; then
+if grep -q "VxID: 0$" "${root}/proc/self/status"; then
+    virtual="Linux VServer Host"
 else
-virtual="Dedicated"
+    virtual="Linux VServer Guest"
+fi
+elif grep -q 'UML' "${root}/proc/cpuinfo"; then
+virtual="UML"
+elif grep -q '^vendor_id.*PowerVM Lx86' "/proc/cpuinfo"; then
+virtual="PowerVM Lx86"
+elif [ grep -q '^vendor_id.*IBM/S390' "/proc/cpuinfo" ]; then
+virtual="IBM SystemZ"
+if [ -f "${root}/proc/sysinfo" ]; then
+{ if grep -q 'VM.*Control Program.*z/VM' "${root}/proc/sysinfo"; then virtual="IBM SystemZ ZVM"
+elif grep -q '^LPAR' "${root}/proc/sysinfo"; then virtual="IBM SystemZ LPAR"
+else virtual="IBM SystemZ Direct" ; fi ; } ; fi 
+elif echo "$dmi" | grep -q 'Manufacturer.*HITACHI' && echo "$dmi" | grep -q 'Product.* LPAR'; then
+virtual="Virtage"
+else
+virtual="未检测到虚拟化技术（可能是独立服务器）"
 fi
 
 
@@ -286,27 +305,6 @@ io_test() {
 
 
 
-echo " ${bailanse}${bold}                                               系统信息                                            ${jiacu}"
-echo " ${bold}"
-
-
-
-
-
-echo -e  "  硬盘大小                           ${cyan}$disk_total_size GB ($disk_used_size GB Used)${jiacu}"
-echo -e  "  内存大小                           ${cyan}$tram MB ($uram MB Used) ($memory_usage)${jiacu}"
-echo -e  "  运行时间                           ${cyan}$uptime1${jiacu}"
-echo -e  "  系统负载                           ${cyan}$load${jiacu}"
-echo -e  "  操作系统                           ${cyan}$DISTRO $RELEASE $CODENAME ($lbit Bit)${jiacu}"
-echo -e  "  系统内核                           ${cyan}$kern${jiacu}"
-echo -e  "  虚拟化技术                         "
-
-
-
-
-
-
-
 echo -e  " ${baizise}${bold}                               This is the choice of Steins;Gate                               ${jiacu} "
 echo
 echo -e  "  CPU 型号                             ${cyan}$CPUNum$cname${jiacu}"
@@ -314,6 +312,8 @@ echo -e  "  CPU 核心                             ${cyan}合计 ${cpucores} 核
 echo -e  "  CPU 状态                             ${cyan}当前主频 ${freq} MHz，占用率 ${cpu_percent}%${jiacu}"
 echo -e  "  内存大小                             ${cyan}$tram MB ($uram MB 已用)${jiacu}"
 echo -e  "  交换分区                             ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
+echo -e  "  虚拟化技术                           ${cyan}$virtual${jiacu}"
+
 echo -e  "  运行时间                             ${cyan}$uptime1${jiacu}"
 echo -e  "  系统负载                             ${cyan}$load${jiacu}"
 echo
