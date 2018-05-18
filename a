@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/inexistence
 # 方便盒子使用的一个没啥卵用的辣鸡脚本
 
-SCRIPTVER=1.0.0.Beta.1
+ScriptVersion=1.0.0.Beta.2
 SCRIPTUPDATE=2018.05.18
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -160,13 +160,8 @@ if [[ `lsmod | grep -E "bbr|nanqinlang|tsunami"` ]] ; then bbrinuse="${green}是
 
 
 
-if hash ifconfig 2>/dev/null; then
-eth=$(ifconfig)
-fi
-
+if [[ $EUID = 0 ]]; then
 virtualx=$(dmesg) 2>/dev/null
-
-# 以下部分从 SuperBench 抄来的
 if grep docker /proc/1/cgroup -qa; then
 virtual="Docker"
 elif grep lxc /proc/1/cgroup -qa; then
@@ -185,33 +180,9 @@ elif [[ "$virtualx" == *VirtualBox* ]]; then
 virtual="VirtualBox"
 elif [[ -e /proc/xen ]]; then
 virtual="Xen"
-# 以下部分从 virt-what 里抄来的
-elif cat "/proc/self/status" | grep -q "VxID: [0-9]*"; then
-
-if grep -q "VxID: 0$" "/proc/self/status"; then
-    virtual="Linux VServer Host"
-else
-    virtual="Linux VServer Guest"
-fi
-
-elif grep -q 'UML' "/proc/cpuinfo"; then
-virtual="UML"
-elif grep -q '^vendor_id.*PowerVM Lx86' "/proc/cpuinfo"; then
-virtual="PowerVM Lx86"
-elif [ grep -q '^vendor_id.*IBM/S390' "/proc/cpuinfo" ]; then
-virtual="IBM SystemZ"
-if [ -f "/proc/sysinfo" ]; then
-
-{ if grep -q 'VM.*Control Program.*z/VM' "/proc/sysinfo"; then virtual="IBM SystemZ ZVM"
-elif grep -q '^LPAR' "/proc/sysinfo"; then virtual="IBM SystemZ LPAR"
-else virtual="IBM SystemZ Direct" ; fi ; } ; fi 
-
-elif echo "$dmi" | grep -q 'Manufacturer.*HITACHI' && echo "$dmi" | grep -q 'Product.* LPAR'; then
-virtual="Virtage"
-# 懒得抄了……
 else
 virtual="未检测到虚拟化技术（可能是独立服务器）"
-fi
+fi ; fi
 
 
 
@@ -328,13 +299,13 @@ print_io() {
 	fi
 
 	if [[ $writemb != "1" ]]; then
-		echo -n " I/O 速度 ( $writemb_size )   : "
+		echo -n "  I/O 速度 ( $writemb_size )   : "
 		io1=$( io_test $writemb )
 		echo -e "${yellow}$io1${normal}"
-		echo -n " I/O 速度 ( $writemb_size )   : "
+		echo -n "  I/O 速度 ( $writemb_size )   : "
 		io2=$( io_test $writemb )
 		echo -e "${yellow}$io2${normal}"
-		echo -n " I/O 速度 ( $writemb_size )   : "
+		echo -n "  I/O 速度 ( $writemb_size )   : "
 		io3=$( io_test $writemb )
 		echo -e "${yellow}$io3${normal}"
 		ioraw1=$( echo $io1 | awk 'NR==1 {print $1}' )
@@ -345,7 +316,7 @@ print_io() {
 		[ "`echo $io3 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw3=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
 		ioall=$( awk 'BEGIN{print '$ioraw1' + '$ioraw2' + '$ioraw3'}' )
 		ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 3}' )
-		echo -e " 平均 I/O 速度        : ${yellow}$ioavg MB/s${normal}"
+		echo -e "  I/O 速度 ( 平均 )    : ${yellow}$ioavg MB/s${normal}"
 	else
 		echo -e " ${red}Not enough space!${normal}"
 	fi
@@ -439,6 +410,7 @@ echo -e  "  CPU 型号                             ${cyan}$CPUNum$cname${jiacu}"
 echo -e  "  CPU 核心                             ${cyan}合计 ${cpucores} 核心，${cputhreads} 线程${jiacu}"
 echo -e  "  CPU 状态                             ${cyan}当前主频 ${freq} MHz，占用率 ${cpu_percent}%${jiacu}"
 echo -e  "  内存大小                             ${cyan}$tram MB ($uram MB 已用)${jiacu}"
+[[ ! $swap == 0 ]] &&
 echo -e  "  交换分区                             ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
 echo
 
@@ -448,6 +420,7 @@ echo -e  "  当前硬盘大小                         ${cyan}${current_disk_siz
 echo -e  "  共享盒子邻居数量                     ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
 
 echo
+[[ $virtual ]] &&
 echo -e  "  虚拟化技术                           ${cyan}$virtual${jiacu}"
 echo -e  "  服务器时间                           ${cyan}$date${jiacu}"
 echo -e  "  运行时间                             ${cyan}$uptime1${jiacu}"
@@ -463,7 +436,7 @@ echo -e  "  ASN／ISP                             ${green}$asn, $isp${jiacu}"
 echo -e  "  地理位置                             ${green}$city, $region, $country${jiacu}"
 
 echo
-echo -e  "  当前操作系统                         ${green}$DISTROU $osversion $CODENAME (x$lbit)${jiacu}"
+echo -e  "  当前操作系统                         ${green}$DISTRO $osversion $CODENAME (x$lbit)${jiacu}"
 echo -e  "  当前正在使用的 TCP 拥塞控制算法      ${green}$tcp_c_name${jiacu}"
 echo -e  "  当前可以使用的 TCP 拥塞控制算法      ${green}$tcp_control_all${jiacu}"
 echo -e  "  当前正在使用的系统内核               ${green}$running_kernel${jiacu}"
@@ -477,7 +450,7 @@ echo
 
 echo -e  "  当前系统内所有已安装的 kernel／headers／modules 列表\n"
 cat -n /tmp/system_kernel_list | sed 's/\t/ /g' | sed "s/ linux-/) ${green}linux-/g" | sed "s/     /  ${magenta}(0/g" | sed "s/    /  ${magenta}(/g"
-echo -e  "\n  ${jiacu}当前脚本版本：$ScriptVersion"
+echo -e  "\n  ${jiacu}当前脚本版本：$ScriptVersion${normal}"
 
 echo
 print_io
