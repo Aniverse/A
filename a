@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 
-ScriptVersion=1.0.0.RC.4
+ScriptVersion=1.0.0
 SCRIPTUPDATE=2018.05.18
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -79,10 +79,6 @@ asn=$(wget -qO- https://ipapi.co/asn/)
 [[ $asn == AS200052 ]] && isp="Feral Hosting"
 [[ $isp == "" ]] && isp="未检测到 ISP"
 
-
-
-# 针对 FH／SH 设计的部分
-Seedbox=Unknown ; [[ `  hostname -f | grep feral  ` ]] && Seedbox=FH ; [[ `  hostname -f | grep seedhost  ` ]] && Seedbox=SH
 serverfqdn=`  hostname -f  `
 
 showip=1
@@ -259,7 +255,10 @@ processes=`ps aux | wc -l`
 # FH／SH 邻居信息 ------------------------------------------------------------------------------------------
 
 
-[[ $Seedbox =~ (FH|SH) ]] && {
+
+Seedbox=Unknown ; [[ `  hostname -f | grep feral  ` ]] && Seedbox=FH ; [[ `  hostname -f | grep seedhost  ` ]] && Seedbox=SH
+
+[[ ! $Seedbox == Unknown ]] && {
 echo -e "${bold}正在检查同盒子的邻居情况 ...${normal}"
 current_disk=`  echo $(pwd) | sed "s/\/$(whoami)//"  `
 
