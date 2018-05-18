@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 
-ScriptVersion=1.0.0
+ScriptVersion=1.0.0.1
 SCRIPTUPDATE=2018.05.18
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -112,9 +112,9 @@ CODENAME=`  cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"
 [[ $DISTRO == Ubuntu ]] && osversion=`  grep -oE  "[0-9.]+" /etc/issue  `
 [[ $DISTRO == Debian ]] && osversion=`  cat /etc/debian_version  `
 
-dpkg -l | grep linux-image   | awk '{print $2}' >  /tmp/system_kernel_list
-dpkg -l | grep linux-headers | awk '{print $2}' >> /tmp/system_kernel_list
-dpkg -l | grep linux-modules | awk '{print $2}' >> /tmp/system_kernel_list
+dpkg -l | grep linux-image   | awk '{print $2}' >  ~/system_kernel_list
+dpkg -l | grep linux-headers | awk '{print $2}' >> ~/system_kernel_list
+dpkg -l | grep linux-modules | awk '{print $2}' >> ~/system_kernel_list
 
 
 
@@ -464,9 +464,13 @@ echo -e  "  当前 BBR  是否已启用                 $bbrinuse"
 echo -e  "  当前 锐速 是否已启用                 $SSrunning"
 echo
 
+[[ ! $Seedbox == FH ]] && {
 echo -e  "  当前系统内所有已安装的 kernel／headers／modules 列表\n"
-cat -n /tmp/system_kernel_list | sed 's/\t/ /g' | sed "s/ linux-/) ${green}linux-/g" | sed "s/     /  ${magenta}(0/g" | sed "s/    /  ${magenta}(/g"
-echo -e  "\n  ${jiacu}当前脚本版本：$ScriptVersion${normal}"
+cat -n ~/system_kernel_list | sed 's/\t/ /g' | sed "s/ linux-/) ${green}linux-/g" | sed "s/     /  ${magenta}(0/g" | sed "s/    /  ${magenta}(/g"
+echo
+rm -f ~/system_kernel_list >/dev/null 2>&1 ; }
+
+echo -e  "  ${jiacu}当前脚本版本：$ScriptVersion${normal}"
 echo ; }
 
 
