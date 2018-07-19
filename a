@@ -64,13 +64,15 @@ result=$( wget -qO- http://freeapi.ipip.net/$serveripv4 )
 country=$( echo $result | awk -F '"' '{print $2}' )
 region=$( echo $result | awk -F '"' '{print $4}' )
 city=$( echo $result | awk -F '"' '{print $6}' )
-isp=$( echo $result | awk -F '"' '{print $10}' )
+#isp=$( echo $result | awk -F '"' '{print $10}' )
+isp=$( wget --no-check-certificate -t1 -T6 -qO- https://ipapi.co/json | grep \"org\" | awk -F '"' '{print $4}' )
 asn=$(wget -qO- https://ipapi.co/asn/)
 
 
 
 # 非常蛋疼的设计，有点自欺欺人
-[[ $isp == "online.net" ]] && isp="Online.net"
+[[ $isp == "Ikoula Net SAS" ]] && isp="Ikoula"
+[[ $isp == "Online S.a.s." ]] && isp="Online.net"
 [[ $isp == "digitalocean.com" ]] && isp="Digital Ocean"
 [[ $isp == "hetzner.de" ]] && isp="Hetzner"
 [[ $isp == "leaseweb.com" ]] && isp="LeaseWeb"
