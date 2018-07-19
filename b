@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 #
-# Ver.0.0.2
+# Ver.0.0.3
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -47,19 +47,30 @@ LC_ALL=en_US.UTF-8
 LANG=en_US.UTF-8
 LANGUAGE=en_US.UTF-8
 
-
+running_kernel=` uname -r `
+tcp_control=` cat /proc/sys/net/ipv4/tcp_congestion_control `
 
 function show_sysctl_part() {
 
-echo -e "\n${baihongse}            以下是 IPv4 参数            ${normal}\n"
+echo -e "\n${bold}"
+echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
+echo -e "  当前 系统内核              ${green}$running_kernel${jiacu}"
+echo -e "  当前 TCP 拥塞控制算法      ${green}$tcp_control${jiacu}"
+echo -e "  当前 CPU  调度方式         ${green}` cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1  `${jiacu}"
+echo -e "  当前 硬盘 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1  `${jiacu}"
+echo -e "  当前 硬盘 文件系统         ${green}` cat /etc/fstab 2>/dev/null | grep -v ^# | grep -P " / |/home" | awk '{print $3}' `${jiacu}" 
+echo -e "  当前 硬盘 挂载方式         ${green}` cat /etc/fstab 2>/dev/null | grep -v ^# | grep -P " / |/home" | awk '{print $4}' `${jiacu}"
+echo -e "  ${normal}"
+
+echo -e "  ${bold}${baihongse}            以下是 IPv4 参数            ${normal}\n"
 { for x in `ls /proc/sys/net/ipv4`; do echo -n "net.ipv4.$x = " ; cat /proc/sys/net/ipv4/$x 2>&1 ; done ; } | grep -Ev "Is a directory|[Pp]ermission"
-echo -e "\n${bailanse}          以下是 Net Core 参数          ${normal}\n"
+echo -e "\n${bold}${bailanse}          以下是 Net Core 参数          ${normal}\n"
 { for x in `ls /proc/sys/net/core`; do echo -n "net.core.$x = " ; cat /proc/sys/net/core/$x 2>&1 ; done ; } | grep -Ev "Is a directory|[Pp]ermission"
-echo -e "\n${bailvse}           以下是 Kernel 参数           ${normal}\n"
+echo -e "\n${bold}${bailvse}           以下是 Kernel 参数           ${normal}\n"
 { for x in `ls /proc/sys/kernel`; do echo -n "kernel.$x = " ; cat /proc/sys/kernel/$x 2>&1 ; done ; } | grep -Ev "Is a directory|[Pp]ermission"
-echo -e "\n${baiqingse}             以下是 vm 参数             ${normal}\n"
+echo -e "\n${bold}${baiqingse}             以下是 vm 参数             ${normal}\n"
 { for x in `ls /proc/sys/vm`; do echo -n "vm.$x = " ; cat /proc/sys/vm/$x 2>&1 ; done ; } | grep -Ev "Is a directory|[Pp]ermission"
-echo -e "\n${baizise}             以下是 fs 参数             ${normal}\n"
+echo -e "\n${bold}${baizise}             以下是 fs 参数             ${normal}\n"
 { for x in `ls /proc/sys/fs`; do echo -n "fs.$x = " ; cat /proc/sys/fs/$x 2>&1 ; done ; } | grep -Ev "Is a directory|[Pp]ermission"
 
 }
@@ -101,6 +112,8 @@ fi ; fi
 show_sysctl_part 2>&1 | tee sysctl.part.txt
 $sysctl -a 2>&1 > sysctl.all.txt
 [[ ! -x /sbin/sysctl ]] && rm -f ./tmpsysctl
+
+echo -e "\n\n"
 
 # sz sysctl.part.txt
 # sz sysctl.all.txt
