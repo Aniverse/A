@@ -2,6 +2,9 @@
 # Author: Aniverse
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
+#
+# Ver.0.0.2
+#
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
 blue=$(tput setaf 4); magenta=$(tput setaf 5); cyan=$(tput setaf 6); white=$(tput setaf 7);
@@ -16,11 +19,35 @@ jiacu=${normal}${bold}
 shanshuo=$(tput blink); wuguangbiao=$(tput civis); guangbiao=$(tput cnorm)
 ########################################################################################################
 # CentOS 7 /sbin/sysctl 和 /usr/sbin/sysctl 都有
+########################################################################################################
+########################################################################################################
+########################################################################################################
+[ -f /etc/redhat-release ] && KNA=$(awk '{print $1}' /etc/redhat-release)
+[ -f /etc/os-release     ] && KNA=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
+[ -f /etc/lsb-release    ] && KNA=$(awk -F'[="]+' '/DISTRIB_ID/{print $2}' /etc/lsb-release)
+
+get_opsy() {
+[ -f /etc/redhat-release ] && awk '{print ($1,$3~/^[0-9]/?$3:$4)}' /etc/redhat-release && return
+[ -f /etc/os-release ] && awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release && return
+[ -f /etc/lsb-release ] && awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release && return ; }
+
+running_kernel=` uname -r `
+arch=$( uname -m )
+DISTRO=`  awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release  `
+[[ $DISTRO =~ (Ubuntu|Debian) ]]  && CODENAME=`  cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -n1  `
+[[ $DISTRO == Ubuntu ]] && osversion=`  grep -oE  "[0-9.]+" /etc/issue  `
+[[ $DISTRO == Debian ]] && osversion=`  cat /etc/debian_version  `
+[[ $KNA == CentOS ]] && DISTRO=$( get_opsy )
+DISTROL=`  echo $DISTRO | tr 'A-Z' 'a-z'  `
+########################################################################################################
+
 
 
 LC_ALL=en_US.UTF-8
 LANG=en_US.UTF-8
 LANGUAGE=en_US.UTF-8
+
+
 
 function show_sysctl_part() {
 
@@ -40,15 +67,24 @@ echo -e "\n${baizise}             以下是 fs 参数             ${normal}\n"
 sysctl="/sbin/sysctl"
 
 if [[ ! -x /sbin/sysctl ]]; then
+if [[ $arch == x86_64 ]]; then
 
-    if [[ ]]; then
-        wget --no-check-certificate -qO ./tmpsysctl https://
-    elif [[ ]]; then
-        wget --no-check-certificate -qO ./tmpsysctl https://
-    elif [[ ]]; then
-        wget --no-check-certificate -qO ./tmpsysctl https://
-    elif [[ ]]; then
-        wget --no-check-certificate -qO ./tmpsysctl https://
+    if [[ $(cat /etc/redhat-release|sed -r 's/.* ([0-9]+)\..*/\1/') == 6 ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/centos_6.10_amd64
+    elif [[ $(cat /etc/redhat-release|sed -r 's/.* ([0-9]+)\..*/\1/') == 7 ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/centos_7.5_amd64
+    elif [[ $CODENAME == wheezy ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/debian_7.11_amd64
+    elif [[ $CODENAME == jessie ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/debian_8.10_amd64
+    elif [[ $CODENAME == stretch ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/debian_9.4_amd64
+    elif [[ $CODENAME == trusty ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/ubuntu_14.04.5_amd64
+    elif [[ $CODENAME == xenial ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/ubuntu_16.04.4_amd64
+    elif [[ $CODENAME == bionic ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/ubuntu_18.04_amd64
     else
         echo -e "找不到可用的 sysctl，无法输出 sysctl -a！"
     fi
@@ -56,8 +92,15 @@ if [[ ! -x /sbin/sysctl ]]; then
     chmod +x ./tmpsysctl
     sysctl="./tmpsysctl"
 
-fi
+else
+
+    echo -e "找不到可用的 sysctl，无法输出 sysctl -a！"
+
+fi ; fi
 
 show_sysctl_part 2>&1 | tee sysctl.part.txt
 $sysctl -a 2>&1 > sysctl.all.txt
 [[ ! -x /sbin/sysctl ]] && rm -f ./tmpsysctl
+
+# sz sysctl.part.txt
+# sz sysctl.all.txt
