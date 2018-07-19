@@ -2,8 +2,9 @@
 # Author: Aniverse
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
+# bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.0.0.4
+# Ver.0.0.5
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);

@@ -2,9 +2,10 @@
 # Author: Aniverse
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
+# bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.1.1
-SCRIPTUPDATE=2018.05.18
+ScriptVersion=1.0.1.2
+SCRIPTUPDATE=2018.07.19
 
 # 颜色 --------------------------------------------------------------------------------------------------------
 
