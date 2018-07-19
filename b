@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 #
-# Ver.0.0.3
+# Ver.0.0.4
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -110,7 +110,7 @@ else
 fi ; fi
 
 show_sysctl_part 2>&1 | tee sysctl.part.txt
-$sysctl -a 2>&1 > sysctl.all.txt
+$sysctl -a 2>&1 > sysctl.all.txt 2>&1
 [[ ! -x /sbin/sysctl ]] && rm -f ./tmpsysctl
 
 echo -e "\n\n"
