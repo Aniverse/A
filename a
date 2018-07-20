@@ -4,8 +4,8 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.1.2
-SCRIPTUPDATE=2018.07.19
+ScriptVersion=1.0.2
+SCRIPTUPDATE=2018.07.20
 
 # 颜色 --------------------------------------------------------------------------------------------------------
 
@@ -61,13 +61,16 @@ serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-
 
 
 # ASN、ISP、地理位置信息检测
-result=$( wget -qO- http://freeapi.ipip.net/$serveripv4 )
+echo -e "${bold}正在检查服务器的地理位置（可能不准） ...${normal}"
+result=$( wget -t1 -T10 -qO- http://freeapi.ipip.net/$serveripv4 )
 country=$( echo $result | awk -F '"' '{print $2}' )
 region=$( echo $result | awk -F '"' '{print $4}' )
 city=$( echo $result | awk -F '"' '{print $6}' )
 #isp=$( echo $result | awk -F '"' '{print $10}' )
-isp=$( wget --no-check-certificate -t1 -T6 -qO- https://ipapi.co/json | grep \"org\" | awk -F '"' '{print $4}' )
-asn=$(wget -qO- https://ipapi.co/asn/)
+echo -e "${bold}正在检查服务器的 ISP ...${normal}"
+isp=$( wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/json | grep \"org\" | awk -F '"' '{print $4}' )
+echo -e "${bold}正在检查服务器的 ASN ...${normal}"
+asn=$(wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/asn/)
 
 
 
@@ -176,7 +179,8 @@ else bbrinuse="${red}否${jiacu}" ; fi
 
 
 
-if [[ $EUID = 0 ]]; then
+# if [[ $EUID = 0 ]]; then
+if [[ $EUID = 10086 ]]; then
 echo -e "${bold}正在检查虚拟化技术 ...${normal}"
 virtualx=$(dmesg) 2>/dev/null
 if grep docker /proc/1/cgroup -qa; then
@@ -200,6 +204,17 @@ virtual="Xen"
 else
 virtual="未检测到虚拟化技术（可能是独立服务器）"
 fi ; fi
+
+
+
+if [[ $EUID = 0 ]]; then
+    echo -e "${bold}正在检查虚拟化技术 ...${normal}"
+    wget --no-check-certificate -qO /usr/local/bin/virt-what https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what
+    mkdir -p /usr/lib/virt-what
+    wget --no-check-certificate -qO /usr/lib/virt-what/virt-what-cpuid-helper https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what-cpuid-helper
+    chmod +x /usr/local/bin/virt-what /usr/lib/virt-what/virt-what-cpuid-helper
+    virtual="$(virt-what)" 2>/dev/null
+fi
 
 
 
@@ -236,14 +251,13 @@ disk_size2=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|devtmpfs|by-uuid|chroot
 disk_total_size=$( calc_disk ${disk_size1[@]} )
 disk_used_size=$( calc_disk ${disk_size2[@]} )
 
-
 # CPU
 cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
 cores=$( awk -F: '/model name/ {core++} END {print core}' /proc/cpuinfo )
 cpucores_single=$( grep 'core id' /proc/cpuinfo | sort -u | wc -l )
 freq=$( awk -F: '/cpu MHz/ {freq=$2} END {print freq}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
 # physical_cpu_number=$( grep 'physical id' /proc/cpuinfo | cut -c15-17 )
-# cpu_percent=$( top -b -n 1|grep Cpu|awk '{print $2}'|cut -f 1 -d "." )
+# cpu_percent=$( top -b -n 1 | grep Cpu | awk '{print $2}' | cut -f 1 -d "." )
 cpunumbers=$( grep 'physical id' /proc/cpuinfo | sort -u | wc -l )
 cpucores=$( expr $cpucores_single \* $cpunumbers )
 cputhreads=$( grep 'processor' /proc/cpuinfo | sort -u | wc -l )
