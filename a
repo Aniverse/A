@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.3
+ScriptVersion=1.0.3.2
 SCRIPTUPDATE=2018.07.20
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -468,8 +468,9 @@ echo -e  "  CPU 状态                             ${cyan}当前主频 ${freq} M
 echo -e  "  内存大小                             ${cyan}$tram MB ($uram MB 已用)${jiacu}"
 [[ ! $swap == 0 ]] &&
 echo -e  "  交换分区                             ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
-[[ ! $Seedbox == Unknown ]] &&
-echo
+
+if [[ ! $Seedbox == Unknown ]] || [[ ! -z $disk_model ]] || [[ ! -z $power_time ]]; then
+echo ; fi
 
 [[ ! -z $disk_model ]] &&
 echo -e  "  硬盘型号                             ${cyan}$disk_model${jiacu}"
