@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.2
+ScriptVersion=1.0.3
 SCRIPTUPDATE=2018.07.20
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -88,6 +88,7 @@ asn=$(wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/asn/)
 serverfqdn=`  hostname -f  `
 
 showip=1
+
 }
 
 
@@ -233,7 +234,7 @@ load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ 
 
 echo -e "${bold}正在检查硬件信息 ...${normal}"
 
-# 硬盘
+# 硬盘大小计算
 calc_disk() {
 local total_size=0 ; local array=$@
 for size in ${array[@]} ; do
@@ -250,6 +251,23 @@ disk_size1=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|devtmpfs|by-uuid|chroot
 disk_size2=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $3}' ))
 disk_total_size=$( calc_disk ${disk_size1[@]} )
 disk_used_size=$( calc_disk ${disk_size2[@]} )
+
+# 硬盘通电时间，可能只有单个硬盘的独服才有效
+if [[ $EUID = 0 ]] && [[ ! "$(virt-what)" ]]; then
+
+    if  [ ! -e '/usr/sbin/smartctl' ]; then
+        echo -e "${bold}正在更新系统源 ...${normal}"
+        apt-get update >/dev/null 2>&1
+        echo -e "${bold}正在安装 smartmontools ...${normal}"
+        DEBIAN_FRONTEND=noninteractive apt-get -y install smartmontools >/dev/null 2>&1
+    fi
+
+    result=$(smartctl -a $(result=$(cat /proc/mounts) && echo $(echo "$result" | awk '/data=ordered/{print $1}') | awk '{print $1}') 2>&1) && power_time=$(echo "$result" | awk '/Power_On/{print $10}') # echo $power_time
+    disk_model=$(echo "$result" | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}') # echo $disk_model
+  # echo "$result" | grep "Device Model" | sed "s/Device Model[:]\?.* \([a-zA-Z]\)/\1/"
+  # [[ ! -z $power_time ]] && showpowertime=1
+
+fi
 
 # CPU
 cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
@@ -430,7 +448,7 @@ speed_test(){
 	fi
 }
 
-
+# 考虑做个 iperf 和 iperf3 测试？？？
 
 
 
@@ -453,10 +471,16 @@ echo -e  "  交换分区                             ${cyan}$swap MB ($uswap MB 
 [[ ! $Seedbox == Unknown ]] &&
 echo
 
+[[ ! -z $disk_model ]] &&
+echo -e  "  硬盘型号                             ${cyan}$disk_model${jiacu}"
 echo -e  "  总硬盘大小                           ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  当前硬盘大小                         ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
 echo -e  "  共享盒子邻居数量                     ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
+[[ ! -z $power_time ]] &&
+echo -e  "  硬盘通电时间                         ${cyan}$power_time 个小时${jiacu}"
+
+
 
 echo
 echo -e  "  服务器时间                           ${cyan}$date${jiacu}"
