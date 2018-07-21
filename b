@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.0.beta2
+# Ver.1.0.1.uname
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -48,8 +48,8 @@ LC_ALL=en_US.UTF-8
 LANG=en_US.UTF-8
 LANGUAGE=en_US.UTF-8
 
-running_kernel=` uname -r `
-tcp_control=` cat /proc/sys/net/ipv4/tcp_congestion_control `
+# tcp_control_all=` cat /proc/sys/net/ipv4/tcp_allowed_congestion_control `
+
 
 
 
@@ -75,12 +75,53 @@ esac
 
 
 
+function get_uname() {
+
+uname=$(which uname)
+
+if [[ ! $(which uname) ]]; then
+if [[ $arch == x86_64 ]]; then
+
+    if [[ $(cat /etc/redhat-release|sed -r 's/.* ([0-9]+)\..*/\1/') == 6 ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/uname/centos_6.10_amd64
+    elif [[ $(cat /etc/redhat-release|sed -r 's/.* ([0-9]+)\..*/\1/') == 7 ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/uname/centos_7.5_amd64
+    elif [[ $CODENAME == wheezy ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/uname/debian_7.11_amd64
+    elif [[ $CODENAME == jessie ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/uname/debian_8.10_amd64
+    elif [[ $CODENAME == stretch ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/uname/debian_9.4_amd64
+    elif [[ $CODENAME == trusty ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/uname/ubuntu_14.04.5_amd64
+    elif [[ $CODENAME == xenial ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/uname/ubuntu_16.04.4_amd64
+    elif [[ $CODENAME == bionic ]]; then
+        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/uname/ubuntu_18.04_amd64
+    else
+        echo -e "找不到可用的 sysctl，无法输出 sysctl -a！"
+    fi
+
+    chmod +x ./tmpuname
+    uname="./tmpuname"
+
+else
+
+    echo -e "找不到可用的 uname，无法检查内核！"
+
+fi ; fi ; }
+
+
+
+
+
 function show_system_info() {
 
 echo -e "\n${bold}"
 echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
-echo -e "  当前 系统内核              ${green}$running_kernel${jiacu}"
-echo -e "  当前 TCP 拥塞控制算法      ${green}$tcp_control${jiacu}"
+echo -e "  当前 系统内核              ${green}` $uname -r `${jiacu}"
+echo -e "  当前 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_congestion_control `${jiacu}"
+echo -e "  可用 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_available_congestion_control `${jiacu}"
 echo -e "  当前 CPU  调度方式         ${green}` cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1  `${jiacu}"
 echo -e "  当前 硬盘 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1  `${jiacu}"
 echo -e "  当前 可用 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null                                   `${jiacu}"
