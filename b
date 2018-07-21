@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.3
+# Ver.1.0.4
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -82,11 +82,7 @@ uname=$(which uname)
 if [[ ! $(which uname) ]]; then
 if [[ $arch == x86_64 ]]; then
 
-    if [[ $(cat /etc/redhat-release|sed -r 's/.* ([0-9]+)\..*/\1/') == 6 ]]; then
-        wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/centos_6.10_amd64
-    elif [[ $(cat /etc/redhat-release|sed -r 's/.* ([0-9]+)\..*/\1/') == 7 ]]; then
-        wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/centos_7.5_amd64
-    elif [[ $CODENAME == wheezy ]]; then
+    if [[ $CODENAME == wheezy ]]; then
         wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/debian_7.11_amd64
     elif [[ $CODENAME == jessie ]]; then
         wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/debian_8.10_amd64
@@ -98,6 +94,10 @@ if [[ $arch == x86_64 ]]; then
         wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/ubuntu_16.04.4_amd64
     elif [[ $CODENAME == bionic ]]; then
         wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/ubuntu_18.04_amd64
+    elif [[ $(cat /etc/redhat-release 2>/dev/null | sed -r 's/.* ([0-9]+)\..*/\1/') == 6 ]]; then
+        wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/centos_6.10_amd64
+    elif [[ $(cat /etc/redhat-release 2>/dev/null | sed -r 's/.* ([0-9]+)\..*/\1/') == 7 ]]; then
+        wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/centos_7.5_amd64
     else
         echo -e "找不到可用的 uname，无法检查内核！"
     fi
@@ -117,7 +117,8 @@ fi ; fi ; }
 
 function show_system_info() {
 
-kernel=` $uname -r `
+[[   $(which uname) ]] && kernel=` uname      -r `
+[[ ! $(which uname) ]] && kernel=` ./tmpuname -r `
 
 echo -e "\n${bold}"
 echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
@@ -162,11 +163,7 @@ sysctl="/sbin/sysctl"
 if [[ ! -x /sbin/sysctl ]]; then
 if [[ $arch == x86_64 ]]; then
 
-    if [[ $(cat /etc/redhat-release|sed -r 's/.* ([0-9]+)\..*/\1/') == 6 ]]; then
-        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/centos_6.10_amd64
-    elif [[ $(cat /etc/redhat-release|sed -r 's/.* ([0-9]+)\..*/\1/') == 7 ]]; then
-        wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/centos_7.5_amd64
-    elif [[ $CODENAME == wheezy ]]; then
+    if [[ $CODENAME == wheezy ]]; then
         wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/debian_7.11_amd64
     elif [[ $CODENAME == jessie ]]; then
         wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/debian_8.10_amd64
@@ -178,6 +175,10 @@ if [[ $arch == x86_64 ]]; then
         wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/ubuntu_16.04.4_amd64
     elif [[ $CODENAME == bionic ]]; then
         wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/ubuntu_18.04_amd64
+    elif [[ $(cat /etc/redhat-release 2>/dev/null | sed -r 's/.* ([0-9]+)\..*/\1/') == 6 ]]; then
+        wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/centos_6.10_amd64
+    elif [[ $(cat /etc/redhat-release 2>/dev/null | sed -r 's/.* ([0-9]+)\..*/\1/') == 7 ]]; then
+        wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/centos_7.5_amd64
     else
         echo -e "找不到可用的 sysctl，无法输出 sysctl -a！"
     fi
