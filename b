@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.0.beta
+# Ver.1.0.0.beta2
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -175,99 +175,99 @@ $sysctl -p 2>&1 > sysctl.p.txt 2>&1
 function show_sysctl_specific() {
 
 # 原句：for x in /proc/sys/fs/file-max; do echo -e "$x "`cat $x`""; done
-# 改进：for x in /proc/sys/fs/file-max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-# 20180721：今天我才知道原来直接 sysctl net.ipv4.tcp_window_scaling 这样就行了，我下文把它复杂化了……
+# 改进：for x in /proc/sys/fs/file-max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+# 20180721：今天我才知道原来直接 sysctl net.ipv4.tcp_window_scaling 这样就行了……
 
 echo -e "\n${bold}${baiqingse}     以下是 文件系统 与 虚拟内存 参数     ${normal}\n"
 
-for x in /proc/sys/fs/file-max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/fs/nr_open; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/vm/swappiness; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/vm/dirty_ratio; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/vm/dirty_background_ratio; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/vm/dirty_writeback_centisecs; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/vm/dirty_expire_centisecs; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/vm/min_free_kbytes; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/vm/overcommit_memory; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/fs/file-max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/fs/nr_open; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/vm/swappiness; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/vm/dirty_ratio; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/vm/dirty_background_ratio; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/vm/dirty_writeback_centisecs; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/vm/dirty_expire_centisecs; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/vm/min_free_kbytes; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/vm/overcommit_memory; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 
 echo -e "\n${bold}${bailanse}      以下是 TCP 拥塞控制算法 参数      ${normal}\n"
 
-for x in /proc/sys/net/core/default_qdisc; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_available_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_allowed_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/core/default_qdisc; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_available_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_allowed_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 
 echo -e "\n${bold}${bailvse}        以下是  网络 参数（布尔型）        ${normal}\n"
 
-for x in /proc/sys/net/ipv4/tcp_dsack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_sack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_fack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_rfc1337; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_mtu_probing; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/ip_no_pmtu_disc; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_no_metrics_save; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_timestamps; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_tw_reuse; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_tw_recycle; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_window_scaling; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_workaround_signed_windows; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_syncookies; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_slow_start_after_idle; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_dsack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_sack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_fack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_rfc1337; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_mtu_probing; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/ip_no_pmtu_disc; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_no_metrics_save; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_timestamps; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_tw_reuse; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_tw_recycle; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_window_scaling; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_workaround_signed_windows; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_syncookies; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_slow_start_after_idle; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 
 echo -e "\n${bold}${bailvse}        以下是  网络 参数（数值型）        ${normal}\n"
 
-for x in /proc/sys/net/ipv4/max_orphans; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/ip_local_port_range; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_adv_win_scale; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_retries1; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_retries2; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_syn_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_orphan_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_synack_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_keepalive_probes; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_keepalive_intvl; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_keepalive_time; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_fin_timeout; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_fastopen; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/core/optmem_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/core/netdev_max_backlog; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/core/somaxconn; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/max_orphans; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/ip_local_port_range; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_adv_win_scale; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_retries1; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_retries2; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_syn_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_orphan_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_synack_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_keepalive_probes; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_keepalive_intvl; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_keepalive_time; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_fin_timeout; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_fastopen; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/core/optmem_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/core/netdev_max_backlog; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/core/somaxconn; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 
 echo -e "\n${bold}${bailvse}           以下是  网络缓存 参数           ${normal}\n"
 
-for x in /proc/sys/net/ipv4/tcp_mem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_rmem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/tcp_wmem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/udp_mem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/udp_rmem_min; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/udp_wmem_min; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/core/rmem_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/core/wmem_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/core/rmem_default; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/core/wmem_default; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_mem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_rmem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/tcp_wmem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/udp_mem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/udp_rmem_min; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/udp_wmem_min; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/core/rmem_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/core/wmem_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/core/rmem_default; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/core/wmem_default; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 
 echo -e "\n${bold}${bailvse}        以下是  网络 参数（什么鬼）        ${normal}\n"
 
-for x in /proc/sys/net/ipv4/tcp_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/ip_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/udp_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/xfrm4_gc_thresh; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/igmp_max_memberships; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/route.gc_timeout; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/conf/all/conf.all.send_redirects; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/conf/all/accept_redirects; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/ipv4/conf/all/accept_source_route; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/net/netfilter/nf_conntrack_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/ip_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/udp_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/xfrm4_gc_thresh; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/igmp_max_memberships; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/route.gc_timeout; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/conf/all/conf.all.send_redirects; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/conf/all/accept_redirects; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/ipv4/conf/all/accept_source_route; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/net/netfilter/nf_conntrack_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 
 echo -e "\n${bold}${baizise}             以下是  内核 参数             ${normal}\n"
 
-for x in /proc/sys/kernel/pid_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/kernel/sem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/kernel/sched_migration_cost_ns; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/kernel/sched_autogroup_enabled; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/kernel/pid_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/kernel/sem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/kernel/sched_migration_cost_ns; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in /proc/sys/kernel/sched_autogroup_enabled; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 
-# for x in /proc/sys/; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+# for x in /proc/sys/; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 # 白红色还没用
 
 }
