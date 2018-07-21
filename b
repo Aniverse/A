@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.4
+# Ver.1.0.5
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -80,7 +80,6 @@ function get_uname() {
 uname=$(which uname)
 
 if [[ ! $(which uname) ]]; then
-if [[ $arch == x86_64 ]]; then
 
     if [[ $CODENAME == wheezy ]]; then
         wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/debian_7.11_amd64
@@ -105,11 +104,7 @@ if [[ $arch == x86_64 ]]; then
     chmod +x ./tmpuname
     uname="./tmpuname"
 
-else
-
-    echo -e "找不到可用的 uname，无法检查内核！"
-
-fi ; fi ; }
+fi ; }
 
 
 
