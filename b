@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.2.uname
+# Ver.1.0.3
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -117,11 +117,13 @@ fi ; fi ; }
 
 function show_system_info() {
 
+kernel=` $uname -r `
+
 echo -e "\n${bold}"
 echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
-echo -e "  当前 系统内核              ${green}` $uname -r `${jiacu}"
+echo -e "  当前 系统内核              ${green}$kernel${jiacu}"
 echo -e "  当前 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_congestion_control `${jiacu}"
-echo -e "  可用 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_available_congestion_control `${jiacu}"
+# echo -e "  可用 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_available_congestion_control `${jiacu}"
 echo -e "  当前 CPU  调度方式         ${green}` cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1  `${jiacu}"
 echo -e "  当前 硬盘 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1  `${jiacu}"
 echo -e "  当前 可用 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null                                   `${jiacu}"
@@ -205,7 +207,6 @@ $sysctl -a 2>&1 > sysctl.all.txt 2>&1
 function sysctl_p() {
 get_sysctl
 cp -f /etc/sysctl.conf sysctl.conf.script
-cp -f /etc/sysctl.d/99-sysctl.conf 99-sysctl.conf.script
 $sysctl -p 2>&1 > sysctl.p.txt 2>&1
 [[ ! -x /sbin/sysctl ]] && rm -f ./tmpsysctl ; }
 
@@ -322,15 +323,6 @@ function show_deluge_libtorrent_info() {
 echo;cat -A ~/.config/deluge/session.state|sed "s/\(listen_interfaces\)[0-9][0-9]:/\1 = /"|sed "s/user_agent[0-9][0-9]:/user_agent = /"|sed "s/.*settingsd[0-9][0-9]:/TMPP\r\nPMT\r\n/g"|sed "s/[0-9][0-9]:/\r\n/g"|sed '1,/PMT/d'|sed -e 's/\([0-9]\)e.*/\1/'|sed -e 's/\(.*\)i/\1 = /'|sed "s/listen_ = /listen_i/"|sed "s/\(peer_fingerprint\)[0-9]:\(-.*-\)[0-9]:/\1 = \2\r\n/";echo;echo
 
 }
-
-
-
-
-
-
-
-
-
 
 
 
