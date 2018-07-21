@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.0.alpha
+# Ver.1.0.0.beta
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -193,54 +193,54 @@ for x in /proc/sys/vm/overcommit_memory; do echo -n "$x = " | sed "s/\/proc\/sys
 echo -e "\n${bold}${bailanse}      以下是 TCP 拥塞控制算法 参数      ${normal}\n"
 
 for x in /proc/sys/net/core/default_qdisc; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_available_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_allowed_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_available_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_allowed_congestion_control; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 
 echo -e "\n${bold}${bailvse}        以下是  网络 参数（布尔型）        ${normal}\n"
 
-for x in /proc/sys/ipv4/tcp_dsack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_sack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_fack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_rfc1337; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_mtu_probing; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/ip_no_pmtu_disc; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_no_metrics_save; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_timestamps; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_tw_reuse; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_tw_recycle; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_window_scaling; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_workaround_signed_windows; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_syncookies; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_slow_start_after_idle; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_dsack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_sack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_fack; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_rfc1337; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_mtu_probing; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/ip_no_pmtu_disc; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_no_metrics_save; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_timestamps; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_tw_reuse; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_tw_recycle; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_window_scaling; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_workaround_signed_windows; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_syncookies; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_slow_start_after_idle; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 
 echo -e "\n${bold}${bailvse}        以下是  网络 参数（数值型）        ${normal}\n"
 
-for x in /proc/sys/ipv4/max_orphans; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/ip_local_port_range; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_adv_win_scale; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_retries1; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_retries2; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_syn_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_orphan_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_synack_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_keepalive_probes; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_keepalive_intvl; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_keepalive_time; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_fin_timeout; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_fastopen; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/max_orphans; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/ip_local_port_range; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_adv_win_scale; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_retries1; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_retries2; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_syn_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_orphan_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_synack_retries; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_keepalive_probes; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_keepalive_intvl; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_keepalive_time; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_fin_timeout; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_fastopen; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 for x in /proc/sys/net/core/optmem_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 for x in /proc/sys/net/core/netdev_max_backlog; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 for x in /proc/sys/net/core/somaxconn; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 
 echo -e "\n${bold}${bailvse}           以下是  网络缓存 参数           ${normal}\n"
 
-for x in /proc/sys/ipv4/tcp_mem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_rmem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/tcp_wmem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/udp_mem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/udp_rmem_min; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/udp_wmem_min; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_mem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_rmem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_wmem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/udp_mem; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/udp_rmem_min; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/udp_wmem_min; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 for x in /proc/sys/net/core/rmem_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 for x in /proc/sys/net/core/wmem_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 for x in /proc/sys/net/core/rmem_default; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
@@ -248,17 +248,17 @@ for x in /proc/sys/net/core/wmem_default; do echo -n "$x = " | sed "s/\/proc\/sy
 
 echo -e "\n${bold}${bailvse}        以下是  网络 参数（什么鬼）        ${normal}\n"
 
-for x in /proc/sys/ipv4/tcp_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/ip_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/udp_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/xfrm4_gc_thresh; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/igmp_max_memberships; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/route.gc_timeout; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/conf/all/conf.all.send_redirects; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/conf/all/accept_redirects; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/ipv4/conf/all/accept_source_route; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/netfilter/nf_conntrack_tcp_timeout_established; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
-for x in /proc/sys/netfilter/nf_conntrack_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/tcp_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/ip_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/udp_early_demux; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/xfrm4_gc_thresh; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/igmp_max_memberships; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/route.gc_timeout; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/conf/all/conf.all.send_redirects; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/conf/all/accept_redirects; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/ipv4/conf/all/accept_source_route; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
+for x in /proc/sys/net/netfilter/nf_conntrack_max; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x ; done
 
 echo -e "\n${bold}${baizise}             以下是  内核 参数             ${normal}\n"
 
