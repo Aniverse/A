@@ -4,7 +4,8 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.7
+# Ver.1.0.9
+# ScriptDate=2018.07.22
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -27,40 +28,63 @@ shanshuo=$(tput blink); wuguangbiao=$(tput civis); guangbiao=$(tput cnorm)
 [ -f /etc/os-release     ] && KNA=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
 [ -f /etc/lsb-release    ] && KNA=$(awk -F'[="]+' '/DISTRIB_ID/{print $2}' /etc/lsb-release)
 
-get_opsy() {
-[ -f /etc/redhat-release ] && awk '{print ($1,$3~/^[0-9]/?$3:$4)}' /etc/redhat-release && return
-[ -f /etc/os-release ] && awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release && return
-[ -f /etc/lsb-release ] && awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release && return ; }
-
-running_kernel=` uname -r `
-arch=$( uname -m )
 DISTRO=`  awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release  `
 [[ $DISTRO =~ (Ubuntu|Debian) ]]  && CODENAME=`  cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -n1  `
 [[ $DISTRO == Ubuntu ]] && osversion=`  grep -oE  "[0-9.]+" /etc/issue  `
 [[ $DISTRO == Debian ]] && osversion=`  cat /etc/debian_version  `
 [[ $KNA == CentOS ]] && DISTRO=$( get_opsy )
 DISTROL=`  echo $DISTRO | tr 'A-Z' 'a-z'  `
-########################################################################################################
 
+# 硬件信息
+calc_disk() {
+local total_size=0 ; local array=$@
+for size in ${array[@]} ; do
+[ "${size}" == "0" ] && size_t=0 || size_t=`echo ${size:0:${#size}-1}`
+[ "`echo ${size:(-1)}`" == "K" ] && size=0
+[ "`echo ${size:(-1)}`" == "M" ] && size=$( awk 'BEGIN{printf "%.1f", '$size_t' / 1024}' )
+[ "`echo ${size:(-1)}`" == "T" ] && size=$( awk 'BEGIN{printf "%.1f", '$size_t' * 1024}' )
+[ "`echo ${size:(-1)}`" == "G" ] && size=${size_t}
+total_size=$( awk 'BEGIN{printf "%.1f", '$total_size' + '$size'}' )
+done ; echo ${total_size} ; }
 
+disk_num=`  df -lh | grep -P "/home[0-9]+|media|/$" | wc -l  `
+disk_size1=($( LANG=C df -hPl | grep -wvP '\-|none|root|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|md[0-9]+/[a-z]*' | awk '{print $2}' ))
+disk_size2=($( LANG=C df -hPl | grep -wvP '\-|none|root|tmpfs|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $3}' ))
+disk_total_size=$( calc_disk ${disk_size1[@]} )
+disk_used_size=$( calc_disk ${disk_size2[@]} )
+
+cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
+cores=$( awk -F: '/model name/ {core++} END {print core}' /proc/cpuinfo )
+cpucores_single=$( grep 'core id' /proc/cpuinfo | sort -u | wc -l )
+freq=$( awk -F: '/cpu MHz/ {freq=$2} END {print freq}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
+cpunumbers=$( grep 'physical id' /proc/cpuinfo | sort -u | wc -l )
+cpucores=$( expr $cpucores_single \* $cpunumbers )
+cputhreads=$( grep 'processor' /proc/cpuinfo | sort -u | wc -l )
+[[ $cpunumbers == 2 ]] && CPUNum='双路 ' ; [[ $cpunumbers == 4 ]] && CPUNum='四路 ' ; [[ $cpunumbers == 8 ]] && CPUNum='八路 '
+
+tram=$( free -m | awk '/Mem/ {print $2}' )   ; uram=$( free -m | awk '/Mem/ {print $3}' )
+swap=$( free -m | awk '/Swap/ {print $2}' )  ; uswap=$( free -m | awk '/Swap/ {print $3}' )
+memory_usage=`free -m |grep -i mem | awk '{printf ("%.2f\n",$3/$2*100)}'`%
+
+users=`users | wc -w` ; processes=`ps aux | wc -l`
+date=$( date +%Y-%m-%d" "%H:%M:%S )
 
 LC_ALL=en_US.UTF-8
 LANG=en_US.UTF-8
 LANGUAGE=en_US.UTF-8
 
-# tcp_control_all=` cat /proc/sys/net/ipv4/tcp_allowed_congestion_control `
+########################################################################################################
 
 
 
 
 
-
-echo -e "
+echo -e "${bold}
 1. 获取 sysctl 参数
 2. 获取 sysctl 参数（特定）
 输入其他数字或者五秒钟内无回应一律退出脚本
 "
-echo -ne "${bold}${yellow}你想做什么？${normal} " ; read -t 5 -e answer
+echo -ne "${yellow}你想做什么？${normal} " ; read -t 5 -e answer
 
 case $answer in
     1) answer=1 ;;
@@ -115,6 +139,18 @@ get_uname
 [[ ! -x /bin/uname ]] && kernel=` ./tmpuname -r `
 
 echo -e "\n${bold}"
+echo -e "  CPU 型号                   ${cyan}$CPUNum$cname${jiacu}"
+echo -e "  CPU 核心                   ${cyan}合计 ${cpucores} 核心，${cputhreads} 线程${jiacu}"
+echo -e "  CPU 状态                   ${cyan}当前主频 ${freq} MHz${jiacu}"
+echo -e "  内存大小                   ${cyan}$tram MB ($uram MB 已用)${jiacu}"
+[[ ! $swap == 0 ]] &&
+echo -e "  交换分区                   ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
+echo -e "  硬盘大小                   ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
+echo
+echo -e  " 系统时间                   ${cyan}$date${jiacu}"
+echo -e  " 运行时间                   ${cyan}$uptime1${jiacu}"
+echo -e  " 系统负载                   ${cyan}$load${jiacu}"
+echo
 echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 echo -e "  当前 系统内核              ${green}$kernel${jiacu}"
 echo -e "  当前 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_congestion_control `${jiacu}"
@@ -133,16 +169,31 @@ get_uname
 [[ ! -x /bin/uname ]] && kernel=` ./tmpuname -r `
 
 echo -e "\n${bold}"
+echo -e "  CPU 型号                   ${cyan}$CPUNum$cname${jiacu}"
+echo -e "  CPU 核心                   ${cyan}合计 ${cpucores} 核心，${cputhreads} 线程${jiacu}"
+echo -e "  CPU 状态                   ${cyan}当前主频 ${freq} MHz${jiacu}"
+echo -e "  内存大小                   ${cyan}$tram MB ($uram MB 已用)${jiacu}"
+[[ ! $swap == 0 ]] &&
+echo -e "  交换分区                   ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
+echo -e "  硬盘大小                   ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
+echo
+echo -e  " 系统时间                   ${cyan}$date${jiacu}"
+echo -e  " 运行时间                   ${cyan}$uptime1${jiacu}"
+echo -e  " 系统负载                   ${cyan}$load${jiacu}"
+echo
 echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 echo -e "  当前 系统内核              ${green}$kernel${jiacu}"
 echo -e "  当前 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_congestion_control `${jiacu}"
 echo -e "  可用 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_available_congestion_control `${jiacu}"
 echo -e "  当前 CPU  调度方式         ${green}` cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1 `${jiacu}"
-echo -e "  当前 硬盘 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1 `${jiacu}"
-echo -e "  当前 可用 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null `${jiacu}"
+echo -e "  当前 硬盘 调度算法         ${green}` cat /sys/block/[sv]da/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1 `${jiacu}"
+echo -e "  当前 可用 调度算法         ${green}` cat /sys/block/[sv]da/queue/scheduler 2>/dev/null `${jiacu}"
 echo -e "  当前 硬盘 文件系统         ${green}` cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $3}' `${jiacu}" 
 echo -e "  当前 硬盘 挂载方式         ${green}` cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $4}' `${jiacu}"
 echo -e "  ${normal}"
+
+# ls /lib/modules/$(uname -r)/kernel/net/ipv4
+# tcp_control_all=` cat /proc/sys/net/ipv4/tcp_allowed_congestion_control `
 
 }
 
