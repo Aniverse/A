@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.9
+# Ver.1.1.0
 # ScriptDate=2018.07.22
 #
 ########################################################################################################
@@ -68,6 +68,9 @@ memory_usage=`free -m |grep -i mem | awk '{printf ("%.2f\n",$3/$2*100)}'`%
 
 users=`users | wc -w` ; processes=`ps aux | wc -l`
 date=$( date +%Y-%m-%d" "%H:%M:%S )
+uptime1=$( awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d days %d hour %d min\n",a,b,c)}' /proc/uptime )
+uptime2=`uptime | grep -ohe 'up .*' | sed 's/,/\ hours/g' | awk '{ printf $2" "$3 }'`
+load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//' )
 
 LC_ALL=en_US.UTF-8
 LANG=en_US.UTF-8
@@ -147,9 +150,9 @@ echo -e "  内存大小                   ${cyan}$tram MB ($uram MB 已用)${jia
 echo -e "  交换分区                   ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
 echo -e "  硬盘大小                   ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 echo
-echo -e  " 系统时间                   ${cyan}$date${jiacu}"
-echo -e  " 运行时间                   ${cyan}$uptime1${jiacu}"
-echo -e  " 系统负载                   ${cyan}$load${jiacu}"
+echo -e "  系统时间                   ${cyan}$date${jiacu}"
+echo -e "  运行时间                   ${cyan}$uptime1${jiacu}"
+echo -e "  系统负载                   ${cyan}$load${jiacu}"
 echo
 echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 echo -e "  当前 系统内核              ${green}$kernel${jiacu}"
@@ -165,8 +168,8 @@ echo -e "  ${normal}"
 function show_system_info_2() {
 
 get_uname
-[[   -x /bin/uname ]] && kernel=` uname      -r `
-[[ ! -x /bin/uname ]] && kernel=` ./tmpuname -r `
+[[   -x /bin/uname ]] && { kernel=$(    uname   -r ) ; arch=$(    uname   -m ) }
+[[ ! -x /bin/uname ]] && { kernel=$( ./tmpuname -r ) ; arch=$( ./tmpuname -m ) }
 
 echo -e "\n${bold}"
 echo -e "  CPU 型号                   ${cyan}$CPUNum$cname${jiacu}"
@@ -177,19 +180,19 @@ echo -e "  内存大小                   ${cyan}$tram MB ($uram MB 已用)${jia
 echo -e "  交换分区                   ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
 echo -e "  硬盘大小                   ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 echo
-echo -e  " 系统时间                   ${cyan}$date${jiacu}"
-echo -e  " 运行时间                   ${cyan}$uptime1${jiacu}"
-echo -e  " 系统负载                   ${cyan}$load${jiacu}"
+echo -e "  系统时间                   ${cyan}$date${jiacu}"
+echo -e "  运行时间                   ${cyan}$uptime1${jiacu}"
+echo -e "  系统负载                   ${cyan}$load${jiacu}"
 echo
 echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 echo -e "  当前 系统内核              ${green}$kernel${jiacu}"
-echo -e "  当前 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_congestion_control `${jiacu}"
-echo -e "  可用 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_available_congestion_control `${jiacu}"
-echo -e "  当前 CPU  调度方式         ${green}` cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1 `${jiacu}"
-echo -e "  当前 硬盘 调度算法         ${green}` cat /sys/block/[sv]da/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1 `${jiacu}"
-echo -e "  当前 可用 调度算法         ${green}` cat /sys/block/[sv]da/queue/scheduler 2>/dev/null `${jiacu}"
-echo -e "  当前 硬盘 文件系统         ${green}` cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $3}' `${jiacu}" 
-echo -e "  当前 硬盘 挂载方式         ${green}` cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $4}' `${jiacu}"
+echo -e "  当前 TCP 拥塞控制算法      ${green}$( cat /proc/sys/net/ipv4/tcp_congestion_control )${jiacu}"
+echo -e "  可用 TCP 拥塞控制算法      ${green}$( cat /proc/sys/net/ipv4/tcp_available_congestion_control )${jiacu}"
+echo -e "  当前 CPU  调度方式         ${green}$( cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1 )${jiacu}"
+echo -e "  当前 硬盘 调度算法         ${green}$( cat /sys/block/[sv]da/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1 )${jiacu}"
+echo -e "  当前 可用 调度算法         ${green}$( cat /sys/block/[sv]da/queue/scheduler 2>/dev/null )${jiacu}"
+echo -e "  当前 硬盘 文件系统         ${green}$( cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $3}' )${jiacu}" 
+echo -e "  当前 硬盘 挂载方式         ${green}$( cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $4}' )${jiacu}"
 echo -e "  ${normal}"
 
 # ls /lib/modules/$(uname -r)/kernel/net/ipv4
@@ -249,9 +252,9 @@ if [[ ! -x /sbin/sysctl ]]; then
     chmod +x ./tmpsysctl
     sysctl="./tmpsysctl"
 
-else
-
-    echo -e "找不到可用的 sysctl，无法输出 sysctl -a！"
+# else
+#
+#    echo -e "找不到可用的 sysctl，无法输出 sysctl -a！"
 
 fi ; }
 #fi ; fi ; }
