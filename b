@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.6
+# Ver.1.0.7
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -110,21 +110,38 @@ fi ; }
 
 function show_system_info() {
 
+get_uname
 [[   -x /bin/uname ]] && kernel=` uname      -r `
 [[ ! -x /bin/uname ]] && kernel=` ./tmpuname -r `
-
-# cat /proc/mounts | grep `df -k | sort -rn -k4 | awk '{print $1}' | head -1`
 
 echo -e "\n${bold}"
 echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 echo -e "  当前 系统内核              ${green}$kernel${jiacu}"
 echo -e "  当前 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_congestion_control `${jiacu}"
-# echo -e "  可用 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_available_congestion_control `${jiacu}"
-echo -e "  当前 CPU  调度方式         ${green}` cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1  `${jiacu}"
-echo -e "  当前 硬盘 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1  `${jiacu}"
-echo -e "  当前 可用 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null                                   `${jiacu}"
-echo -e "  当前 硬盘 文件系统         ${green}` cat /etc/fstab 2>/dev/null | grep -v ^# | grep -P " / |/home" | awk '{print $3}' `${jiacu}" 
-echo -e "  当前 硬盘 挂载方式         ${green}` cat /etc/fstab 2>/dev/null | grep -v ^# | grep -P " / |/home" | awk '{print $4}' `${jiacu}"
+echo -e "  可用 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_available_congestion_control `${jiacu}"
+echo -e "  ${normal}"
+
+}
+
+
+
+
+function show_system_info_2() {
+
+get_uname
+[[   -x /bin/uname ]] && kernel=` uname      -r `
+[[ ! -x /bin/uname ]] && kernel=` ./tmpuname -r `
+
+echo -e "\n${bold}"
+echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
+echo -e "  当前 系统内核              ${green}$kernel${jiacu}"
+echo -e "  当前 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_congestion_control `${jiacu}"
+echo -e "  可用 TCP 拥塞控制算法      ${green}` cat /proc/sys/net/ipv4/tcp_available_congestion_control `${jiacu}"
+echo -e "  当前 CPU  调度方式         ${green}` cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1 `${jiacu}"
+echo -e "  当前 硬盘 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1 `${jiacu}"
+echo -e "  当前 可用 调度算法         ${green}` cat /sys/block/sda/queue/scheduler 2>/dev/null `${jiacu}"
+echo -e "  当前 硬盘 文件系统         ${green}` cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $3}' `${jiacu}" 
+echo -e "  当前 硬盘 挂载方式         ${green}` cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $4}' `${jiacu}"
 echo -e "  ${normal}"
 
 }
@@ -156,7 +173,7 @@ function get_sysctl() {
 sysctl="/sbin/sysctl"
 
 if [[ ! -x /sbin/sysctl ]]; then
-if [[ $arch == x86_64 ]]; then
+# if [[ $arch == x86_64 ]]; then                    # 没有 uname 也没法检查架构
 
     if [[ $CODENAME == wheezy ]]; then
         wget --no-check-certificate -qO ./tmpsysctl https://github.com/Aniverse/A/raw/i/files/sysctl/debian_7.11_amd64
@@ -185,7 +202,8 @@ else
 
     echo -e "找不到可用的 sysctl，无法输出 sysctl -a！"
 
-fi ; fi ; }
+fi ; }
+#fi ; fi ; }
 
 
 
@@ -193,7 +211,8 @@ fi ; fi ; }
 
 function save_sysctl_all() {
 get_sysctl
-$sysctl -a 2>&1 > sysctl.all.txt 2>&1
+$sysctl -a 2>&1 > sysctl.all.txt # 2>&1
+tar zcf sysctl.d.tar.gz /etc/sysctl.d # 2>&1 >/dev/null
 [[ ! -x /sbin/sysctl ]] && rm -f ./tmpsysctl ; }
 
 
@@ -325,13 +344,11 @@ echo;cat -A ~/.config/deluge/session.state|sed "s/\(listen_interfaces\)[0-9][0-9
 
 
 if [[ $answer == 1 ]]; then
-    show_system_info
-    show_sysctl_part 2>&1 | tee sysctl.part.txt
+    show_sysctl_part 2>&1 | tee sysctl.txt
 elif [[ $answer == 2 ]]; then
     show_system_info
-    show_sysctl_specific 2>&1 | tee sysctl.specific.txt
 elif [[ $answer == 10010 ]]; then
-    show_system_info
+    show_system_info_2 | tee system.info.txt
     show_sysctl_specific 2>&1 | tee sysctl.specific.txt
     save_sysctl_all
     sysctl_p
