@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.1.0
+# Ver.1.1.1
 # ScriptDate=2018.07.22
 #
 ########################################################################################################
@@ -332,8 +332,8 @@ for x in $proc_sys_path/net/ipv4/tcp_slow_start_after_idle; do echo -n "$x = " |
 
 echo -e "\n${bold}${bailvse}        以下是  网络 参数（数值型）        ${normal}\n"
 
-for x in $proc_sys_path/net/ipv4/max_orphans; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 for x in $proc_sys_path/net/ipv4/ip_local_port_range; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
+for x in $proc_sys_path/net/ipv4/tcp_max_orphans; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 for x in $proc_sys_path/net/ipv4/tcp_adv_win_scale; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 for x in $proc_sys_path/net/ipv4/tcp_retries1; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
 for x in $proc_sys_path/net/ipv4/tcp_retries2; do echo -n "$x = " | sed "s/\/proc\/sys\///" | sed "s/\//./g" ; cat $x 2>/dev/null || echo "找不到这个值！" ; done
