@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.4
+ScriptVersion=1.0.4.2
 SCRIPTUPDATE=2018.07.22
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -462,7 +462,7 @@ speed_test(){
 function _menu() { clear ; echo
 echo -e  " ${baizise}${bold}                               This is the choice of Steins;Gate                               ${jiacu} "
 
-[[ ! $Seedbox == Unknown ]] && SeedboxDiskTotalFlag="总"
+[[ ! $Seedbox == Unknown ]] && SeedboxDiskTotalFlagOne="总" ; [[ $Seedbox == Unknown ]] && SeedboxDiskTotalFlagTwo="  "
 
 echo
 echo -e  "  CPU 型号                             ${cyan}$CPUNum$cname${jiacu}"
@@ -477,7 +477,7 @@ echo ; fi
 
 [[ ! -z $disk_model ]] &&
 echo -e  "  硬盘型号                             ${cyan}$disk_model${jiacu}"
-echo -e  "  $SeedboxDiskTotalFlag硬盘大小                           ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
+echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小   ${SeedboxDiskTotalFlagTwo}                        ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  当前硬盘大小                         ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
 echo -e  "  共享盒子邻居数量                     ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
