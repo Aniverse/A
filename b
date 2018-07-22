@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.0.5
+# Ver.1.0.6
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -77,9 +77,7 @@ esac
 
 function get_uname() {
 
-uname=$(which uname)
-
-if [[ ! $(which uname) ]]; then
+if [[ ! -x /bin/uname ]]; then
 
     if [[ $CODENAME == wheezy ]]; then
         wget --no-check-certificate -qO ./tmpuname https://github.com/Aniverse/A/raw/i/files/uname/debian_7.11_amd64
@@ -112,8 +110,10 @@ fi ; }
 
 function show_system_info() {
 
-[[   $(which uname) ]] && kernel=` uname      -r `
-[[ ! $(which uname) ]] && kernel=` ./tmpuname -r `
+[[   -x /bin/uname ]] && kernel=` uname      -r `
+[[ ! -x /bin/uname ]] && kernel=` ./tmpuname -r `
+
+# cat /proc/mounts | grep `df -k | sort -rn -k4 | awk '{print $1}' | head -1`
 
 echo -e "\n${bold}"
 echo -e "  当前 操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
