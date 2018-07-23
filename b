@@ -4,8 +4,10 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
 #
-# Ver.1.1.1
-# ScriptDate=2018.07.22
+# wget -qO b https://raw.githubusercontent.com/Aniverse/A/i/b && sed -i "s/_proc_sys/_root_sys/" b && bash b
+#
+# Ver.1.1.2
+# ScriptDate=2018.07.23
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -168,8 +170,8 @@ echo -e "  ${normal}"
 function show_system_info_2() {
 
 get_uname
-[[   -x /bin/uname ]] && { kernel=$(    uname   -r ) ; arch=$(    uname   -m ) }
-[[ ! -x /bin/uname ]] && { kernel=$( ./tmpuname -r ) ; arch=$( ./tmpuname -m ) }
+[[   -x /bin/uname ]] && { kernel=$(    uname   -r ) ; arch=$(    uname   -m ) ; }
+[[ ! -x /bin/uname ]] && { kernel=$( ./tmpuname -r ) ; arch=$( ./tmpuname -m ) ; }
 
 echo -e "\n${bold}"
 echo -e "  CPU 型号                   ${cyan}$CPUNum$cname${jiacu}"
@@ -291,6 +293,7 @@ function show_sysctl_specific() {
 
 # 这么写主要是考虑到以后连不上机器，用备份的文件来检查参数的时候，直接改下变量就行了
 # 至于 _ 到 / 的转换，纯粹是为了以后 sed 方便一些不用加反斜杠
+# sed -i "s/_proc_sys/替换路径/" b && bash b
 proc_sys_path_tmp="_proc_sys"
 proc_sys_path=$( echo $proc_sys_path_tmp | sed "s/_/\//g")
 
