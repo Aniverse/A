@@ -6,7 +6,7 @@
 #
 # wget -qO b https://raw.githubusercontent.com/Aniverse/A/i/b && sed -i "s/_proc_sys/_root_sys/" b && bash b
 #
-# Ver.1.1.2
+# Ver.1.1.3
 # ScriptDate=2018.07.23
 #
 ########################################################################################################
@@ -86,7 +86,7 @@ LANGUAGE=en_US.UTF-8
 
 echo -e "${bold}
 1. 获取 sysctl 参数
-2. 获取 sysctl 参数（特定）
+2. 获取 系统信息
 输入其他数字或者五秒钟内无回应一律退出脚本
 "
 echo -ne "${yellow}你想做什么？${normal} " ; read -t 5 -e answer
@@ -293,7 +293,7 @@ function show_sysctl_specific() {
 
 # 这么写主要是考虑到以后连不上机器，用备份的文件来检查参数的时候，直接改下变量就行了
 # 至于 _ 到 / 的转换，纯粹是为了以后 sed 方便一些不用加反斜杠
-# sed -i "s/_proc_sys/替换路径/" b && bash b
+# 不过下边显示的文字也会被替换掉，不过问题不大，复制下来再在文本编辑器里批量替换就行了
 proc_sys_path_tmp="_proc_sys"
 proc_sys_path=$( echo $proc_sys_path_tmp | sed "s/_/\//g")
 
