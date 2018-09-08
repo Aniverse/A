@@ -4,8 +4,8 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.4.2
-SCRIPTUPDATE=2018.07.22
+ScriptVersion=1.0.4.3
+SCRIPTUPDATE=2018.09.08
 
 # 颜色 --------------------------------------------------------------------------------------------------------
 
@@ -249,8 +249,8 @@ done ; echo ${total_size} ; }
 
 disk_num=`  df -lh | grep -P "/home[0-9]+|media|/$" | wc -l  `
 # 计算总共空间的时候，排除掉 FH SSD 每个用户限额的空间；计算已用空间的时候不排除（因为原先的单个 md 已用空间只有 128k/256k）
-disk_size1=($( LANG=C df -hPl | grep -wvP '\-|none|root|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|md[0-9]+/[a-z]*' | awk '{print $2}' ))
-disk_size2=($( LANG=C df -hPl | grep -wvP '\-|none|root|tmpfs|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $3}' ))
+disk_size1=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker|md[0-9]+/[a-z]*' | awk '{print $2}' ))
+disk_size2=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker' | awk '{print $3}' ))
 disk_total_size=$( calc_disk ${disk_size1[@]} )
 disk_used_size=$( calc_disk ${disk_size2[@]} )
 
