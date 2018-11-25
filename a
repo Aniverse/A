@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.5.1
+ScriptVersion=1.0.6
 SCRIPTUPDATE=2018.11.25
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -29,38 +29,8 @@ clear
 # IP 信息相关 -------------------------------------------------------------------------------------------------
 
 
-
-
-function _ip() {
-echo -e "${bold}正在检查服务器的 IP 信息 ...${normal}"
-
-### 是否为 IP 地址 ###
-function isValidIpAddress() { echo $1 | grep -qE '^[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?$' ; }
-
-### 是否为内网 IP 地址 ###
-function isInternalIpAddress() { echo $1 | grep -qE '(192\.168\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(172\.((1[6-9])|(2\d)|(3[0-1]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(10\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))' ; }
-
-# IPv4 与 IPv6 地址检测
-
-# serveripv4=$( ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:" )
-serveripv4=$( ip route get 8.8.8.8 | awk '{print $3}' | head -1 )
-# serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' )
-isInternalIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- v4.ipv6-test.com/api/myip.php )
-isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
-isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T7 -qO- ipecho.net/plain )
-isValidIpAddress    "$serveripv4" || { echo "${red}${shanshuo}WARNING ${jiacu}${underline}Failed to detect your public IPv4 address, use internal address instead${jiacu}" ; serveripv4=$( ip route get 8.8.8.8 | awk '{print $3}' | head -1 ) ; }
-
-# serveripv6=$( wget --no-check-certificate -qO- -t1 -T8 ipv6.icanhazip.com )
-serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -n1 )
-
-# [ -n "$(grep 'eth0:' /proc/net/dev)" ] && wangka=eth0 || wangka=`cat /proc/net/dev |awk -F: 'function trim(str){sub(/^[ \t]*/,"",str); sub(/[ \t]*$/,"",str); return str } NR>2 {print trim($1)}'  |grep -Ev '^lo|^sit|^stf|^gif|^dummy|^vmnet|^vir|^gre|^ipip|^ppp|^bond|^tun|^tap|^ip6gre|^ip6tnl|^teql|^venet|^he-ipv6|^docker' |awk 'NR==1 {print $0}'`
-# wangka=` ifconfig -a | grep -B 1 $(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}') | head -n1 | awk '{print $1}' | sed "s/:$//"  `
-# wangka=`  ip route get 8.8.8.8 | awk '{print $5}'  `
-# serverlocalipv6=$( ip addr show dev $wangka | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | head -n1 )
-
-
-
-# ASN、ISP、地理位置信息检测
+# 已经不用了的代码
+function _ip_info_old () {
 echo -e "${bold}正在检查服务器的地理位置（可能不准） ...${normal}"
 result=$( wget -t1 -T10 -qO- http://freeapi.ipip.net/$serveripv4 )
 country=$( echo $result | awk -F '"' '{print $2}' )
@@ -73,8 +43,6 @@ isp=$( wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/json | grep \"
 echo -e "${bold}正在检查服务器的 ASN ...${normal}"
 asn=$(wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/asn/)
 
-
-
 # 非常蛋疼的设计，自欺欺人
 [[ $isp == "Ikoula Net SAS" ]] && isp="Ikoula"
 [[ $isp == "Online S.a.s." ]] && isp="Online.net"
@@ -86,6 +54,52 @@ asn=$(wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/asn/)
 [[ $asn == AS200052 ]] && isp="Feral Hosting"
 [[ $isp == "" ]] && isp="未检测到 ISP"
 
+# serveripv4=$( ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:" )
+# serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' )
+# serveripv6=$( wget --no-check-certificate -qO- -t1 -T8 ipv6.icanhazip.com )
+# [ -n "$(grep 'eth0:' /proc/net/dev)" ] && wangka=eth0 || wangka=`cat /proc/net/dev |awk -F: 'function trim(str){sub(/^[ \t]*/,"",str); sub(/[ \t]*$/,"",str); return str } NR>2 {print trim($1)}'  |grep -Ev '^lo|^sit|^stf|^gif|^dummy|^vmnet|^vir|^gre|^ipip|^ppp|^bond|^tun|^tap|^ip6gre|^ip6tnl|^teql|^venet|^he-ipv6|^docker' |awk 'NR==1 {print $0}'`
+# wangka=` ifconfig -a | grep -B 1 $(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}') | head -n1 | awk '{print $1}' | sed "s/:$//"  `
+# wangka=`  ip route get 8.8.8.8 | awk '{print $5}'  `
+# serverlocalipv6=$( ip addr show dev $wangka | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | head -n1 )
+}
+
+### 是否为 IP 地址 ###
+function isValidIpAddress() { echo $1 | grep -qE '^[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?$' ; }
+
+### 是否为内网 IP 地址 ###
+function isInternalIpAddress() { echo $1 | grep -qE '(192\.168\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(172\.((1[6-9])|(2\d)|(3[0-1]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(10\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))' ; }
+
+
+
+
+function _ip() {
+
+echo -e "${bold}正在检查服务器的 IPv4 信息 ...${normal}"
+serveripv4=$( ip route get 8.8.8.8 | awk '{print $3}' | head -1 )
+
+isInternalIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- v4.ipv6-test.com/api/myip.php )
+isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
+isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T7 -qO- ipecho.net/plain )
+isValidIpAddress    "$serveripv4" || { echo "${red}${shanshuo}WARNING ${jiacu}${underline}Failed to detect your public IPv4 address, use internal address instead${jiacu}" ; serveripv4=$( ip route get 8.8.8.8 | awk '{print $3}' | head -1 ) ; }
+
+echo -e "${bold}正在检查服务器的 IPv6 信息 ...${normal}"
+serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -n1 )
+
+echo -e "${bold}正在检查服务器的其他 IP 信息 ...${normal}"
+
+wget --no-check-certificate -qO- https://www.ipip.net/ip.html > ~/ipip_result 2>&1
+
+  ipip_IP=$( cat ~/ipip_result | grep -A3 当前IP     | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+" | head -1 )
+ ipip_ASN=$( cat ~/ipip_result | grep -C7 ASN数据    | grep -oE "AS[0-9]+" | head -1 )
+ipip_CIDR=$( cat ~/ipip_result | grep -C7 ASN数据    | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+/[0-9]+" | head -1 )
+ipip_rDNS=$( cat ~/ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: //" )
+ ipip_Loc=$( cat ~/ipip_result | grep -A3 地理位置   | grep -v 地理位置 | cut -d '>' -f2 | cut -d '<' -f1 )
+ ipip_Loc=$( echo $ipip_Loc    | sed "s/ //g" ) # 执行两次，转换格式
+ ipip_ISP=$( cat ~/ipip_result | grep -A3 运营商     | grep -v 运营商   | cut -d '>' -f2 | cut -d '<' -f1 )
+ ipip_ISP=$( echo $ipip_Loc    | sed "s/ //g" ) # 执行两次，转换格式
+
+rm -f ~/ipip_result
+
 serverfqdn=`  hostname -f  `
 
 showip=1
@@ -93,7 +107,12 @@ showip=1
 }
 
 
+
+
+
 # 操作系统、内核等参数检测 ---------------------------------------------------------------------------------------
+
+
 
 
 echo -e "${bold}正在检查操作系统与内核 ...${normal}"
@@ -104,8 +123,8 @@ echo -e "${bold}正在检查操作系统与内核 ...${normal}"
 
 get_opsy() {
 [ -f /etc/redhat-release ] && awk '{print ($1,$3~/^[0-9]/?$3:$4)}' /etc/redhat-release && return
-[ -f /etc/os-release ] && awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release && return
-[ -f /etc/lsb-release ] && awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release && return ; }
+[ -f /etc/os-release     ] && awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release && return
+[ -f /etc/lsb-release    ] && awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release && return ; }
 
 running_kernel=` uname -r `
 arch=$( uname -m )         # 架构，可以识别 ARM
@@ -477,7 +496,7 @@ print_io() {
 	fi
 echo ; }
 
-# Speedtest 以后再说
+# Speedtest 以后再加上
 
 print_speedtest() {
 	printf "%-18s%-18s%-20s%-12s\n" " Node Name" "Upload Speed" "Download Speed" "Latency"
@@ -572,11 +591,9 @@ echo -e  "  内存大小                             ${cyan}$tram MB ($uram MB �
 [[ ! $swap == 0 ]] &&
 echo -e  "  交换分区                             ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
 
-if [[ ! $Seedbox == Unknown ]] || [[ ! -z $disk_model ]] || [[ ! -z $power_time ]]; then
+if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then
 echo ; fi
-
 _show_disk_info
-
 echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小   ${SeedboxDiskTotalFlagTwo}                        ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 
 [[ ! $Seedbox == Unknown ]] &&
@@ -593,14 +610,22 @@ echo -e  "  系统负载                             ${cyan}$load${jiacu}"
 echo -e  "  虚拟化技术                           ${cyan}$virtual${jiacu}"
 echo
 
+
+
+
 [[ $showip == 1 ]] && {
-[[ ! $Seedbox == Unknown ]] &&
-echo -e  "  盒子域名                             ${green}$serverfqdn${jiacu}"
+[[ ! -z ipip_rDNS ]] &&
+echo -e  "  反向域名                             ${green}$ipip_rDNS${jiacu}"
 echo -e  "  IPv4 地址                            ${green}$serveripv4${jiacu}"
 [[ $serveripv6 ]] &&
 echo -e  "  IPv6 地址                            ${green}$serveripv6${jiacu}"
-echo -e  "  ASN／ISP                             ${green}$asn, $isp${jiacu}"
-echo -e  "  地理位置                             ${green}${citydisplay}$region, $country${jiacu}" ; }
+echo -e  "  运营商                               ${green}$ipip_ISP${jiacu}"
+echo -e  "  ASN 信息                             ${green}$ipip_ASN, $ipip_AS, ipip_CIDR${jiacu}"
+echo -e  "  地理位置                             ${green}$ipip_Loc${jiacu}"
+}
+
+
+
 
 echo
 echo -e  "  当前操作系统                         ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
