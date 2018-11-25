@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.6.2
+ScriptVersion=1.0.6.3
 SCRIPTUPDATE=2018.11.25
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -267,18 +267,16 @@ function _disk_raid_check () {
 rm -f ~/disk.info
 
 # 检查 RAID 类型
-if [[ -z $(lspci|grep "RAID bus controller") && -z $(fdisk -l 2>/dev/null|grep /dev/nvme) ]]; then
-    raidcard=NoRaid
-elif [[ `lspci|grep -i "RAID bus controller" |wc -l` -eq 1 ]]; then
-    if [[ -n `lspci|grep -i "RAID bus controller"|grep "MegaRAID"` ]]; then
-        raidcard=MegaRAID
-    elif [[ -n `lspci|grep -i "RAID bus controller"|grep "Hewlett-Packard"` ]]; then
-        raidcard=HP-RAID
-    elif [[ -n $(fdisk -l 2>/dev/null|grep /dev/nvme) ]]; then
-        raidcard=NVME
-    fi 
-elif [[ `lspci|grep -i "RAID bus controller" |wc -l` -ge 2 ]]; then
-    sleep 0
+if [[ -n `lspci|grep -i "RAID bus controller"|grep "MegaRAID"` ]]; then
+    raidcard=MegaRAID
+elif [[ -n `lspci|grep -i "RAID bus controller"|grep "Hewlett-Packard"` ]]; then
+    raidcard=HP-RAID
+elif [[ -n `lspci|grep -i "SCSI controller"` ]]; then
+    raidcard=SCSI
+elif [[ -n $(fdisk -l 2>/dev/null|grep /dev/nvme) ]]; then
+    raidcard=NVME
+else
+    raidcard=NoRaid # 其实还有很多种情况检测不到的，不管了
 fi
 
 case "$raidcard" in
@@ -296,6 +294,11 @@ case "$raidcard" in
     HP-RAID  ) for i in `seq 0 11` ; do
                    [[ $( smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
 			       echo "disk-$(expr $i + 1) text $(smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d cciss,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
+			   done
+               ;;
+    SCSI     ) for i in `seq 0 9` ; do
+                   [[ $( smartctl -a /dev/sg$i | grep Power_On_Hours ) ]] &&
+			       echo "disk-$(expr $i + 1) text $(smartctl -a /dev/sg$i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a /dev/sg$i | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
 			   done
                ;;
 esac ; }
@@ -326,47 +329,50 @@ function _show_disk_info () {
 
 disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 
+# 检查能不能得到通电时间，能得到的话脚本运行应该比较正常吧？
+if [[ $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -oE "[0-9]+") ]]; then
+
   if [[ $disk_num == 0 ]]; then
     sleep 0
 elif [[ $disk_num == 1 ]]; then
-    echo -e  "  硬盘型号                             ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-1 | awk '{print $4,$5,$6,$7}')${jiacu}"
-    echo -e  "  硬盘通电时间                         ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-1 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  硬盘型号                             ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  硬盘通电时间                         ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 个小时${jiacu}"
 elif [[ $disk_num -ge 2 ]]; then
-    echo -e  "  第一块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-1 | awk '{print $4,$5,$6,$7}')${jiacu}"
-    echo -e  "  第一块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-1 | awk '{print $3}') 个小时${jiacu}"
-    echo -e  "  第二块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-2 | awk '{print $4,$5,$6,$7}')${jiacu}"
-    echo -e  "  第二块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-2 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第一块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第一块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第二块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '2p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第二块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '2p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 3 ]] &&
-    echo -e  "  第三块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-3 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第三块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-3 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第三块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '3p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第三块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '3p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 4 ]] &&
-    echo -e  "  第四块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-4 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第四块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-4 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第四块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '4p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第四块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '4p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 5 ]] &&
-    echo -e  "  第五块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-5 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第五块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-5 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第五块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '5p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第五块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '5p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 6 ]] &&
-    echo -e  "  第六块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-6 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第六块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-6 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第六块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '6p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第六块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '6p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 7 ]] &&
-    echo -e  "  第七块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-7 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第七块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-7 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第七块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '7p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第七块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '7p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 8 ]] &&
-    echo -e  "  第八块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-8 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第八块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-8 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第八块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '8p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第八块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '9p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 9 ]] &&
-    echo -e  "  第九块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-9 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第九块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-9 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第九块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '9p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第九块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '9p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 10 ]] &&
-    echo -e  "  第十块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-10 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第十块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-10 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第十块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '10p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第十块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '10p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 11 ]] &&
-    echo -e  "  第十一块硬盘型号                     ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-11 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第十一块硬盘通电时间                 ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-11 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第十一块硬盘型号                     ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '11p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第十一块硬盘通电时间                 ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '11p' | awk '{print $3}') 个小时${jiacu}"
     [[ $disk_num -ge 12 ]] &&
-    echo -e  "  第十二块硬盘型号                     ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-12 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
-    echo -e  "  第十二块硬盘通电时间                 ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-12 | awk '{print $3}') 个小时${jiacu}"
-fi ; }
+    echo -e  "  第十二块硬盘型号                     ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '12p' | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第十二块硬盘通电时间                 ${cyan}$(cat ~/disk.info 2>/dev/null | sed -n '12p' | awk '{print $3}') 个小时${jiacu}"
+fi ; fi ; }
 
 
 
@@ -645,6 +651,7 @@ echo -e  "  当前系统内所有已安装的 kernel／headers／modules 列表\
 cat -n ~/system_kernel_list | sed 's/\t/ /g' | sed "s/ linux-/) ${green}linux-/g" | sed "s/     /  ${magenta}(0/g" | sed "s/    /  ${magenta}(/g"
 echo
 rm -f ~/system_kernel_list >/dev/null 2>&1 ; }
+rm -f ~/system_kernel_list >/dev/null 2>&1
 
 echo -e  "  ${jiacu}当前脚本版本：$ScriptVersion${normal}"
 echo ; }
