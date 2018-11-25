@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.6.6
+ScriptVersion=1.0.6.7
 SCRIPTUPDATE=2018.11.26
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -89,6 +89,8 @@ echo -e "${bold}正在检查服务器的其他 IP 信息 ... (可能要很久)${
 
 #ipip_result=/tmp/ipip_result ; touch $ipip_result 2> /dev/null || ipip_result=~/ipip_result
 #[[ ! -e $ipip_result ]] && 
+
+ipip_result=~/ipip_result
 wget --no-check-certificate -qO- https://www.ipip.net/ip.html > $ipip_result 2>&1
 
   ipip_IP=$( cat $ipip_result | grep -A3 当前IP     | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+" | head -1 )
