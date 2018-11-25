@@ -4,8 +4,8 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.4.3
-SCRIPTUPDATE=2018.09.08
+ScriptVersion=1.0.5
+SCRIPTUPDATE=2018.11.25
 
 # 颜色 --------------------------------------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ asn=$(wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/asn/)
 
 
 
-# 非常蛋疼的设计，有点自欺欺人
+# 非常蛋疼的设计，自欺欺人
 [[ $isp == "Ikoula Net SAS" ]] && isp="Ikoula"
 [[ $isp == "Online S.a.s." ]] && isp="Online.net"
 [[ $isp == "digitalocean.com" ]] && isp="Digital Ocean"
@@ -97,14 +97,6 @@ showip=1
 
 
 echo -e "${bold}正在检查操作系统与内核 ...${normal}"
-
-if [[ -f /etc/redhat-release ]]; then faxingban="centos"
-elif cat /etc/issue | grep -Eqi "debian"; then faxingban="debian"
-elif cat /etc/issue | grep -Eqi "ubuntu"; then faxingban="ubuntu"
-elif cat /etc/issue | grep -Eqi "centos|red hat|redhat"; then faxingban="centos"
-elif cat /proc/version | grep -Eqi "debian"; then faxingban="debian"
-elif cat /proc/version | grep -Eqi "ubuntu"; then faxingban="ubuntu"
-elif cat /proc/version | grep -Eqi "centos|red hat|redhat"; then faxingban="centos" ; fi
 
 [ -f /etc/redhat-release ] && KNA=$(awk '{print $1}' /etc/redhat-release)
 [ -f /etc/os-release     ] && KNA=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
@@ -131,7 +123,9 @@ DISTROL=`  echo $DISTRO | tr 'A-Z' 'a-z'  `
 rm -f ~/system_kernel_list
 dpkg -l | grep linux-image   | awk '{print $2}' >  ~/system_kernel_list
 dpkg -l | grep linux-headers | awk '{print $2}' >> ~/system_kernel_list
-dpkg -l | grep linux-modules | awk '{print $2}' >> ~/system_kernel_list ; }
+dpkg -l | grep linux-modules | awk '{print $2}' >> ~/system_kernel_list
+dpkg -l | grep ovhkernel     | awk '{print $2}' >> ~/system_kernel_list
+dpkg -l | grep pve-kernel    | awk '{print $2}' >> ~/system_kernel_list ; }
 
 
 
@@ -140,23 +134,17 @@ dpkg -l | grep linux-modules | awk '{print $2}' >> ~/system_kernel_list ; }
 
 echo -e "${bold}正在检查 TCP 信息 ...${normal}"
 
-# tcp_control=` awk '{print $1}' /proc/sys/net/ipv4/tcp_available_congestion_control `
-tcp_control=` cat /proc/sys/net/ipv4/tcp_congestion_control `
-tcp_control_all=` cat /proc/sys/net/ipv4/tcp_available_congestion_control `
-# tcp_control_all=` cat /proc/sys/net/ipv4/tcp_allowed_congestion_control `
+tcp_control=$( cat /proc/sys/net/ipv4/tcp_congestion_control )
+tcp_control_all=$( cat /proc/sys/net/ipv4/tcp_available_congestion_control )
 
 tcp_c_name=$tcp_control
-[[ $tcp_control == reno ]] && tcp_c_name="reno (系统自带算法)"
-[[ $tcp_control == cubic ]] && tcp_c_name="cubic (系统自带算法)"
-[[ $tcp_control == westwood ]] && tcp_c_name="westwood (Xanmod 默认算法)"
-[[ $tcp_control == bbr ]] && tcp_c_name="bbr (原版 BBR)"
-[[ $tcp_control == bbr_powered ]] && tcp_c_name="bbr_powered (用 Vicer 脚本安装的 Yankee 版 魔改 BBR)"
-[[ $tcp_control == tsunami ]] && tcp_c_name="tsunami (Yankee 版 魔改 BBR)"
-[[ $tcp_control == nanqinlang ]] && tcp_c_name="nanqinlang (南琴浪 版 魔改 BBR)"
+[[ $tcp_control == bbr_powered ]] && tcp_c_name="bbr_powered (用 Vicer 脚本安装的 Yankee 版魔改 BBR)"
+[[ $tcp_control == tsunami ]] && tcp_c_name="tsunami (Yankee 版魔改 BBR)"
+[[ $tcp_control == nanqinlang ]] && tcp_c_name="nanqinlang (南琴浪版魔改 BBR)"
 
 # 检查理论上内核是否支持锐速
 SSKernel="${red}否${jiacu}"
-URLKernel='https://raw.githubusercontent.com/0oVicero0/serverSpeeder_kernel/master/serverSpeeder.txt'
+URLKernel=$(https://raw.githubusercontent.com/0oVicero0/serverSpeeder_kernel/master/serverSpeeder.txt)
 AcceVer=$(wget --no-check-certificate -qO- "$URLKernel" |grep "$KNA/" |grep "/x$KernelBit/" |grep "/$running_kernel/" |awk -F'/' '{print $NF}' |sort -n -k 2 -t '_' |tail -n 1)
 MyKernel=$(wget --no-check-certificate -qO- "$URLKernel" |grep "$KNA/" |grep "/x$KernelBit/" |grep "/$running_kernel/" |grep "$AcceVer" |tail -n 1)
 [[ ! -z "$MyKernel" ]] && SSKernel="${green}是${jiacu}"
@@ -182,6 +170,7 @@ else bbrinuse="${red}否${jiacu}" ; fi
 
 
 # if [[ $EUID = 0 ]]; then
+# 10086 的意义就在于让这段代码无法运行，等于注释掉了
 if [[ $EUID = 10086 ]]; then
 echo -e "${bold}正在检查虚拟化技术 ...${normal}"
 virtualx=$(dmesg) 2>/dev/null
@@ -230,10 +219,10 @@ load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ 
 
 
 
-# 硬件信息 ----------------------------------------------------------------------------------------------
+# 硬盘信息 ----------------------------------------------------------------------------------------------
 
 
-echo -e "${bold}正在检查硬件信息 ...${normal}"
+echo -e "${bold}正在检查硬盘信息 ...${normal}"
 
 # 硬盘大小计算
 calc_disk() {
@@ -254,22 +243,120 @@ disk_size2=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot
 disk_total_size=$( calc_disk ${disk_size1[@]} )
 disk_used_size=$( calc_disk ${disk_size2[@]} )
 
+
+
+# Thanks to https://github.com/dave-pl/hwcheck
+function _disk_raid_check () {
+
+rm -f ~/disk.info
+
+# 检查 RAID 类型
+if [[ -z $(lspci|grep "RAID bus controller") && -z $(fdisk -l 2>/dev/null|grep /dev/nvme) ]]; then
+    raidcard=NoRaid
+elif [[ `lspci|grep -i "RAID bus controller" |wc -l` -eq 1 ]]; then
+    if [[ -n `lspci|grep -i "RAID bus controller"|grep "MegaRAID"` ]]; then
+        raidcard=MegaRAID
+    elif [[ -n `lspci|grep -i "RAID bus controller"|grep "Hewlett-Packard"` ]]; then
+        raidcard=HP-RAID
+    elif [[ -n $(fdisk -l 2>/dev/null|grep /dev/nvme) ]]; then
+        raidcard=NVME
+    fi 
+elif [[ `lspci|grep -i "RAID bus controller" |wc -l` -ge 2 ]]; then
+    sleep 0
+fi
+
+case "$raidcard" in
+    NoRaid   ) disk=$(fdisk -l 2>/dev/null| grep -i dev |egrep -v "(/dev/[brm])"| awk '/:/ {print $2}'| cut -f 1 -d ":") ; d=0
+               for i in $disk; do
+                   d=$(expr $d + 1)
+                   echo "disk-$d $i $(smartctl -a $i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a $i | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
+               done
+               ;;
+    MegaRAID ) for i in `seq 0 9` ; do
+			       [[ $( smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
+			       echo "disk-$i $(smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d megaraid,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
+			   done
+               ;;
+    HP-RAID  ) for i in `seq 0 11` ; do
+                   [[ $( smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
+			       echo "disk-$i $(smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d cciss,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
+			   done
+               ;;
+esac ; }
+
+
 # 硬盘通电时间，可能只有单个硬盘的独服才有效
+# 事实上 VPS 可能也有独立的硬盘，不过我懒得管他了。。。
 if [[ $EUID = 0 ]] && [[ ! "$(virt-what)" ]]; then
 
-    if  [ ! -e '/usr/sbin/smartctl' ]; then
+    if  [ ! -e /usr/sbin/smartctl ]; then
         echo -e "${bold}正在更新系统源 ...${normal}"
         apt-get update >/dev/null 2>&1
         echo -e "${bold}正在安装 smartmontools ...${normal}"
         DEBIAN_FRONTEND=noninteractive apt-get -y install smartmontools >/dev/null 2>&1
     fi
 
-    result=$(smartctl -a $(result=$(cat /proc/mounts) && echo $(echo "$result" | awk '/data=ordered/{print $1}') | awk '{print $1}') 2>&1) && power_time=$(echo "$result" | awk '/Power_On/{print $10}') # echo $power_time
-    disk_model=$(echo "$result" | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}') # echo $disk_model
+  # result=$(smartctl -a $(result=$(cat /proc/mounts) && echo $(echo "$result" | awk '/data=ordered/{print $1}') | awk '{print $1}') 2>&1) && power_time=$(echo "$result" | awk '/Power_On/{print $10}') # echo $power_time
+  # disk_model=$(echo "$result" | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}') # echo $disk_model
   # echo "$result" | grep "Device Model" | sed "s/Device Model[:]\?.* \([a-zA-Z]\)/\1/"
   # [[ ! -z $power_time ]] && showpowertime=1
 
+    _disk_raid_check
+
 fi
+
+
+function _show_disk_info () {
+
+disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
+
+  if [[ $disk_num == 0 ]]; then
+    sleep 0
+elif [[ $disk_num == 1 ]]; then
+    echo -e  "  硬盘型号                             ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-1 | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  硬盘通电时间                         ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-1 | awk '{print $3}') 个小时${jiacu}"
+elif [[ $disk_num -ge 2 ]]; then
+    echo -e  "  第一块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-1 | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第一块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-1 | awk '{print $3}') 个小时${jiacu}"
+    echo -e  "  第二块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-2 | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第二块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-2 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 3 ]] &&
+    echo -e  "  第三块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-3 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第三块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-3 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 4 ]] &&
+    echo -e  "  第四块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-4 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第四块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-4 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 5 ]] &&
+    echo -e  "  第五块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-5 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第五块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-5 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 6 ]] &&
+    echo -e  "  第六块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-6 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第六块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-6 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 7 ]] &&
+    echo -e  "  第七块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-7 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第七块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-7 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 8 ]] &&
+    echo -e  "  第八块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-8 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第八块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-8 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 9 ]] &&
+    echo -e  "  第九块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-9 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第九块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-9 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 10 ]] &&
+    echo -e  "  第十块硬盘型号                       ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-10 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第十块硬盘通电时间                   ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-10 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 11 ]] &&
+    echo -e  "  第十一块硬盘型号                     ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-11 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第十一块硬盘通电时间                 ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-11 | awk '{print $3}') 个小时${jiacu}"
+    [[ $disk_num -ge 12 ]] &&
+    echo -e  "  第十二块硬盘型号                     ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-12 | awk '{print $4,$5,$6,$7}')${jiacu}" &&
+    echo -e  "  第十二块硬盘通电时间                 ${cyan}$(cat ~/disk.info 2>/dev/null | grep disk-12 | awk '{print $3}') 个小时${jiacu}"
+fi ; }
+
+
+
+# 其他硬件信息 ----------------------------------------------------------------------------------------------
+
+echo -e "${bold}正在检查其他硬件信息 ...${normal}"
 
 # CPU
 cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
@@ -476,14 +563,13 @@ echo -e  "  交换分区                             ${cyan}$swap MB ($uswap MB 
 if [[ ! $Seedbox == Unknown ]] || [[ ! -z $disk_model ]] || [[ ! -z $power_time ]]; then
 echo ; fi
 
-[[ ! -z $disk_model ]] &&
-echo -e  "  硬盘型号                             ${cyan}$disk_model${jiacu}"
+_show_disk_info
+
 echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小   ${SeedboxDiskTotalFlagTwo}                        ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
+
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  当前硬盘大小                         ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
 echo -e  "  共享盒子邻居数量                     ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
-[[ ! -z $power_time ]] &&
-echo -e  "  硬盘通电时间                         ${cyan}$power_time 个小时${jiacu}"
 
 
 
@@ -507,7 +593,7 @@ echo -e  "  地理位置                             ${green}${citydisplay}$regi
 echo
 echo -e  "  当前操作系统                         ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 echo -e  "  当前正在使用的 TCP 拥塞控制算法      ${green}$tcp_c_name${jiacu}"
-echo -e  "  当前可以使用的 TCP 拥塞控制算法      ${green}$tcp_control_all${jiacu}"
+#echo -e  "  当前可以使用的 TCP 拥塞控制算法      ${green}$tcp_control_all${jiacu}"
 echo -e  "  当前正在使用的系统内核               ${green}$running_kernel${jiacu}"
 # echo -e  "  当前内核是否支持 原版 BBR            $BBRKernel"
 # echo -e  "  当前内核是否支持 Yankee 版魔改 BBR   $YKKernel"
