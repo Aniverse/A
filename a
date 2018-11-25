@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.6
+ScriptVersion=1.0.6.1
 SCRIPTUPDATE=2018.11.25
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -92,11 +92,10 @@ wget --no-check-certificate -qO- https://www.ipip.net/ip.html > ~/ipip_result 2>
   ipip_IP=$( cat ~/ipip_result | grep -A3 当前IP     | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+" | head -1 )
  ipip_ASN=$( cat ~/ipip_result | grep -C7 ASN数据    | grep -oE "AS[0-9]+" | head -1 )
 ipip_CIDR=$( cat ~/ipip_result | grep -C7 ASN数据    | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+/[0-9]+" | head -1 )
+  ipip_AS=$( cat ~/ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
 ipip_rDNS=$( cat ~/ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: //" )
- ipip_Loc=$( cat ~/ipip_result | grep -A3 地理位置   | grep -v 地理位置 | cut -d '>' -f2 | cut -d '<' -f1 )
- ipip_Loc=$( echo $ipip_Loc    | sed "s/ //g" ) # 执行两次，转换格式
- ipip_ISP=$( cat ~/ipip_result | grep -A3 运营商     | grep -v 运营商   | cut -d '>' -f2 | cut -d '<' -f1 )
- ipip_ISP=$( echo $ipip_Loc    | sed "s/ //g" ) # 执行两次，转换格式
+ ipip_Loc=$( cat ~/ipip_result | grep -A3 地理位置   | grep -v 地理位置 | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
+ ipip_ISP=$( cat ~/ipip_result | grep -A3 运营商     | grep -v 运营商   | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
 
 rm -f ~/ipip_result
 
@@ -293,12 +292,12 @@ case "$raidcard" in
                ;;
     MegaRAID ) for i in `seq 0 9` ; do
 			       [[ $( smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
-			       echo "disk-$(expr $i + 1) $(smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d megaraid,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
+			       echo "disk-$(expr $i + 1) text $(smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d megaraid,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
 			   done
                ;;
     HP-RAID  ) for i in `seq 0 11` ; do
                    [[ $( smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
-			       echo "disk-$(expr $i + 1) $(smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d cciss,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
+			       echo "disk-$(expr $i + 1) text $(smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d cciss,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
 			   done
                ;;
 esac ; }
@@ -614,13 +613,15 @@ echo
 
 
 [[ $showip == 1 ]] && {
-[[ ! -z ipip_rDNS ]] &&
-echo -e  "  反向域名                             ${green}$ipip_rDNS${jiacu}"
 echo -e  "  IPv4 地址                            ${green}$serveripv4${jiacu}"
+[[ ! $Seedbox == Unknown ]] &&
+echo -e  "  盒子域名                             ${green}$ipip_rDNS${jiacu}"
+[[ ! -z $ipip_rDNS ]] &&
+echo -e  "  反向域名                             ${green}$ipip_rDNS${jiacu}"
 [[ $serveripv6 ]] &&
 echo -e  "  IPv6 地址                            ${green}$serveripv6${jiacu}"
 echo -e  "  运营商                               ${green}$ipip_ISP${jiacu}"
-echo -e  "  ASN 信息                             ${green}$ipip_ASN, $ipip_AS, ipip_CIDR${jiacu}"
+echo -e  "  ASN 信息                             ${green}$ipip_ASN, $ipip_AS${jiacu}"
 echo -e  "  地理位置                             ${green}$ipip_Loc${jiacu}"
 }
 
