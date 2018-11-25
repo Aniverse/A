@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.6.3
+ScriptVersion=1.0.6.4
 SCRIPTUPDATE=2018.11.25
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -87,7 +87,9 @@ serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-
 
 echo -e "${bold}正在检查服务器的其他 IP 信息 ... (可能要很久)${normal}"
 
-[[ ! -f ~/ipip_result ]] && wget --no-check-certificate -qO- https://www.ipip.net/ip.html > ~/ipip_result 2>&1
+ipip_result=/tmp/ipip_result ; touch $ipip_result 2> /dev/null || ipip_result=~/ipip_result
+
+[[ ! -f $ipip_result ]] && wget --no-check-certificate -qO- https://www.ipip.net/ip.html > $ipip_result 2>&1
 
   ipip_IP=$( cat ~/ipip_result | grep -A3 当前IP     | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+" | head -1 )
  ipip_ASN=$( cat ~/ipip_result | grep -C7 ASN数据    | grep -oE "AS[0-9]+" | head -1 )
@@ -96,6 +98,8 @@ ipip_CIDR=$( cat ~/ipip_result | grep -C7 ASN数据    | grep -oE "[0-9]+.[0-9]+
 ipip_rDNS=$( cat ~/ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: //" )
  ipip_Loc=$( cat ~/ipip_result | grep -A3 地理位置   | grep -v 地理位置 | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
  ipip_ISP=$( cat ~/ipip_result | grep -A3 运营商     | grep -v 运营商   | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
+
+[[ $ipip_result == ~/ipip_result ]] && rm -f $ipip_result
 
 serverfqdn=`  hostname -f  `
 
