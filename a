@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.5
+ScriptVersion=1.0.5.1
 SCRIPTUPDATE=2018.11.25
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -144,7 +144,7 @@ tcp_c_name=$tcp_control
 
 # 检查理论上内核是否支持锐速
 SSKernel="${red}否${jiacu}"
-URLKernel=$(https://raw.githubusercontent.com/0oVicero0/serverSpeeder_kernel/master/serverSpeeder.txt)
+URLKernel=https://raw.githubusercontent.com/0oVicero0/serverSpeeder_kernel/master/serverSpeeder.txt
 AcceVer=$(wget --no-check-certificate -qO- "$URLKernel" |grep "$KNA/" |grep "/x$KernelBit/" |grep "/$running_kernel/" |awk -F'/' '{print $NF}' |sort -n -k 2 -t '_' |tail -n 1)
 MyKernel=$(wget --no-check-certificate -qO- "$URLKernel" |grep "$KNA/" |grep "/x$KernelBit/" |grep "/$running_kernel/" |grep "$AcceVer" |tail -n 1)
 [[ ! -z "$MyKernel" ]] && SSKernel="${green}是${jiacu}"
@@ -245,7 +245,7 @@ disk_used_size=$( calc_disk ${disk_size2[@]} )
 
 
 
-# Thanks to https://github.com/dave-pl/hwcheck
+# Origin code from https://github.com/dave-pl/hwcheck
 function _disk_raid_check () {
 
 rm -f ~/disk.info
@@ -274,12 +274,12 @@ case "$raidcard" in
                ;;
     MegaRAID ) for i in `seq 0 9` ; do
 			       [[ $( smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
-			       echo "disk-$i $(smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d megaraid,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
+			       echo "disk-$(expr $i + 1) $(smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d megaraid,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
 			   done
                ;;
     HP-RAID  ) for i in `seq 0 11` ; do
                    [[ $( smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
-			       echo "disk-$i $(smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d cciss,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
+			       echo "disk-$(expr $i + 1) $(smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d cciss,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
 			   done
                ;;
 esac ; }
@@ -442,6 +442,8 @@ print_io() {
 	fi
 
 	if [[ $writemb != "1" ]]; then
+        # 因为有些情况下第一次测试 IO 速度异常的高，所以多跑一次但是不计入统计
+        io0=$( io_test $writemb )
 		echo -n "  I/O 速度 ( $writemb_size )   "
 		io1=$( io_test $writemb )
 		echo -e "${yellow}$io1${normal}"
@@ -451,14 +453,24 @@ print_io() {
 		echo -n "  I/O 速度 ( $writemb_size )   "
 		io3=$( io_test $writemb )
 		echo -e "${yellow}$io3${normal}"
+		echo -n "  I/O 速度 ( $writemb_size )   "
+		io4=$( io_test $writemb )
+		echo -e "${yellow}$io3${normal}"
+        echo -n "  I/O 速度 ( $writemb_size )   "
+		io5=$( io_test $writemb )
+		echo -e "${yellow}$io3${normal}"
 		ioraw1=$( echo $io1 | awk 'NR==1 {print $1}' )
 		[ "`echo $io1 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw1=$( awk 'BEGIN{print '$ioraw1' * 1024}' )
 		ioraw2=$( echo $io2 | awk 'NR==1 {print $1}' )
 		[ "`echo $io2 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw2=$( awk 'BEGIN{print '$ioraw2' * 1024}' )
 		ioraw3=$( echo $io3 | awk 'NR==1 {print $1}' )
 		[ "`echo $io3 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw3=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
-		ioall=$( awk 'BEGIN{print '$ioraw1' + '$ioraw2' + '$ioraw3'}' )
-		ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 3}' )
+		ioraw4=$( echo $io4 | awk 'NR==1 {print $1}' )
+		[ "`echo $io4 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw4=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
+		ioraw5=$( echo $io5 | awk 'NR==1 {print $1}' )
+		[ "`echo $io5 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw5=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
+		ioall=$( awk 'BEGIN{print '$ioraw1' + '$ioraw2' + '$ioraw3' + '$ioraw4' + '$ioraw5'}' )
+		ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 5}' )
 		echo -e "  I/O 速度 (  平均  )   ${yellow}$ioavg MB/s${normal}"
 	else
 		echo -e " ${red}Not enough space!${normal}"
