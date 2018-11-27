@@ -3,9 +3,29 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
+# wget -q https://github.com/Aniverse/A/raw/i/a && bash a -n
 
-ScriptVersion=1.0.7.2
+ScriptVersion=1.0.7.3.测试中
 SCRIPTUPDATE=2018.11.27
+
+DeBUG=0
+show_ip=1
+show_ipip=1
+
+# 运行参数 --------------------------------------------------------------------------------------------------------
+
+OPTS=$(getopt -n "$0" -o dab --long "debug,no-ip,no-ipip" -- "$@")
+eval set -- "$OPTS"
+
+while true; do
+  case "$1" in
+    -d | --debug       ) DeBUG=1      ; shift ;;
+    -a | --no-ip       ) show_ip=0     ; shift ;;
+    -b | --no-ipip     ) show_ipip=0   ; shift ;;
+    -- ) shift; break ;;
+     * ) break ;;
+  esac
+done
 
 # 颜色 --------------------------------------------------------------------------------------------------------
 
@@ -85,6 +105,11 @@ isValidIpAddress    "$serveripv4" || { echo "${red}${shanshuo}WARNING ${jiacu}${
 echo -e "${bold}正在检查服务器的 IPv6 信息 ...${normal}"
 serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -n1 )
 
+}
+
+
+
+function _ipip() {
 echo -e "${bold}正在检查服务器的其他 IP 信息 ... (可能要很久)${normal}"
 
 #ipip_result=/tmp/ipip_result ; touch $ipip_result 2> /dev/null || ipip_result=~/ipip_result
@@ -103,8 +128,6 @@ ipip_rDNS=$( cat $ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: /
 
 #[[ $ipip_result == ~/ipip_result ]] && 
 rm -f $ipip_result
-
-showip=1
 
 }
 
@@ -230,13 +253,45 @@ fi
 
 
 
-# 其他系统信息 ----------------------------------------------------------------------------------------------
 
 
 
-uptime1=$( awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d days %d hour %d min\n",a,b,c)}' /proc/uptime )
-uptime2=`uptime | grep -ohe 'up .*' | sed 's/,/\ hours/g' | awk '{ printf $2" "$3 }'`
-load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//' )
+
+# 共享盒子 邻居信息 ------------------------------------------------------------------------------------------
+
+serverfqdn=$( hostname -f )
+Seedbox=Unknown
+hostname -f | grep -q feral          && Seedbox=FH
+hostname -f | grep -q seedhost       && Seedbox=SH
+hostname -f | grep -q pulsedmedia    && Seedbox=PM
+hostname -f | grep -q ultraseedbox   && Seedbox=USB
+Seedbox=FH && df -hPl | grep -q "/media/md" && FH_SSD=1
+
+[[ ! $Seedbox == Unknown ]] && {
+
+echo -e "${bold}正在检查同盒子的邻居情况 ...${normal}"
+
+[[ $Seedbox == USB ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11 这样子的
+[[ $Seedbox == PM  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home   这样子的
+[[ $Seedbox == SH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home22 这样子的
+[[ $Seedbox == FH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /media/sdk1 这样子的
+
+getent passwd | grep -Ev "$(whoami)|root" | grep -E "/bin/sh|/bin/bash" | grep -E "home|home[0-9]+|media" > ~/neighbors_all
+
+neighbors_all_num=$(cat ~/neighbors_all | wc -l)
+neighbors_same_disk_num=$(cat ~/neighbors_all | grep "${current_disk}/" | wc -l)
+
+current_disk_size=($( LANG=C df -hPl | grep $current_disk | awk '{print $2}' ))
+current_disk_total_used=($( LANG=C df -hPl | grep $current_disk | awk '{print $3}' ))
+current_disk_self_used=$( du -sh ~ | awk -F " " '{print $1}' )
+#current_disk_avai=($( LANG=C df -hPl | grep $current_disk | awk '{print $4}' ))
+#current_disk_perc=($( LANG=C df -hPl | grep $current_disk | awk '{print $5}' ))
+
+}
+
+
+
+
 
 
 
@@ -265,6 +320,17 @@ disk_size1=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot
 disk_size2=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker' | awk '{print $3}' ))
 disk_total_size=$( calc_disk ${disk_size1[@]} )
 disk_used_size=$( calc_disk ${disk_size2[@]} )
+
+
+
+
+
+
+
+
+
+
+
 
 # 检查 RAID 类型
 # Origin code from https://github.com/dave-pl/hwcheck
@@ -439,6 +505,15 @@ fi ; }
 
 
 
+
+
+
+
+
+
+
+
+
 # 其他硬件信息 ----------------------------------------------------------------------------------------------
 
 echo -e "${bold}正在检查其他硬件信息 ...${normal}"
@@ -466,41 +541,20 @@ users=`users | wc -w`
 date=$( date +%Y-%m-%d" "%H:%M:%S )
 processes=`ps aux | wc -l`
 
+uptime1=$( awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d days %d hour %d min\n",a,b,c)}' /proc/uptime )
+uptime2=`uptime | grep -ohe 'up .*' | sed 's/,/\ hours/g' | awk '{ printf $2" "$3 }'`
+load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//' )
 
 
-# 共享盒子 邻居信息 ------------------------------------------------------------------------------------------
 
-serverfqdn=$( hostname -f )
-Seedbox=Unknown
-hostname -f | grep -q feral          && Seedbox=FH
-hostname -f | grep -q seedhost       && Seedbox=SH
-hostname -f | grep -q pulsedmedia    && Seedbox=PM
-hostname -f | grep -q ultraseedbox   && Seedbox=USB
-
-[[ ! $Seedbox == Unknown ]] && {
-echo -e "${bold}正在检查同盒子的邻居情况 ...${normal}"
-
-[[ $Seedbox == USB ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11 这样子的
-[[ $Seedbox == PM  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home   这样子的
-[[ $Seedbox == SH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home22 这样子的
-[[ $Seedbox == FH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /media/sdk1 这样子的
-
-getent passwd | grep -Ev "$(whoami)|root" | grep -E "/bin/sh|/bin/bash" | grep -E "home|home[0-9]+|media" > ~/neighbors_all
-
-neighbors_all_num=$(cat ~/neighbors_all | wc -l)
-neighbors_same_disk_num=$(cat ~/neighbors_all | grep "${current_disk}/" | wc -l)
-
-current_disk_size=($( LANG=C df -hPl | grep $current_disk | awk '{print $2}' ))
-current_disk_total_used=($( LANG=C df -hPl | grep $current_disk | awk '{print $3}' ))
-current_disk_self_used=$( du -sh ~ | awk -F " " '{print $1}' )
-#current_disk_avai=($( LANG=C df -hPl | grep $current_disk | awk '{print $4}' ))
-#current_disk_perc=($( LANG=C df -hPl | grep $current_disk | awk '{print $5}' ))
-
-}
 
 
 
 # 测试 ----------------------------------------------------------------------------------------------
+
+
+
+
 
 
 
@@ -538,6 +592,7 @@ print_io() {
 
 	if [[ $writemb != "1" ]]; then
         # 因为有些情况下第一次测试 IO 速度异常的高，所以多跑一次但是不计入统计
+        echo -n "  I/O 速度 ( $writemb_size )   "
         io0=$( io_test $writemb )
 		echo -n "  I/O 速度 ( $writemb_size )   "
 		io1=$( io_test $writemb )
@@ -684,28 +739,34 @@ echo -e  "  运行时间              ${cyan}$uptime1${jiacu}"
 echo -e  "  系统负载              ${cyan}$load${jiacu}"
 [[ $virtual ]] &&
 echo -e  "  虚拟化技术            ${cyan}$virtual${jiacu}"
-echo
 
 
 
+[[ $show_ip == 1 || $show_ipip == 1 ]] && echo
 
-[[ $showip == 1 ]] && {
+
+
+[[ $show_ip == 1 ]] && {
 echo -e  "  IPv4 地址             ${green}$serveripv4${jiacu}"
 [[ $serveripv6 ]] &&
 echo -e  "  IPv6 地址             ${green}$serveripv6${jiacu}"
 [[ ! $Seedbox == Unknown ]] &&
-echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}"
-[[ ! -z $ipip_rDNS ]] &&
+echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}" ; }
+
+
+
+[[ $show_ipip == 1 ]] && [[ ! -z $ipip_rDNS ]] && {
 echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
 echo -e  "  运营商                ${green}$ipip_ISP${jiacu}"
 echo -e  "  ASN 信息              ${green}$ipip_ASN, $ipip_AS${jiacu}"
-echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}"
-}
+echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}" ; }
 
 
 
+[[ $show_ip == 1 || $show_ipip == 1 ]] && echo
 
-echo
+
+
 echo -e  "  操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 echo -e  "  系统内核              ${green}$running_kernel${jiacu}"
 echo -e  "  TCP 拥塞控制算法      ${green}$tcp_c_name${jiacu}"
@@ -734,8 +795,8 @@ echo ; }
 
 # 结构 ----------------------------------------------------------------------------------------------
 
-
-_ip
+[[ $show_ip == 1 ]] && _ip
+[[ $show_ipip == 1 ]] && _ipip
 _menu
 print_io
 
