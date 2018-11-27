@@ -3,9 +3,9 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
-# wget -q https://github.com/Aniverse/A/raw/i/a && bash a -ab
+# wget -q https://github.com/Aniverse/A/raw/i/a && bash a -a
 
-ScriptVersion=1.0.7.4.测试中
+ScriptVersion=1.0.7.5.测试中
 SCRIPTUPDATE=2018.11.27
 
 DeBUG=0
@@ -261,11 +261,13 @@ fi
 
 serverfqdn=$( hostname -f )
 Seedbox=Unknown
-hostname -f | grep -q feral          && Seedbox=FH
-hostname -f | grep -q seedhost       && Seedbox=SH
-hostname -f | grep -q pulsedmedia    && Seedbox=PM
-hostname -f | grep -q ultraseedbox   && Seedbox=USB
+echo $serverfqdn | grep -q feral          && Seedbox=FH
+echo $serverfqdn | grep -q seedhost       && Seedbox=SH
+echo $serverfqdn | grep -q pulsedmedia    && Seedbox=PM
+echo $serverfqdn | grep -q ultraseedbox   && Seedbox=USB
 Seedbox=FH && df -hPl | grep -q "/media/md" && FH_SSD=1
+
+[[ $DeBUG == 1 ]] && echo -e "Seedbox=$Seedbox  FH_SSD=$FH_SSD"
 
 [[ ! $Seedbox == Unknown ]] && {
 
@@ -597,10 +599,10 @@ print_io() {
 		echo -e "${yellow}$io3${normal}"
 		echo -n "  I/O 速度 ( $writemb_size )   "
 		io4=$( io_test $writemb )
-		echo -e "${yellow}$io3${normal}"
+		echo -e "${yellow}$io4${normal}"
         echo -n "  I/O 速度 ( $writemb_size )   "
 		io5=$( io_test $writemb )
-		echo -e "${yellow}$io3${normal}"
+		echo -e "${yellow}$io5${normal}"
 		ioraw1=$( echo $io1 | awk 'NR==1 {print $1}' )
 		[ "`echo $io1 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw1=$( awk 'BEGIN{print '$ioraw1' * 1024}' )
 		ioraw2=$( echo $io2 | awk 'NR==1 {print $1}' )
