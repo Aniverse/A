@@ -3,9 +3,9 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
-# wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -ac
+# wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 
-ScriptVersion=1.0.7.9.测试中
+ScriptVersion=1.0.7.10
 SCRIPTUPDATE=2018.11.27
 
 debug=0
@@ -64,17 +64,6 @@ echo -e "${bold}正在检查服务器的 ISP ...${normal}"
 isp=$( wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/json | grep \"org\" | awk -F '"' '{print $4}' )
 echo -e "${bold}正在检查服务器的 ASN ...${normal}"
 asn=$(wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/asn/)
-
-# 非常蛋疼的设计，自欺欺人
-[[ $isp == "Ikoula Net SAS" ]] && isp="Ikoula"
-[[ $isp == "Online S.a.s." ]] && isp="Online.net"
-[[ $isp == "digitalocean.com" ]] && isp="Digital Ocean"
-[[ $isp == "hetzner.de" ]] && isp="Hetzner"
-[[ $isp == "leaseweb.com" ]] && isp="LeaseWeb"
-[[ `hostname -A | grep vultr` ]] && isp="Vultr, Choopa"
-[[ `hostname -A | grep seedhost` ]] && isp="SeedHost, LeaseWeb"
-[[ $asn == AS200052 ]] && isp="Feral Hosting"
-[[ $isp == "" ]] && isp="未检测到 ISP"
 
 # serveripv4=$( ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:" )
 # serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' )
@@ -426,6 +415,8 @@ cat ~/disk.info 2>/dev/null | sed -e 's/\(.*\)_/\1:/' | sed "s/:.*//" | sort -u 
 disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 disk_model_num=$( cat ~/disk.info.2 2>/dev/null | wc -l )
 
+[[ $debug == 1 ]] && echo -e "\n" && cat ~/disk.info.2 && echo -e "\n"
+
 disk_model_1_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '1p')  2>/dev/null | wc -l )
 disk_model_2_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '2p')  2>/dev/null | wc -l )
 disk_model_3_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '3p')  2>/dev/null | wc -l )
@@ -436,6 +427,8 @@ disk_model_7_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/de
 disk_model_8_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '8p')  2>/dev/null | wc -l )
 disk_model_9_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '9p')  2>/dev/null | wc -l )
 disk_model_0_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '10p') 2>/dev/null | wc -l )
+
+[[ $debug == 1 ]] && echo -e "disk_model_1_num=$disk_model_1_num"
 
 }
 
@@ -474,7 +467,7 @@ disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 # 检查能不能得到通电时间，能得到的话脚本运行应该比较正常吧？
 if [[ $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -oE "[0-9]+") ]]; then
 
-    [[ $$RC_Model ]] &&
+    [[ ! -z $RC_Model ]] &&
     echo -e  "  磁盘阵列卡            ${cyan}$RC_Model${jiacu}"
 
 if [[ $disk_num == 1 ]]; then
@@ -506,7 +499,7 @@ elif [[ $disk_num -ge 2 ]]; then
     echo -e  "  暂时不支持 12 块以上硬盘……${jiacu}"
 fi
 
-else
+                else
 
 if [[ $disk_model_num == 1 ]]; then
     echo -e  "  硬盘型号              ${cyan}$(cat ~/disk.info.2 2>/dev/null | sed -n '1p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_1_num${jiacu}"
@@ -538,9 +531,8 @@ elif [[ $disk_model_num -ge 2 ]]; then
 fi
 
 echo
-
-fi ; }
-
+                fi ; }
+#
 
 
 
@@ -754,7 +746,7 @@ echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}
 
 if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then
 echo ; fi
-_show_disk_info
+[[ ! $Seedbox == FH ]] && _show_disk_info
 echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagTwo}     ${cyan}共 $disk_par_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 
 [[ ! $Seedbox == Unknown ]] &&
