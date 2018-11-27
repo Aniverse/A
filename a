@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.7.1
+ScriptVersion=1.0.7.2
 SCRIPTUPDATE=2018.11.27
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -257,14 +257,14 @@ for size in ${array[@]} ; do
 total_size=$( awk 'BEGIN{printf "%.1f", '$total_size' + '$size'}' )
 done ; echo ${total_size} ; }
 
-disk_num=`  df -lh | grep -P "/home[0-9]+|media|/$" | wc -l  `
+disk_par_num=$(df -lh | grep -P "/home[0-9]+|media|home|mnt" | wc -l)
+[[ $(df -lh | grep $(df -k | sort -rn -k4 | awk '{print $1}' | head -1) | awk '{print $NF}') == / ]] && disk_par_num=$(expr $disk_par_num + 1)
+
 # 计算总共空间的时候，排除掉 FH SSD 每个用户限额的空间；计算已用空间的时候不排除（因为原先的单个 md 已用空间只有 128k/256k）
 disk_size1=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker|md[0-9]+/[a-z]*' | awk '{print $2}' ))
 disk_size2=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker' | awk '{print $3}' ))
 disk_total_size=$( calc_disk ${disk_size1[@]} )
 disk_used_size=$( calc_disk ${disk_size2[@]} )
-
-
 
 # 检查 RAID 类型
 # Origin code from https://github.com/dave-pl/hwcheck
@@ -479,17 +479,23 @@ hostname -f | grep -q ultraseedbox   && Seedbox=USB
 
 [[ ! $Seedbox == Unknown ]] && {
 echo -e "${bold}正在检查同盒子的邻居情况 ...${normal}"
-current_disk=`  echo $(pwd) | sed "s/\/$(whoami)//"  `
 
-neighbors_same_disk_num=`  getent passwd | grep -v $(whoami) | grep $current_disk/ | wc -l  `
-neighbors_same_disk_name=`  getent passwd | grep -v $(whoami) | grep $current_disk/ | awk -F ":" '{print $1}'  `
-neighbors_all_num=`  getent passwd | grep -v $(whoami) | grep -E "home[0-9]+|media" | wc -l  `
+[[ $Seedbox == USB ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11 这样子的
+[[ $Seedbox == PM  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home   这样子的
+[[ $Seedbox == SH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home22 这样子的
+[[ $Seedbox == FH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /media/sdk1 这样子的
+
+getent passwd | grep -Ev "$(whoami)|root" | grep -E "/bin/sh|/bin/bash" | grep -E "home|home[0-9]+|media" > ~/neighbors_all
+
+neighbors_all_num=$(cat ~/neighbors_all | wc -l)
+neighbors_same_disk_num=$(cat ~/neighbors_all | grep "${current_disk}/" | wc -l)
 
 current_disk_size=($( LANG=C df -hPl | grep $current_disk | awk '{print $2}' ))
 current_disk_total_used=($( LANG=C df -hPl | grep $current_disk | awk '{print $3}' ))
+current_disk_self_used=$( du -sh ~ | awk -F " " '{print $1}' )
 #current_disk_avai=($( LANG=C df -hPl | grep $current_disk | awk '{print $4}' ))
 #current_disk_perc=($( LANG=C df -hPl | grep $current_disk | awk '{print $5}' ))
-current_disk_self_used=` du -sh ~ | awk -F " " '{print $1}' `
+
 }
 
 
@@ -664,7 +670,7 @@ echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}
 if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then
 echo ; fi
 _show_disk_info
-echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagTwo}     ${cyan}共 $disk_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
+echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagTwo}     ${cyan}共 $disk_par_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  当前硬盘大小          ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
