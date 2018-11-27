@@ -3,7 +3,7 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
-# wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -bc
+# wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -ac
 
 ScriptVersion=1.0.7.8.测试中
 SCRIPTUPDATE=2018.11.27
@@ -322,7 +322,9 @@ for size in ${array[@]} ; do
 total_size=$( awk 'BEGIN{printf "%.1f", '$total_size' + '$size'}' )
 done ; echo ${total_size} ; }
 
+# 其实这个判定对于独服不太对
 disk_par_num=$(df -lh | grep -P "/home[0-9]+|media|home|mnt" | wc -l)
+# / 为最大分区时，数字 +1
 [[ $(df -lh | grep $(df -k | sort -rn -k4 | awk '{print $1}' | head -1) | awk '{print $NF}') == / ]] && disk_par_num=$(expr $disk_par_num + 1)
 
 # 计算总共空间的时候，排除掉 FH SSD 每个用户限额的空间；计算已用空间的时候不排除（因为原先的单个 md 已用空间只有 128k/256k）
@@ -346,16 +348,19 @@ disk_used_size=$( calc_disk ${disk_size2[@]} )
 # Origin code from https://github.com/dave-pl/hwcheck
 function _disk_raid_check () {
 
-[[ $debug == 1 ]] && lspci | grep -E "RAID bus controller|SCSI controller"
+[[ $debug == 1 ]] && lspci | grep -E "RAID|SCSI|SATA"
 
 rm -f ~/disk.info
 
 if [[ -n `lspci|grep -i "RAID bus controller"|grep "MegaRAID"` ]]; then
     raidcard=MegaRAID
+    RC_Model="$(lspci|grep -i "RAID bus controller"|grep "MegaRAID" | awk -F ":" '{print $3}' | sed "s/^ //")"
 elif [[ -n `lspci|grep -i "RAID bus controller"|grep "Hewlett-Packard"` ]]; then
     raidcard=HP-RAID
+    RC_Model="$(lspci|grep -i "RAID bus controller"|grep "Hewlett-Packard" | awk -F ":" '{print $3}' | sed "s/^ //")"
 elif [[ -n `lspci|grep -i "SCSI controller"` ]]; then
     raidcard=SCSI
+    RC_Model="$(lspci|grep -i "SCSI controller" | awk -F ":" '{print $3}' | sed "s/^ //")"
 elif [[ -n $(fdisk -l 2>/dev/null|grep /dev/nvme) ]]; then
     raidcard=NVME
 else
@@ -384,7 +389,9 @@ case "$raidcard" in
 			       echo "disk-$(expr $i + 1) text $(smartctl -a /dev/sg$i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a /dev/sg$i | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> ~/disk.info
 			   done
                ;;
-esac ; }
+esac
+
+[[ $debug == 1 ]] && echo -e "raidcard=$raidcard" ; }
 
 
 
@@ -452,6 +459,9 @@ disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 
 # 检查能不能得到通电时间，能得到的话脚本运行应该比较正常吧？
 if [[ $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -oE "[0-9]+") ]]; then
+
+    [[ $$RC_Model ]] &&
+    echo -e  "  磁盘阵列卡            ${cyan}$RC_Model${jiacu}"
 
 if [[ $disk_num == 1 ]]; then
     echo -e  "  硬盘信息              ${cyan}通电 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
