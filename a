@@ -3,9 +3,9 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
-# wget -q https://github.com/Aniverse/A/raw/i/a && bash a -n
+# wget -q https://github.com/Aniverse/A/raw/i/a && bash a -ab
 
-ScriptVersion=1.0.7.3.测试中
+ScriptVersion=1.0.7.4.测试中
 SCRIPTUPDATE=2018.11.27
 
 DeBUG=0
@@ -579,25 +579,17 @@ freedisk() {
 
 # 显示 IO 测试结果
 print_io() {
-	if [[ $1 == "fast" ]]; then
-		writemb=$((128*2))
-	else
-		writemb=$(freedisk)
-	fi
-	
+
+	writemb=$(freedisk)
 	writemb_size="$(( writemb / 2 ))MB"
-	if [[ $writemb_size == "1024MB" ]]; then
-		writemb_size="1.0 GB"
-	fi
+	[[ $writemb_size == "1024MB" ]] && writemb_size="1.0 GB"
 
 	if [[ $writemb != "1" ]]; then
-        # 因为有些情况下第一次测试 IO 速度异常的高，所以多跑一次但是不计入统计
-        echo -n "  I/O 速度 ( $writemb_size )   "
-        io0=$( io_test $writemb )
-		echo -n "  I/O 速度 ( $writemb_size )   "
+        # 因为有些情况下前两次测试 IO 速度异常的高，所以多跑两次次但是不计入统计
+		echo -n "  I/O 速度 ( 不统计 )   "
 		io1=$( io_test $writemb )
 		echo -e "${yellow}$io1${normal}"
-		echo -n "  I/O 速度 ( $writemb_size )   "
+		echo -n "  I/O 速度 ( 不统计 )   "
 		io2=$( io_test $writemb )
 		echo -e "${yellow}$io2${normal}"
 		echo -n "  I/O 速度 ( $writemb_size )   "
@@ -619,11 +611,11 @@ print_io() {
 		[ "`echo $io4 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw4=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
 		ioraw5=$( echo $io5 | awk 'NR==1 {print $1}' )
 		[ "`echo $io5 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw5=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
-		ioall=$( awk 'BEGIN{print '$ioraw1' + '$ioraw2' + '$ioraw3' + '$ioraw4' + '$ioraw5'}' )
-		ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 5}' )
+		ioall=$( awk 'BEGIN{print '$ioraw3' + '$ioraw4' + '$ioraw5'}' )
+		ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 3}' )
 		echo -e "  I/O 速度 (  平均  )   ${yellow}$ioavg MB/s${normal}"
 	else
-		echo -e " ${red}Not enough space!${normal}"
+		echo -e " ${red}硬盘剩余空间不足，无法进行 IO 测试！${normal}"
 	fi
 echo ; }
 
@@ -739,10 +731,9 @@ echo -e  "  运行时间              ${cyan}$uptime1${jiacu}"
 echo -e  "  系统负载              ${cyan}$load${jiacu}"
 [[ $virtual ]] &&
 echo -e  "  虚拟化技术            ${cyan}$virtual${jiacu}"
+echo
 
 
-
-[[ $show_ip == 1 || $show_ipip == 1 ]] && echo
 
 
 
@@ -753,17 +744,15 @@ echo -e  "  IPv6 地址             ${green}$serveripv6${jiacu}"
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}" ; }
 
-
-
 [[ $show_ipip == 1 ]] && [[ ! -z $ipip_rDNS ]] && {
 echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
 echo -e  "  运营商                ${green}$ipip_ISP${jiacu}"
 echo -e  "  ASN 信息              ${green}$ipip_ASN, $ipip_AS${jiacu}"
 echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}" ; }
 
-
-
 [[ $show_ip == 1 || $show_ipip == 1 ]] && echo
+
+
 
 
 
