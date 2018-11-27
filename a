@@ -5,10 +5,10 @@
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 # wget -q https://github.com/Aniverse/A/raw/i/a && bash a -a
 
-ScriptVersion=1.0.7.5.测试中
+ScriptVersion=1.0.7.6.测试中
 SCRIPTUPDATE=2018.11.27
 
-DeBUG=0
+debug=0
 show_ip=1
 show_ipip=1
 
@@ -19,7 +19,7 @@ eval set -- "$OPTS"
 
 while true; do
   case "$1" in
-    -d | --debug       ) DeBUG=1      ; shift ;;
+    -d | --debug       ) debug=1      ; shift ;;
     -a | --no-ip       ) show_ip=0     ; shift ;;
     -b | --no-ipip     ) show_ipip=0   ; shift ;;
     -- ) shift; break ;;
@@ -267,7 +267,7 @@ echo $serverfqdn | grep -q pulsedmedia    && Seedbox=PM
 echo $serverfqdn | grep -q ultraseedbox   && Seedbox=USB
 Seedbox=FH && df -hPl | grep -q "/media/md" && FH_SSD=1
 
-[[ $DeBUG == 1 ]] && echo -e "Seedbox=$Seedbox  FH_SSD=$FH_SSD"
+[[ $debug == 1 ]] && echo -e "Seedbox=$Seedbox  FH_SSD=$FH_SSD"
 
 [[ ! $Seedbox == Unknown ]] && {
 
@@ -338,6 +338,8 @@ disk_used_size=$( calc_disk ${disk_size2[@]} )
 # Origin code from https://github.com/dave-pl/hwcheck
 function _disk_raid_check () {
 
+[[ $debug == 1 ]] && lspci | grep -E "RAID bus controller|SCSI controller"
+
 rm -f ~/disk.info
 
 if [[ -n `lspci|grep -i "RAID bus controller"|grep "MegaRAID"` ]]; then
@@ -385,6 +387,8 @@ Raid=No
 ls /dev/disk/by-id 2>/dev/null | grep -q scsi- && Raid=Hard
 ls /dev/disk/by-id 2>/dev/null | grep -q md-   && Raid=Soft
 # NVMe 等就不管了，没机器测试
+
+[[ $debug == 1 ]] && echo -e "Raid=$Raid"
 
 [[ ! $Raid == Hard ]] &&
 ls /dev/disk/by-id | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u > ~/disk.info
@@ -442,7 +446,7 @@ disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 if [[ $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -oE "[0-9]+") ]]; then
 
 if [[ $disk_num == 1 ]]; then
-    echo -e  "  硬盘                  ${cyan}通电 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  硬盘信息              ${cyan}通电 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
 elif [[ $disk_num -ge 2 ]]; then
     echo -e  "  第一块硬盘            ${cyan}通电 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     echo -e  "  第二块硬盘            ${cyan}通电 $(cat ~/disk.info 2>/dev/null | sed -n '2p' | awk '{print $3}') 小时，型号 $(cat ~/disk.info 2>/dev/null | sed -n '2p' | awk '{print $4,$5,$6,$7}')${jiacu}"
