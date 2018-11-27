@@ -3,9 +3,9 @@
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
-# wget -q https://github.com/Aniverse/A/raw/i/a && bash a -a
+# wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -bc
 
-ScriptVersion=1.0.7.7.测试中
+ScriptVersion=1.0.7.8.测试中
 SCRIPTUPDATE=2018.11.27
 
 debug=0
@@ -15,7 +15,7 @@ test_io=1
 
 # 运行参数 --------------------------------------------------------------------------------------------------------
 
-OPTS=$(getopt -n "$0" -o dab --long "debug,no-ip,no-ipip" -- "$@")
+OPTS=$(getopt -n "$0" -o abcd --long "debug,no-ip,no-ipip,no-io" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -273,7 +273,7 @@ echo $serverfqdn | grep -q feral          && Seedbox=FH
 echo $serverfqdn | grep -q seedhost       && Seedbox=SH
 echo $serverfqdn | grep -q pulsedmedia    && Seedbox=PM
 echo $serverfqdn | grep -q ultraseedbox   && Seedbox=USB
-Seedbox=FH && df -hPl | grep -q "/media/md" && FH_SSD=1
+[[ $Seedbox == FH ]] && df -hPl | grep -q "/media/md" && FH_SSD=1
 
 [[ $debug == 1 ]] && echo -e "Seedbox=$Seedbox  FH_SSD=$FH_SSD"
 
@@ -756,7 +756,7 @@ echo -e  "  IPv6 地址             ${green}$serveripv6${jiacu}"
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}" ; }
 
-[[ $show_ipip == 1 ]] && [[ ! -z $ipip_rDNS ]] && {
+[[ $show_ipip == 1 ]] && [[ ! -z $ipip_ISP ]] && {
 echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
 echo -e  "  运营商                ${green}$ipip_ISP${jiacu}"
 echo -e  "  ASN 信息              ${green}$ipip_ASN, $ipip_AS${jiacu}"
@@ -793,4 +793,4 @@ echo ; }
 _menu
 [[ $test_io == 1 ]] && print_io
 
-rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list
+rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all
