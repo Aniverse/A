@@ -5,12 +5,13 @@
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 # wget -q https://github.com/Aniverse/A/raw/i/a && bash a -a
 
-ScriptVersion=1.0.7.6.测试中
+ScriptVersion=1.0.7.7.测试中
 SCRIPTUPDATE=2018.11.27
 
 debug=0
 show_ip=1
 show_ipip=1
+test_io=1
 
 # 运行参数 --------------------------------------------------------------------------------------------------------
 
@@ -19,9 +20,10 @@ eval set -- "$OPTS"
 
 while true; do
   case "$1" in
-    -d | --debug       ) debug=1      ; shift ;;
     -a | --no-ip       ) show_ip=0     ; shift ;;
     -b | --no-ipip     ) show_ipip=0   ; shift ;;
+    -c | --no-io       ) test_io=0     ; shift ;;
+    -d | --debug       ) debug=1       ; shift ;;
     -- ) shift; break ;;
      * ) break ;;
   esac
@@ -139,7 +141,6 @@ rm -f $ipip_result
 
 
 
-
 echo -e "${bold}正在检查操作系统与内核 ...${normal}"
 
 [ -f /etc/redhat-release ] && KNA=$(awk '{print $1}' /etc/redhat-release)
@@ -151,7 +152,7 @@ get_opsy() {
 [ -f /etc/os-release     ] && awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release && return
 [ -f /etc/lsb-release    ] && awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release && return ; }
 
-running_kernel=` uname -r `
+running_kernel=$(uname -r )
 arch=$( uname -m )         # 架构，可以识别 ARM
 lbit=$( getconf LONG_BIT ) # 只显示多少位，无法识别 ARM
 
@@ -160,10 +161,9 @@ DISTROL=`  echo $DISTRO | tr 'A-Z' 'a-z'  `
 [[ $DISTRO =~ (Ubuntu|Debian) ]]  && CODENAME=`  cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -n1  `
 [[ $DISTRO == Ubuntu ]] && osversion=`  grep Ubuntu /etc/issue | head -1 | grep -oE  "[0-9.]+"  `
 [[ $DISTRO == Debian ]] && osversion=`  cat /etc/debian_version  `
-
 [[ $KNA == CentOS ]] && DISTRO=$( get_opsy )
 
-[[ `command -v dpkg` ]] && {
+[[ $(command -v dpkg) ]] && {
 rm -f ~/system_kernel_list
 dpkg -l | grep linux-image   | awk '{print $2}' >  ~/system_kernel_list
 dpkg -l | grep linux-headers | awk '{print $2}' >> ~/system_kernel_list
@@ -174,6 +174,7 @@ dpkg -l | grep pve-kernel    | awk '{print $2}' >> ~/system_kernel_list ; }
 
 
 # TCP 信息相关 ---------------------------------------------------------------------------------------------------
+
 
 
 echo -e "${bold}正在检查 TCP 信息 ...${normal}"
@@ -207,6 +208,13 @@ if [[ $tcp_control =~ (nanqinlang|tsunami|bbr|bbr2|bbr_powered) ]]; then bbrinus
 else bbrinuse="${red}否${jiacu}" ; fi
 # if [[ `lsmod | grep -E "bbr|nanqinlang|tsunami"` ]] ; then bbrinuse="${green}是${jiacu}" ; else bbrinuse="${red}否${jiacu}" ; fi
 
+# echo -e  "  当前可以使用的 TCP 拥塞控制算法      ${green}$tcp_control_all${jiacu}"
+# echo -e  "  当前内核是否支持 原版 BBR            $BBRKernel"
+# echo -e  "  当前内核是否支持 Yankee 版魔改 BBR   $YKKernel"
+# echo -e  "  当前内核是否支持 南琴浪 版魔改 BBR   $NQLKernel"
+# echo -e  "  当前内核是否支持 Vicer  版锐速       $SSKernel"
+# echo -e  "  当前 BBR  是否已启用                 $bbrinuse"
+# echo -e  "  当前 锐速 是否已启用                 $SSrunning"
 
 
 # Virt-what 相关 ----------------------------------------------------------------------------------------------
@@ -741,8 +749,6 @@ echo
 
 
 
-
-
 [[ $show_ip == 1 ]] && {
 echo -e  "  IPv4 地址             ${green}$serveripv4${jiacu}"
 [[ $serveripv6 ]] &&
@@ -760,19 +766,11 @@ echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}" ; }
 
 
 
-
-
 echo -e  "  操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 echo -e  "  系统内核              ${green}$running_kernel${jiacu}"
 echo -e  "  TCP 拥塞控制算法      ${green}$tcp_c_name${jiacu}"
 echo
-# echo -e  "  当前可以使用的 TCP 拥塞控制算法      ${green}$tcp_control_all${jiacu}"
-# echo -e  "  当前内核是否支持 原版 BBR            $BBRKernel"
-# echo -e  "  当前内核是否支持 Yankee 版魔改 BBR   $YKKernel"
-# echo -e  "  当前内核是否支持 南琴浪 版魔改 BBR   $NQLKernel"
-# echo -e  "  当前内核是否支持 Vicer  版锐速       $SSKernel"
-# echo -e  "  当前 BBR  是否已启用                 $bbrinuse"
-# echo -e  "  当前 锐速 是否已启用                 $SSrunning"
+
 
 
 # 等于把这段注释掉
@@ -793,6 +791,6 @@ echo ; }
 [[ $show_ip == 1 ]] && _ip
 [[ $show_ipip == 1 ]] && _ipip
 _menu
-print_io
+[[ $test_io == 1 ]] && print_io
 
 rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list
