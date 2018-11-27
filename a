@@ -4,7 +4,7 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 
-ScriptVersion=1.0.7
+ScriptVersion=1.0.7.1
 SCRIPTUPDATE=2018.11.27
 
 # 颜色 --------------------------------------------------------------------------------------------------------
@@ -103,13 +103,6 @@ ipip_rDNS=$( cat $ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: /
 
 #[[ $ipip_result == ~/ipip_result ]] && 
 rm -f $ipip_result
-
-serverfqdn=$( hostname -f )
-Seedbox=Unknown
-hostname -f | grep -q feral          && Seedbox=FH
-hostname -f | grep -q seedhost       && Seedbox=SH
-hostname -f | grep -q pulsedmedia    && Seedbox=PM
-hostname -f | grep -q ultraseedbox   && Seedbox=USB
 
 showip=1
 
@@ -325,8 +318,8 @@ ls /dev/disk/by-id 2>/dev/null | grep -q scsi- && Raid=Hard
 ls /dev/disk/by-id 2>/dev/null | grep -q md-   && Raid=Soft
 # NVMe 等就不管了，没机器测试
 
-[[ $Raid == No ]] &&
-ls /dev/disk/by-id | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m |sort -u > ~/disk.info
+[[ ! $Raid == Hard ]] &&
+ls /dev/disk/by-id | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u > ~/disk.info
 
 cat ~/disk.info 2>/dev/null | sed -e 's/\(.*\)_/\1:/' | sed "s/:.*//" | sort -u > ~/disk.info.2
 disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
@@ -477,7 +470,12 @@ processes=`ps aux | wc -l`
 
 # 共享盒子 邻居信息 ------------------------------------------------------------------------------------------
 
-
+serverfqdn=$( hostname -f )
+Seedbox=Unknown
+hostname -f | grep -q feral          && Seedbox=FH
+hostname -f | grep -q seedhost       && Seedbox=SH
+hostname -f | grep -q pulsedmedia    && Seedbox=PM
+hostname -f | grep -q ultraseedbox   && Seedbox=USB
 
 [[ ! $Seedbox == Unknown ]] && {
 echo -e "${bold}正在检查同盒子的邻居情况 ...${normal}"
@@ -651,7 +649,7 @@ speed_test(){
 
 # 主界面
 function _menu() { clear ; echo
-echo -e  " ${baizise}${bold}                               This is the choice of Steins;Gate                               ${jiacu} "
+echo -e  " ${baizise}${bold}                          This is the choice of Steins;Gate                           ${jiacu} "
 
 [[ ! $Seedbox == Unknown ]] && SeedboxDiskTotalFlagOne="总" ; [[ $Seedbox == Unknown ]] && SeedboxDiskTotalFlagTwo="  "
 
