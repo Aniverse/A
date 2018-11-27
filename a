@@ -5,7 +5,7 @@
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -ac
 
-ScriptVersion=1.0.7.8.测试中
+ScriptVersion=1.0.7.9.测试中
 SCRIPTUPDATE=2018.11.27
 
 debug=0
@@ -277,6 +277,9 @@ echo $serverfqdn | grep -q ultraseedbox   && Seedbox=USB
 
 [[ $debug == 1 ]] && echo -e "Seedbox=$Seedbox  FH_SSD=$FH_SSD"
 
+# 所有硬盘分区
+df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker|md[0-9]+/[a-z].*' | sort -u > ~/par_list
+
 [[ ! $Seedbox == Unknown ]] && {
 
 echo -e "${bold}正在检查同盒子的邻居情况 ...${normal}"
@@ -284,16 +287,26 @@ echo -e "${bold}正在检查同盒子的邻居情况 ...${normal}"
 [[ $Seedbox == USB ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11 这样子的
 [[ $Seedbox == PM  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home   这样子的
 [[ $Seedbox == SH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home22 这样子的
-[[ $Seedbox == FH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /media/sdk1 这样子的
+[[ $Seedbox == FH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /media/sdk1 这样子的，或者 /media/98811
+# /media/sdr1/home 这样子的，一些老的 FH HDD 会出现这样的
+[[ $Seedbox == FH  ]] && echo $current_disk | grep -q "/home" && current_disk=$(echo $current_disk | sed "s/\/home//") && FH_HOME=1
 
+# 所有邻居
 getent passwd | grep -Ev "$(whoami)|root" | grep -E "/bin/sh|/bin/bash" | grep -E "home|home[0-9]+|media" > ~/neighbors_all
 
 neighbors_all_num=$(cat ~/neighbors_all | wc -l)
-neighbors_same_disk_num=$(cat ~/neighbors_all | grep "${current_disk}/" | wc -l)
+neighbors_same_disk_num=$(cat ~/neighbors_all | grep "$current_disk" | wc -l)
 
-current_disk_size=($( LANG=C df -hPl | grep $current_disk | awk '{print $2}' ))
-current_disk_total_used=($( LANG=C df -hPl | grep $current_disk | awk '{print $3}' ))
-current_disk_self_used=$( du -sh ~ | awk -F " " '{print $1}' )
+if [[ $FH_SSD == 1 ]];then
+    current_disk_size=($( LANG=C df -hPl | grep $(pwd) | awk '{print $2}' ))
+    current_disk_total_used=($( LANG=C df -hPl | grep $(pwd) | awk '{print $3}' ))
+    current_disk_self_used=$( du -sh ~ | awk -F " " '{print $1}' )
+else
+    current_disk_size=($( LANG=C df -hPl | grep $current_disk | awk '{print $2}' ))
+    current_disk_total_used=($( LANG=C df -hPl | grep $current_disk | awk '{print $3}' ))
+    current_disk_self_used=$( du -sh ~ | awk -F " " '{print $1}' )
+fi
+
 #current_disk_avai=($( LANG=C df -hPl | grep $current_disk | awk '{print $4}' ))
 #current_disk_perc=($( LANG=C df -hPl | grep $current_disk | awk '{print $5}' ))
 
@@ -322,8 +335,9 @@ for size in ${array[@]} ; do
 total_size=$( awk 'BEGIN{printf "%.1f", '$total_size' + '$size'}' )
 done ; echo ${total_size} ; }
 
-# 其实这个判定对于独服不太对
-disk_par_num=$(df -lh | grep -P "/home[0-9]+|media|home|mnt" | wc -l)
+# 其实这个判定对于独服可能不太对
+#disk_par_num=$(df -lh | grep -P "/home[0-9]+|media|home|mnt" | wc -l)
+disk_par_num=$(cat ~/par_list | wc -l)
 # / 为最大分区时，数字 +1
 [[ $(df -lh | grep $(df -k | sort -rn -k4 | awk '{print $1}' | head -1) | awk '{print $NF}') == / ]] && disk_par_num=$(expr $disk_par_num + 1)
 
@@ -803,4 +817,4 @@ echo ; }
 _menu
 [[ $test_io == 1 ]] && print_io
 
-rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all
+rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all ~/par_list
