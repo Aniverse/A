@@ -4,9 +4,10 @@
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
+# bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.8
-SCRIPTUPDATE=2018.11.27
+ScriptVersion=1.0.8.1
+SCRIPTUPDATE=2018.11.29
 
 debug=0
 show_ip=1
@@ -773,7 +774,7 @@ echo -e  "  IPv6 地址             ${green}$serveripv6${jiacu}"
 echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}" ; }
 
 [[ $show_ipip == 1 ]] && [[ ! -z $ipip_ISP ]] && {
-[[ ! -z $ipip_rDNS ]] && echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
+[[ $show_ip == 1 ]] && [[ ! -z $ipip_rDNS ]] && echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
 echo -e  "  运营商                ${green}$ipip_ISP${jiacu}"
 echo -e  "  ASN 信息              ${green}$ipip_ASN, $ipip_AS${jiacu}"
 echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}" ; }
