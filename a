@@ -6,7 +6,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.8.1
+ScriptVersion=1.0.8.2
 SCRIPTUPDATE=2018.11.29
 
 debug=0
@@ -113,7 +113,7 @@ wget --no-check-certificate -qO- https://www.ipip.net/ip.html > $ipip_result 2>&
   ipip_IP=$( cat $ipip_result | grep -A3 当前IP     | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+" | head -1 )
  ipip_ASN=$( cat $ipip_result | grep -C7 ASN数据    | grep -oE "AS[0-9]+" | head -1 )
 ipip_CIDR=$( cat $ipip_result | grep -C7 ASN数据    | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+/[0-9]+" | head -1 )
-  ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
+  ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" | head -1 )
 ipip_rDNS=$( cat $ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: //" )
  ipip_Loc=$( cat $ipip_result | grep -A3 地理位置   | grep -v 地理位置 | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
  ipip_ISP=$( cat $ipip_result | grep -A3 运营商     | grep -v 运营商   | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
@@ -410,7 +410,7 @@ ls /dev/disk/by-id 2>/dev/null | grep -q md-   && Raid=Soft
 [[ $debug == 1 ]] && echo -e "Raid=$Raid"
 
 [[ ! $Raid == Hard ]] &&
-ls /dev/disk/by-id | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u > ~/disk.info
+ls /dev/disk/by-id 2>/dev/null | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u > ~/disk.info
 
 cat ~/disk.info 2>/dev/null | sed -e 's/\(.*\)_/\1:/' | sed "s/:.*//" | sort -u > ~/disk.info.2
 disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
@@ -733,7 +733,7 @@ speed_test(){
 
 # 主界面
 function _menu() { clear ; echo
-echo -e  " ${baizise}${bold}                          This is the choice of Steins;Gate                           ${jiacu} "
+echo -e  " ${baizise}${bold}                  This is the choice of Steins;Gate                   ${jiacu} "
 
 [[ ! $Seedbox == Unknown ]] && SeedboxDiskTotalFlagOne="总" ; [[ $Seedbox == Unknown ]] && SeedboxDiskTotalFlagTwo="  "
 
