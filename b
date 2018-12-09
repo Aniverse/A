@@ -6,8 +6,8 @@
 #
 # wget -qO b https://raw.githubusercontent.com/Aniverse/A/i/b && sed -i "s/_proc_sys/_root_sys/" b && bash b
 #
-# Ver.1.1.3
-# ScriptDate=2018.07.23
+Ver=1.2.0
+ScriptDate=2018.12.09
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -191,10 +191,12 @@ echo -e "  当前 系统内核              ${green}$kernel${jiacu}"
 echo -e "  当前 TCP 拥塞控制算法      ${green}$( cat /proc/sys/net/ipv4/tcp_congestion_control )${jiacu}"
 echo -e "  可用 TCP 拥塞控制算法      ${green}$( cat /proc/sys/net/ipv4/tcp_available_congestion_control )${jiacu}"
 echo -e "  当前 CPU  调度方式         ${green}$( cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1 )${jiacu}"
-echo -e "  当前 硬盘 调度算法         ${green}$( cat /sys/block/[sv]da/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1 )${jiacu}"
-echo -e "  当前 可用 调度算法         ${green}$( cat /sys/block/[sv]da/queue/scheduler 2>/dev/null )${jiacu}"
+echo -e "  当前 硬盘 调度算法         ${green}$( cat /sys/block/[sv]d*/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1 | sort -u )${jiacu}"
+echo -e "  当前 可用 调度算法         ${green}$( cat /sys/block/[sv]d*/queue/scheduler 2>/dev/null | sort -u )${jiacu}"
 echo -e "  当前 硬盘 文件系统         ${green}$( cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $3}' )${jiacu}" 
 echo -e "  当前 硬盘 挂载方式         ${green}$( cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $4}' )${jiacu}"
+echo -e "  当前 nr_requests           ${green}$( cat /sys/block/[sv]d*/queue/nr_requests  2>/dev/null | sort -u )${jiacu}"
+echo -e "  当前 read_ahead            ${green}$( cat /sys/block/[sv]d*/queue/read_ahead   2>/dev/null | sort -u )${jiacu}"
 echo -e "  ${normal}"
 
 # ls /lib/modules/$(uname -r)/kernel/net/ipv4
@@ -414,6 +416,9 @@ elif [[ $answer == 10010 ]]; then
     show_sysctl_specific 2>&1 | tee sysctl.specific.txt
     save_sysctl_all
     sysctl_p
+elif [[ $answer == 11111 ]]; then
+    show_system_info_2
+    show_sysctl_specific
 elif [[ $answer == 10086 ]]; then
     show_deluge_libtorrent_info | tee deluge.libtorrent.txt
 else
