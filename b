@@ -6,7 +6,7 @@
 #
 # wget -qO b https://raw.githubusercontent.com/Aniverse/A/i/b && sed -i "s/_proc_sys/_root_sys/" b && bash b
 #
-Ver=1.2.0
+Ver=1.2.1
 ScriptDate=2018.12.09
 #
 ########################################################################################################
@@ -74,6 +74,8 @@ uptime1=$( awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d days %
 uptime2=`uptime | grep -ohe 'up .*' | sed 's/,/\ hours/g' | awk '{ printf $2" "$3 }'`
 load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//' )
 
+ETH=$(cat /proc/net/dev | awk -F: 'function trim(str){sub(/^[ \t]*/,"",str); sub(/[ \t]*$/,"",str); return str } NR>2 {print trim($1)}'  | grep -Ev '^lo|^sit|^stf|^gif|^dummy|^vmnet|^vir|^gre|^ipip|^ppp|^bond|^tun|^tap|^ip6gre|^ip6tnl|^teql' | awk 'NR==1 {print $0}')
+
 LC_ALL=en_US.UTF-8
 LANG=en_US.UTF-8
 LANGUAGE=en_US.UTF-8
@@ -85,6 +87,7 @@ LANGUAGE=en_US.UTF-8
 
 
 echo -e "${bold}
+当前脚本版本：$Ver
 1. 获取 sysctl 参数
 2. 获取 系统信息
 输入其他数字或者五秒钟内无回应一律退出脚本
@@ -129,7 +132,39 @@ if [[ ! -x /bin/uname ]]; then
     fi
 
     chmod +x ./tmpuname
-    uname="./tmpuname"
+    alias uname="./tmpuname"
+
+fi ; }
+
+
+
+
+function get_ifconfig() {
+
+if [[ ! -x /sbin/ifconfig ]]; then
+
+    if [[ $CODENAME == wheezy ]]; then
+        wget --no-check-certificate -qO ./tmpifconfig https://github.com/Aniverse/A/raw/i/files/ifconfig/debian_7.11_amd64
+    elif [[ $CODENAME == jessie ]]; then
+        wget --no-check-certificate -qO ./tmpifconfig https://github.com/Aniverse/A/raw/i/files/ifconfig/debian_8.10_amd64
+    elif [[ $CODENAME == stretch ]]; then
+        wget --no-check-certificate -qO ./tmpifconfig https://github.com/Aniverse/A/raw/i/files/ifconfig/debian_9.4_amd64
+    elif [[ $CODENAME == trusty ]]; then
+        wget --no-check-certificate -qO ./tmpifconfig https://github.com/Aniverse/A/raw/i/files/ifconfig/ubuntu_14.04.5_amd64
+    elif [[ $CODENAME == xenial ]]; then
+        wget --no-check-certificate -qO ./tmpifconfig https://github.com/Aniverse/A/raw/i/files/ifconfig/ubuntu_16.04.4_amd64
+    elif [[ $CODENAME == bionic ]]; then
+        wget --no-check-certificate -qO ./tmpifconfig https://github.com/Aniverse/A/raw/i/files/ifconfig/ubuntu_18.04_amd64
+    elif [[ $(cat /etc/redhat-release 2>/dev/null | sed -r 's/.* ([0-9]+)\..*/\1/') == 6 ]]; then
+        wget --no-check-certificate -qO ./tmpifconfig https://github.com/Aniverse/A/raw/i/files/ifconfig/centos_6.10_amd64
+    elif [[ $(cat /etc/redhat-release 2>/dev/null | sed -r 's/.* ([0-9]+)\..*/\1/') == 7 ]]; then
+        wget --no-check-certificate -qO ./tmpifconfig https://github.com/Aniverse/A/raw/i/files/ifconfig/centos_7.5_amd64
+    else
+        echo -e "找不到可用的 ifconfig，无法检查网卡！"
+    fi
+
+    chmod +x ./tmpifconfig
+    alias ifconfig="./tmpifconfig"
 
 fi ; }
 
@@ -170,8 +205,10 @@ echo -e "  ${normal}"
 function show_system_info_2() {
 
 get_uname
-[[   -x /bin/uname ]] && { kernel=$(    uname   -r ) ; arch=$(    uname   -m ) ; }
-[[ ! -x /bin/uname ]] && { kernel=$( ./tmpuname -r ) ; arch=$( ./tmpuname -m ) ; }
+kernel=$( uname -r ) ; arch=$( uname -m )
+txqueuelen=$( ifconfig $ETH 2>/dev/null | grep -oE "txqueuelen:[0-9]+" )
+# [[   -x /bin/uname ]] && { kernel=$(    uname   -r ) ; arch=$(    uname   -m ) ; }
+# [[ ! -x /bin/uname ]] && { kernel=$( ./tmpuname -r ) ; arch=$( ./tmpuname -m ) ; }
 
 echo -e "\n${bold}"
 echo -e "  CPU 型号                   ${cyan}$CPUNum$cname${jiacu}"
@@ -199,7 +236,8 @@ echo -e "  当前 nr_requests           ${green}$( cat /sys/block/[sv]d*/queue/n
 echo -e "  当前 read_ahead            ${green}$( cat /sys/block/[sv]d*/queue/read_ahead   2>/dev/null | sort -u )${jiacu}"
 echo -e "  ${normal}"
 
-# ls /lib/modules/$(uname -r)/kernel/net/ipv4
+echo -e "  ls /lib/modules/$(uname -r)/kernel/net/ipv4 \n" ; ls /lib/modules/$(uname -r)/kernel/net/ipv4 ; echo
+
 # tcp_control_all=` cat /proc/sys/net/ipv4/tcp_allowed_congestion_control `
 
 }
@@ -424,6 +462,8 @@ elif [[ $answer == 10086 ]]; then
 else
     echo -e "\n${bold}无事可做，告辞~${normal}"
 fi
+
+rm -f tmpifconfig tmpuname
 
 echo -e "\n\n"
 
