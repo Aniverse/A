@@ -206,7 +206,6 @@ function show_system_info_2() {
 
 get_uname
 kernel=$( uname -r ) ; arch=$( uname -m )
-txqueuelen=$( ifconfig $ETH 2>/dev/null | grep -oE "txqueuelen:[0-9]+" )
 # [[   -x /bin/uname ]] && { kernel=$(    uname   -r ) ; arch=$(    uname   -m ) ; }
 # [[ ! -x /bin/uname ]] && { kernel=$( ./tmpuname -r ) ; arch=$( ./tmpuname -m ) ; }
 
@@ -234,9 +233,10 @@ echo -e "  当前 硬盘 文件系统         ${green}$( cat /proc/mounts | grep
 echo -e "  当前 硬盘 挂载方式         ${green}$( cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $4}' )${jiacu}"
 echo -e "  当前 nr_requests           ${green}$( cat /sys/block/[sv]d*/queue/nr_requests  2>/dev/null | sort -u )${jiacu}"
 echo -e "  当前 read_ahead            ${green}$( cat /sys/block/[sv]d*/queue/read_ahead   2>/dev/null | sort -u )${jiacu}"
+echo -e "  当前 txqueuelen            ${green}$( ifconfig $ETH 2>/dev/null | grep -oE "txqueuelen:[0-9]+" )${jiacu}"
 echo -e "  ${normal}"
 
-echo -e "  ls /lib/modules/$(uname -r)/kernel/net/ipv4 \n" ; ls /lib/modules/$(uname -r)/kernel/net/ipv4 ; echo
+echo -e "\n${bold}${baiqingse}  ls /lib/modules/$(uname -r)/kernel/net/ipv4  ${normal}\n" ; ls /lib/modules/$(uname -r)/kernel/net/ipv4 ; echo
 
 # tcp_control_all=` cat /proc/sys/net/ipv4/tcp_allowed_congestion_control `
 
