@@ -2,7 +2,7 @@
 # Author: Aniverse
 #
 # 2018.12.13
-# Ver.1.0.2
+# Ver.1.0.3
 #
 # 用于在 VPS 上编译 lt deb 给 inexistence 脚本使用
 # 主要是 libtorrent-rasterbar 的编译速度实在是太慢了……
@@ -58,8 +58,6 @@ function install_lt() {
 git clone --depth=1 -b $branch https://github.com/Aniverse/libtorrent libtorrent-$version
 cd libtorrent-$version
 mkdir -p doc-pak ; echo "an efficient feature complete C++ bittorrent implementation, installed by inexistence script" >description-pak
-
-[[ $version == 1.0 ]] && sed -i "s/+ target_specific(),/+ target_specific() + ['-std=c++11'],/" bindings/python/setup.py
 
 ./autotool.sh
 ./configure --enable-python-binding --with-libiconv --disable-debug --enable-encryption --with-libgeoip=system CXXFLAGS=-std=c++11
