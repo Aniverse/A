@@ -1,0 +1,74 @@
+#!/bin/bash
+# Author: Aniverse
+#
+# 2018.12.13
+# Ver.1.0.1
+#
+# 用于在 VPS 上编译 lt deb 给 inexistence 脚本使用
+# 主要是 libtorrent-rasterbar 的编译速度实在是太慢了……
+#
+# bash <(wget --no-check-certificate -qO- https://github.com/Aniverse/A/raw/i/z1) 1.0
+
+[[ $1 != 1.0 ]] && [[ $1 != 1.1 ]] && exit 1
+echo -e "\n$(tput setaf 7)$(tput setab 1) $1 $(tput sgr0)\n"
+
+cd
+dd if=/dev/zero of=/root/.swapfile bs=1M count=2048
+mkswap /root/.swapfile
+swapon /root/.swapfile
+swapon -s
+echo -e "\n$(tput setaf 7)$(tput setab 1) DONE $(tput sgr0)\n"
+
+# 设置简单的密码，登陆 SFTP 把文件下回来用
+# 反正不是我自己平常用的密码，公开出来无所谓，这 VPS 编译完直接就删掉的东西……
+echo -ne 'inexistence233\ninexistence233\n' | passwd root
+echo -e "\n$(tput setaf 7)$(tput setab 1) DONE $(tput sgr0)\n"
+
+# 开启 SSH root 密码登陆，安全性放弃治疗的
+sed -i '/.*AllowGroups.*/d' /etc/ssh/sshd_config
+sed -i '/.*PasswordAuthentication.*/d' /etc/ssh/sshd_config
+sed -i '/.*PermitRootLogin.*/d' /etc/ssh/sshd_config
+echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+/etc/init.d/ssh restart
+echo -e "\n------ DONE  ------\n"
+
+# 安装依赖
+apt-get update
+apt-get -y install lrzsz sudo screen nano tree build-essential pkg-config autoconf automake libtool git checkinstall libboost-dev libboost-system-dev libboost-chrono-dev libboost-random-dev libssl-dev geoip-database libgeoip-dev libboost-python-dev libgl1-mesa-dev zlib1g-dev
+
+# 文件存放到这个路径
+mkdir -p /root/0.file/library
+
+echo -e "\n\n\n$(tput setaf 7)$(tput setab 1)------ DONE  ------$(tput sgr0)\n\n\n"
+
+#########################################################################################################
+
+# 设定参数
+export ARCH=amd64
+export CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}')
+export DATE=$(date +%Y%m%d)
+
+[[ $1 == 1.0 ]] && export branch=1.0.x && export version=1.0.11
+[[ $1 == 1.1 ]] && export branch=1.1.x && export version=1.1.11
+
+# 编译部分，正文
+function install_lt() {
+
+git clone --depth=1 -b $branch https://github.com/Aniverse/libtorrent libtorrent-$version
+cd libtorrent-$version
+mkdir -p doc-pak ; echo "an efficient feature complete C++ bittorrent implementation, installed by inexistence script" >description-pak
+
+[[ $1 == 1.0 ]] && sed -i "s/+ target_specific(),/+ target_specific() + ['-std=c++11'],/" bindings/python/setup.py
+
+./autotool.sh
+./configure --enable-python-binding --with-libiconv --disable-debug --enable-encryption --with-libgeoip=system CXXFLAGS=-std=c++11
+make -j$(nproc)
+checkinstall -y --pkgname=libtorrent-rasterbar --pkggroup libtorrent --pkgversion $version
+mv libtorrent-rasterbar*deb /root/0.file/libtorrent-rasterbar-${version}.${CODENAME}.${ARCH}.deb
+
+tar zcvpf /root/0.file/libtorrent-rasterbar-${version}.${CODENAME}.${ARCH}.tar.gz /root/libtorrent-$version
+ldconfig ; }
+
+time install_lt ; echo
+python -c "import libtorrent ; print libtorrent.version"
+echo -e "\n\n\n$(tput setaf 7)$(tput setab 1)------ LT DONE ------$(tput sgr0)\n\n\n"
