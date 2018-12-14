@@ -2,7 +2,7 @@
 # Author: Aniverse
 #
 # 2018.12.14
-# Ver.1.0.0
+# Ver.1.0.1
 #
 # apt-get update && apt-get -y install screen unzip && screen -R GG
 # bash <(wget --no-check-certificate -qO- https://github.com/Aniverse/A/raw/i/z2)
@@ -61,6 +61,7 @@ echo -e "\n\n\n$(tput setaf 7)$(tput setab 1)------ DONE  ------$(tput sgr0)\n\n
 export ARCH=amd64
 export CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}')
 export DATE=$(date +%Y%m%d)
+export branch=1.1.x
 export version=1.1.11.111
 
 # 编译部分，正文
