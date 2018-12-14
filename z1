@@ -1,8 +1,8 @@
 #!/bin/bash
 # Author: Aniverse
 #
-# 2018.12.13
-# Ver.1.0.3
+# 2018.12.14
+# Ver.1.0.4
 #
 # 用于在 VPS 上编译 lt deb 给 inexistence 脚本使用
 # 主要是 libtorrent-rasterbar 的编译速度实在是太慢了……
@@ -13,6 +13,7 @@ export version=$1
 [[ $version != 1.0 ]] && [[ $version != 1.1 ]] && exit 1
 echo -e "\n$(tput setaf 7)$(tput setab 1) $version $(tput sgr0)\n"
 
+# SWAP 防止内存不足
 cd
 dd if=/dev/zero of=/root/.swapfile bs=1M count=2048
 mkswap /root/.swapfile
@@ -33,10 +34,6 @@ echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
 /etc/init.d/ssh restart
 echo -e "\n------ DONE  ------\n"
 
-# 安装依赖
-apt-get update
-apt-get -y install lrzsz sudo screen nano tree build-essential pkg-config autoconf automake libtool git checkinstall libboost-dev libboost-system-dev libboost-chrono-dev libboost-random-dev libssl-dev geoip-database libgeoip-dev libboost-python-dev libgl1-mesa-dev zlib1g-dev
-
 # 文件存放到这个路径
 mkdir -p /root/0.file/library
 
@@ -55,10 +52,16 @@ export DATE=$(date +%Y%m%d)
 # 编译部分，正文
 function install_lt() {
 
+# 安装依赖
+apt-get update
+apt-get -y install lrzsz sudo screen nano tree build-essential pkg-config autoconf automake libtool git checkinstall libboost-dev libboost-system-dev libboost-chrono-dev libboost-random-dev libssl-dev geoip-database libgeoip-dev libboost-python-dev libgl1-mesa-dev zlib1g-dev
+
+# 下载源码
 git clone --depth=1 -b $branch https://github.com/Aniverse/libtorrent libtorrent-$version
 cd libtorrent-$version
 mkdir -p doc-pak ; echo "an efficient feature complete C++ bittorrent implementation, installed by inexistence script" >description-pak
 
+# 编译
 ./autotool.sh
 ./configure --enable-python-binding --with-libiconv --disable-debug --enable-encryption --with-libgeoip=system CXXFLAGS=-std=c++11
 make -j$(nproc)
@@ -70,4 +73,5 @@ ldconfig ; }
 
 time install_lt ; echo
 python -c "import libtorrent ; print libtorrent.version"
+pkg-config --exists --print-errors "libtorrent-rasterbar >= 3.0.0" 2>&1 | awk '{print $NF}' | grep -oE [0-9.]+
 echo -e "\n\n\n$(tput setaf 7)$(tput setab 1)------ LT DONE ------$(tput sgr0)\n\n\n"
