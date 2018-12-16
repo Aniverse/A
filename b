@@ -6,7 +6,7 @@
 #
 # wget -qO b https://raw.githubusercontent.com/Aniverse/A/i/b && sed -i "s/_proc_sys/_root_sys/" b && bash b
 #
-Ver=1.2.2
+Ver=1.2.3
 ScriptDate=2018.12.16
 #
 ########################################################################################################
@@ -97,8 +97,8 @@ echo -ne "${yellow}你想做什么？${normal} " ; read -t 5 -e answer
 case $answer in
     1) answer=1 ;;
     2) answer=2 ;;
-    10000) answer=10000 ;;
-    11111) answer=10010 ;;
+    11111) answer=11111 ;;
+    10010) answer=10010 ;;
     10086) answer=10086 ;;
     "" | *) unset answer ;;
 esac
@@ -231,9 +231,10 @@ echo -e "  当前 硬盘 调度算法         ${green}$( cat /sys/block/[svn]d*/
 echo -e "  当前 可用 调度算法         ${green}$( cat /sys/block/[svn]d*/queue/scheduler 2>/dev/null | sort -u )${jiacu}"
 echo -e "  当前 硬盘 文件系统         ${green}$( cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $3}' )${jiacu}" 
 echo -e "  当前 硬盘 挂载方式         ${green}$( cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $4}' )${jiacu}"
-echo -e "  当前 nr_requests           ${green}$( cat /sys/block/[svn]d*/queue/nr_requests  2>/dev/null | sort -u )${jiacu}"
-echo -e "  当前 read_ahead_kb         ${green}$( cat /sys/block/[svn]d*/queue/read_ahead_kb   2>/dev/null | sort -u )${jiacu}"
-echo -e "  当前 txqueuelen            ${green}$( ifconfig $ETH 2>/dev/null | grep -oE "txqueuelen:[0-9]+" )${jiacu}"
+echo -e "  当前 fifo_batch            ${green}$( cat /sys/block/[svn]d*/queue/iosched/fifo_batch  2>/dev/null | sort -u )${jiacu}"
+echo -e "  当前 nr_requests           ${green}$( cat /sys/block/[svn]d*/queue/nr_requests         2>/dev/null | sort -u )${jiacu}"
+echo -e "  当前 read_ahead_kb         ${green}$( cat /sys/block/[svn]d*/queue/read_ahead_kb       2>/dev/null | sort -u )${jiacu}"
+echo -e "  当前 txqueuelen            ${green}$( ifconfig $ETH 2>/dev/null | grep -oE "txqueuelen:[0-9]+" | grep -oE "[0-9]+" )${jiacu}"
 echo -e "  ${normal}"
 
 echo -e "\n${bold}${baiqingse}  ls /lib/modules/$(uname -r)/kernel/net/ipv4  ${normal}\n" ; ls /lib/modules/$(uname -r)/kernel/net/ipv4 ; echo
