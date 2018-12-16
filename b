@@ -6,8 +6,8 @@
 #
 # wget -qO b https://raw.githubusercontent.com/Aniverse/A/i/b && sed -i "s/_proc_sys/_root_sys/" b && bash b
 #
-Ver=1.2.1
-ScriptDate=2018.12.09
+Ver=1.2.2
+ScriptDate=2018.12.16
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -98,7 +98,7 @@ case $answer in
     1) answer=1 ;;
     2) answer=2 ;;
     10000) answer=10000 ;;
-    10010) answer=10010 ;;
+    11111) answer=10010 ;;
     10086) answer=10086 ;;
     "" | *) unset answer ;;
 esac
@@ -227,12 +227,12 @@ echo -e "  当前 系统内核              ${green}$kernel${jiacu}"
 echo -e "  当前 TCP 拥塞控制算法      ${green}$( cat /proc/sys/net/ipv4/tcp_congestion_control )${jiacu}"
 echo -e "  可用 TCP 拥塞控制算法      ${green}$( cat /proc/sys/net/ipv4/tcp_available_congestion_control )${jiacu}"
 echo -e "  当前 CPU  调度方式         ${green}$( cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -1 )${jiacu}"
-echo -e "  当前 硬盘 调度算法         ${green}$( cat /sys/block/[sv]d*/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1 | sort -u )${jiacu}"
-echo -e "  当前 可用 调度算法         ${green}$( cat /sys/block/[sv]d*/queue/scheduler 2>/dev/null | sort -u )${jiacu}"
+echo -e "  当前 硬盘 调度算法         ${green}$( cat /sys/block/[svn]d*/queue/scheduler 2>/dev/null | cut -d '[' -f2|cut -d ']'  -f1 | sort -u )${jiacu}"
+echo -e "  当前 可用 调度算法         ${green}$( cat /sys/block/[svn]d*/queue/scheduler 2>/dev/null | sort -u )${jiacu}"
 echo -e "  当前 硬盘 文件系统         ${green}$( cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $3}' )${jiacu}" 
 echo -e "  当前 硬盘 挂载方式         ${green}$( cat /proc/mounts | grep -P "`df -k | sort -rn -k4 | awk '{print $1}' | head -1`\b" | awk '{print $4}' )${jiacu}"
-echo -e "  当前 nr_requests           ${green}$( cat /sys/block/[sv]d*/queue/nr_requests  2>/dev/null | sort -u )${jiacu}"
-echo -e "  当前 read_ahead            ${green}$( cat /sys/block/[sv]d*/queue/read_ahead   2>/dev/null | sort -u )${jiacu}"
+echo -e "  当前 nr_requests           ${green}$( cat /sys/block/[svn]d*/queue/nr_requests  2>/dev/null | sort -u )${jiacu}"
+echo -e "  当前 read_ahead_kb         ${green}$( cat /sys/block/[svn]d*/queue/read_ahead_kb   2>/dev/null | sort -u )${jiacu}"
 echo -e "  当前 txqueuelen            ${green}$( ifconfig $ETH 2>/dev/null | grep -oE "txqueuelen:[0-9]+" )${jiacu}"
 echo -e "  ${normal}"
 
