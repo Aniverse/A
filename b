@@ -6,8 +6,8 @@
 #
 # wget -qO b https://raw.githubusercontent.com/Aniverse/A/i/b && sed -i "s/_proc_sys/_root_sys/" b && bash b
 #
-Ver=1.2.3
-ScriptDate=2018.12.16
+Ver=1.2.4
+ScriptDate=2018.12.17
 #
 ########################################################################################################
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
@@ -206,8 +206,9 @@ function show_system_info_2() {
 
 get_uname
 kernel=$( uname -r ) ; arch=$( uname -m )
-# [[   -x /bin/uname ]] && { kernel=$(    uname   -r ) ; arch=$(    uname   -m ) ; }
-# [[ ! -x /bin/uname ]] && { kernel=$( ./tmpuname -r ) ; arch=$( ./tmpuname -m ) ; }
+echo "uname -r $( uname -r )"
+[[   -x /bin/uname ]] && { kernel=$(    uname   -r ) ; arch=$(    uname   -m ) ; }
+[[ ! -x /bin/uname ]] && { kernel=$( ./tmpuname -r ) ; arch=$( ./tmpuname -m ) ; }
 
 echo -e "\n${bold}"
 echo -e "  CPU 型号                   ${cyan}$CPUNum$cname${jiacu}"
