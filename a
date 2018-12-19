@@ -6,8 +6,8 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.8.2
-SCRIPTUPDATE=2018.11.29
+ScriptVersion=1.0.8.3
+SCRIPTUPDATE=2018.12.19
 
 debug=0
 show_ip=1
@@ -272,7 +272,7 @@ df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docke
 
 [[ ! $Seedbox == Unknown ]] && {
 
-echo -e "${bold}正在检查同盒子的邻居情况 ...${normal}"
+echo -e "${bold}正在检查盒子的邻居情况 ...${normal}"
 
 [[ $Seedbox == USB ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11 这样子的
 [[ $Seedbox == PM  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home   这样子的
@@ -745,10 +745,11 @@ echo -e  "  内存大小              ${cyan}$tram MB ($uram MB 已用)${jiacu}"
 [[ ! $swap == 0 ]] &&
 echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
 
-if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then
-echo ; fi
+if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then echo ; fi
+
 [[ ! $Seedbox == FH ]] && _show_disk_info
-echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagTwo}     ${cyan}共 $disk_par_num 个硬盘分区，合计 $disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
+[[ ! $Seedbox == Unknown ]] && DiskParNumDisplay="共 $disk_par_num 个硬盘分区，合计 "
+echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagTwo}     ${cyan}${DiskParNumDisplay}$disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  当前硬盘大小          ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
