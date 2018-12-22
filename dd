@@ -2,7 +2,7 @@
 # Author: Aniverse
 #
 # 2018.12.22
-# 1.0.3
+# 1.0.4
 #
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/dd)"
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/dd) 16
@@ -20,6 +20,7 @@ heibaise=${black}${on_white}; heihuangse=${on_yellow}${black}
 dd_size=$1
 [[ -z $dd_size ]] && dd_size=16
 echo "$dd_size" | grep -q "\." && { echo -e "\n${bold}不支持非整数！${normal}\n" ; exit 1 ; }
+ddsize=$(echo "$dd_size" | grep -oE "[1-9][0-9]+")
 
 starttime=$(date +%s)
 
@@ -81,7 +82,7 @@ dd_time=$(cat dd_result | grep --color=never -oE "[0-9]+\.[0-9][0-9]")
 endtime=$(date +%s) ; timeused=$(( $endtime - $starttime )) ; time_cal
 
 # echo -e "\n${bold}第${bailvse} $i ${normal}${bold}次循环 dd 已完成，总写入量${baihongse} ${data}${unit} ${normal}"
-echo -e "\n${bold}第${bailanse} $i ${normal}${bold}次循环 dd 已完成，总写入量${baihongse} ${data}${unit} ${normal}${bold}，总耗时${baizise} ${time}${normal}"
+echo -e "\n${bold}第${bailanse} $i ${normal}${bold}次循环 dd 已完成，总写入量${baihongse} ${data}${unit} ${normal}${bold}，总耗时${baizise} ${time} ${normal}"
 echo -e "${bold}本次耗时${heihuangse} $dd_time 秒 ${normal}${bold}，本次 dd 平均速度${baiqingse} ${dd_speed} ${normal}"
 # echo -e "${bold}${bailanse}$(date "+%Y.%m.%d %H:%M:%S")，总耗时${baizise} ${time}${normal}\n"
 
