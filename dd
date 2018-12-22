@@ -1,8 +1,10 @@
 #!/bin/bash
-#
 # Author: Aniverse
+#
 # 2018.12.22
-# 1.0.1
+# 1.0.2
+#
+# bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/dd)"
 
 black=$(tput setaf 0); red=$(tput setaf 1); green=$(tput setaf 2); yellow=$(tput setaf 3);
 blue=$(tput setaf 4); magenta=$(tput setaf 5); cyan=$(tput setaf 6); white=$(tput setaf 7);
@@ -13,6 +15,9 @@ reset_standout=$(tput rmso); normal=$(tput sgr0); alert=${white}${on_red}; title
 baihuangse=${white}${on_yellow}; bailanse=${white}${on_blue}; bailvse=${white}${on_green};
 baiqingse=${white}${on_cyan}; baihongse=${white}${on_red}; baizise=${white}${on_magenta};
 heibaise=${black}${on_white}; heihuangse=${on_yellow}${black}
+
+dd_size=$1
+[[ -z $dd_size ]] && dd_size=16
 
 starttime=$(date +%s)
 
@@ -64,10 +69,10 @@ starttime=$(date +%s)
 while true ; do
 
 
-i=$(expr $i + 1) ; data=$(expr $i \* 16) ; unit=GB
-[[ $(command -v bc) ]] && [[ $data -ge 1024 ]] && data=$(echo "scale=3 ; $date/1024" | bc) && unit=TB
+i=$(expr $i + 1) ; data=$(expr $i \* $dd_size) ; unit=GB
+[[ $(command -v bc) ]] && [[ $data -ge 1024 ]] && eval data=$(echo "scale=3 ; $date/1024" | bc) && unit=TB
 
-LANG=C dd if=/dev/zero of=~/testfile bs=1G count=16 oflag=direct > dd_result 2>&1 
+LANG=C dd if=/dev/zero of=~/testfile bs=1G count=$dd_size oflag=direct > dd_result 2>&1 
 dd_speed=$(cat dd_result | awk -F, '{io=$NF} END { print io}' | sed 's/^[ \t]*//;s/[ \t]*$//')
 dd_time=$(cat dd_result | grep --color=never -oE "[0-9]+\.[0-9][0-9]")
 endtime=$(date +%s) ; timeused=$(( $endtime - $starttime )) ; time_cal
