@@ -6,7 +6,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.9.3
+ScriptVersion=1.0.9.4
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -17,16 +17,19 @@ full_ip=0
 
 # 运行参数 --------------------------------------------------------------------------------------------------------
 
-OPTS=$(getopt -n "$0" -o abcdf --long "debug,no-ip,no-ipip,no-io,full-ip" -- "$@")
+OPTS=$(getopt -n "$0" -o abcdfghi --long "debug,no-ip,no-ipip,no-io,full-ip,down-test,speedtest,iperf_test" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
   case "$1" in
-    -a | --no-ip       ) show_ip=0     ; shift ;;
-    -b | --no-ipip     ) show_ipip=0   ; shift ;;
-    -c | --no-io       ) test_io=0     ; shift ;;
-    -d | --debug       ) debug=1       ; shift ;;
-    -f | --full-ip     ) full_ip=1     ; shift ;;
+    -a | --no-ip       ) show_ip=0       ; shift ;;
+    -b | --no-ipip     ) show_ipip=0     ; shift ;;
+    -c | --no-io       ) test_io=0       ; shift ;;
+    -d | --debug       ) debug=1         ; shift ;;
+    -f | --full-ip     ) full_ip=1       ; shift ;;
+    -g | --down-test   ) down-test=1     ; shift ;;
+    -h | --speedtest   ) spd_test=1      ; shift ;;
+    -i | --iperf       ) iperf_test=1    ; shift ;;
     -- ) shift; break ;;
      * ) break ;;
   esac
