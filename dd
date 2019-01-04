@@ -1,8 +1,8 @@
 #!/bin/bash
 # Author: Aniverse
 #
-# 2018.12.22
-# 1.0.4
+# 2018.12.28
+# 1.0.5
 #
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/dd)"
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/dd) 16
@@ -24,7 +24,7 @@ ddsize=$(echo "$dd_size" | grep -oE "[1-9][0-9]+")
 
 starttime=$(date +%s)
 
-next() { printf "%-70s\n" "-" | sed 's/\s/-/g' | tee -a $log ; }
+next() { printf "%-70s\n" "-" | sed 's/\s/-/g' ; }
 
 cancel() {
 	echo ""
