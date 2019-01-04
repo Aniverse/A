@@ -6,7 +6,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.9.5
+ScriptVersion=1.0.9.6
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -235,9 +235,9 @@ else bbrinuse="${red}否${jiacu}" ; fi
 # Virt-what 相关 ----------------------------------------------------------------------------------------------
 
 
+echo -e "${bold}正在检查虚拟化技术 ...${normal}"
 
 if [[ $EUID = 0 ]]; then
-    echo -e "${bold}正在检查虚拟化技术 ...${normal}"
     wget --no-check-certificate -qO /usr/local/bin/virt-what https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what
     mkdir -p /usr/lib/virt-what
     wget --no-check-certificate -qO /usr/lib/virt-what/virt-what-cpuid-helper https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what-cpuid-helper
@@ -298,6 +298,8 @@ fi
 # 共享盒子 邻居信息 ------------------------------------------------------------------------------------------
 
 serverfqdn=$( hostname -f 2>1 )
+[ -z $serverfqdn ] && serverfqdn=$( hostname 2>1 )
+
 Seedbox=Unknown
 echo $serverfqdn | grep -q feral          && Seedbox=FH
 echo $serverfqdn | grep -q seedhost       && Seedbox=SH
@@ -312,14 +314,18 @@ echo $serverfqdn | grep -q seedboxes.cc   && Seedbox=Sbcc   && Docker=1
 # 所有硬盘分区
 df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker|md[0-9]+/[a-z].*' | sort -u > ~/par_list
 
-[[ ! $Seedbox == Unknown ]] && {
+[[ ! $Seedbox == Unknown ]] && [[ ! $virtual == Docker ]] && {
 
 echo -e "${bold}正在检查盒子的邻居情况 ...${normal}"
 
-[[ $Seedbox == USB ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11 这样子的
-[[ $Seedbox == PM  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home   这样子的
-[[ $Seedbox == SH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home22 这样子的
-[[ $Seedbox == FH  ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /media/sdk1 这样子的，或者 /media/98811
+[[ $Seedbox == USB    ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11    这样子的
+[[ $Seedbox == PM     ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home       这样子的
+[[ $Seedbox == SH     ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home22     这样子的
+[[ $Seedbox == FH     ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /media/sdk1 这样子的，或者 /media/98811
+[[ $Seedbox == DSD    ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /           这样子的
+[[ $Seedbox == Sbcc   ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home/user  这样子的
+[[ $Seedbox == AppBox ]] && [[ ! $(whoami) == root  ]] && current_disk=/home/$(whoami)
+[[ $Seedbox == AppBox ]] && [[   $(whoami) == root  ]] && current_disk=/root
 # /media/sdr1/home 这样子的，一些老的 FH HDD 会出现这样的
 [[ $Seedbox == FH  ]] && echo $current_disk | grep -q "/home" && current_disk=$(echo $current_disk | sed "s/\/home//") && FH_HOME=1
 
@@ -464,6 +470,8 @@ ls /dev/disk/by-id 2>/dev/null | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-pa
 cat ~/disk.info 2>/dev/null | sed -e 's/\(.*\)_/\1:/' | sed "s/:.*//" | sort -u > ~/disk.info.2
 # disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 disk_num=$( lsblk --nodeps --noheadings --output NAME,SIZE,ROTA --exclude 1,2,11 2>1 | wc -l )
+
+[[ $debug == 1 ]] && echo -e "disk_num=$disk_num"
 
 disk_model_num=$( cat ~/disk.info.2 2>/dev/null | wc -l )
 
