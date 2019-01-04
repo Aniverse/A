@@ -6,7 +6,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.9
+ScriptVersion=1.0.9.2
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -163,9 +163,10 @@ get_opsy() {
 [ -f /etc/os-release     ] && awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release && return
 [ -f /etc/lsb-release    ] && awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release && return ; }
 
-running_kernel=$(uname -r )
-arch=$( uname -m )         # 架构，可以识别 ARM
+running_kernel=$(uname -r 2>1 )
+arch=$( uname -m 2>1 )     # 架构，可以识别 ARM
 lbit=$( getconf LONG_BIT ) # 只显示多少位，无法识别 ARM
+[ -z $arch ] && arch=$(echo "x$(getconf LONG_BIT)")
 
 DISTRO=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
 DISTROL=$(echo $DISTRO | tr 'A-Z' 'a-z')
@@ -195,14 +196,14 @@ tcp_control_all=$( cat /proc/sys/net/ipv4/tcp_available_congestion_control 2>1 )
 
 tcp_c_name=$tcp_control
 [[ $tcp_control == bbr_powered ]] && tcp_c_name="bbr_powered (用 Vicer 脚本安装的 Yankee 版魔改 BBR)"
-[[ $tcp_control == tsunami ]] && tcp_c_name="tsunami (Yankee 版魔改 BBR)"
-[[ $tcp_control == nanqinlang ]] && tcp_c_name="nanqinlang (南琴浪版魔改 BBR)"
+[[ $tcp_control == tsunami     ]] && tcp_c_name="tsunami (Yankee 版魔改 BBR)"
+[[ $tcp_control == nanqinlang  ]] && tcp_c_name="nanqinlang (南琴浪版魔改 BBR)"
 
 # 检查理论上内核是否支持锐速
 SSKernel="${red}否${jiacu}"
 URLKernel=https://raw.githubusercontent.com/0oVicero0/serverSpeeder_kernel/master/serverSpeeder.txt
-AcceVer=$(wget --no-check-certificate -qO- "$URLKernel" | grep "$KNA/" | grep "/x$KernelBit/" | grep "/$running_kernel/" | awk -F'/' '{print $NF}' | sort -n -k 2 -t '_' |tail -1)
-MyKernel=$(wget --no-check-certificate -qO- "$URLKernel" | grep "$KNA/" | grep "/x$KernelBit/" | grep "/$running_kernel/" | grep "$AcceVer" |tail -1)
+AcceVer=$(wget --no-check-certificate -qO- "$URLKernel" | grep "$KNA/" | grep "/x$KernelBit/" | grep "/$running_kernel/" | awk -F'/' '{print $NF}' | sort -n -k 2 -t '_' | tail -1)
+MyKernel=$(wget --no-check-certificate -qO- "$URLKernel" | grep "$KNA/" | grep "/x$KernelBit/" | grep "/$running_kernel/" | grep "$AcceVer" | tail -1)
 [[ ! -z "$MyKernel" ]] && SSKernel="${green}是${jiacu}"
 
 # 检查理论上内核是否支持原版 BBR
@@ -806,7 +807,9 @@ echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}" ; }
 
 
 echo -e  "  操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
+[[ $running_kernel ]] &&
 echo -e  "  系统内核              ${green}$running_kernel${jiacu}"
+[[ $tcp_c_name ]] &&
 echo -e  "  TCP 拥塞控制算法      ${green}$tcp_c_name${jiacu}"
 echo
 
