@@ -6,7 +6,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.9.2
+ScriptVersion=1.0.9.3
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -112,8 +112,8 @@ isValidIpAddress    "$serveripv4" || { echo "${red}${shanshuo}WARNING ${jiacu}${
 echo -e "${bold}正在检查服务器的 IPv6 信息 ...${normal}"
 serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -1 )
 
-serveripv6_show=$serveripv6 ; [[ $full_ip == 1 ]] && serveripv6_show=$(redact_ip "$serveripv6")
-serveripv4_show=$serveripv4 ; [[ $full_ip == 1 ]] && serveripv4_show=$(redact_ip "$serveripv4")
+serveripv6_show=$(redact_ip "$serveripv6") ; [[ $full_ip == 1 ]] && serveripv6_show=$serveripv6
+serveripv4_show=$(redact_ip "$serveripv4") ; [[ $full_ip == 1 ]] && serveripv4_show=$serveripv4
 
 }
 
@@ -233,35 +233,6 @@ else bbrinuse="${red}否${jiacu}" ; fi
 
 
 
-# if [[ $EUID = 0 ]]; then
-# 10086 的意义就在于让这段代码无法运行，等于注释掉了
-if [[ $EUID = 10086 ]]; then
-echo -e "${bold}正在检查虚拟化技术 ...${normal}"
-virtualx=$(dmesg) 2>/dev/null
-if grep docker /proc/1/cgroup -qa; then
-virtual="Docker"
-elif grep lxc /proc/1/cgroup -qa; then
-virtual="Lxc"
-elif grep -qa container=lxc /proc/1/environ; then
-virtual="Lxc"
-elif [[ -f /proc/user_beancounters ]]; then
-virtual="OpenVZ"
-elif [[ "$virtualx" == *kvm-clock* ]]; then
-virtual="Kernel-based Virtual Machine (KVM)"
-elif [[ "$virtualx" == *"VMware Virtual Platform"* ]]; then
-virtual="VMware"
-elif [[ "$virtualx" == *"Parallels Software International"* ]]; then
-virtual="Parallels"
-elif [[ "$virtualx" == *VirtualBox* ]]; then
-virtual="VirtualBox"
-elif [[ -e /proc/xen ]]; then
-virtual="Xen"
-else
-virtual="未检测到虚拟化技术（可能是独立服务器）"
-fi ; fi
-
-
-
 if [[ $EUID = 0 ]]; then
     echo -e "${bold}正在检查虚拟化技术 ...${normal}"
     wget --no-check-certificate -qO /usr/local/bin/virt-what https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what
@@ -269,8 +240,52 @@ if [[ $EUID = 0 ]]; then
     wget --no-check-certificate -qO /usr/lib/virt-what/virt-what-cpuid-helper https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what-cpuid-helper
     chmod +x /usr/local/bin/virt-what /usr/lib/virt-what/virt-what-cpuid-helper
     virtual="$(virt-what)" 2>/dev/null
-fi
+# https://raw.githubusercontent.com/oooldking/script/master/superbench_git.sh
+else
+    virtualx=$(dmesg) 2>/dev/null
 
+    if  [ $(which dmidecode) ]; then
+        sys_manu=$(dmidecode -s system-manufacturer) 2>/dev/null
+        sys_product=$(dmidecode -s system-product-name) 2>/dev/null
+        sys_ver=$(dmidecode -s system-version) 2>/dev/null
+    else
+        sys_manu=""
+        sys_product=""
+        sys_ver=""
+    fi
+    
+    if grep docker /proc/1/cgroup -qa; then
+        virtual="Docker"
+    elif grep lxc /proc/1/cgroup -qa; then
+        virtual="Lxc"
+    elif grep -qa container=lxc /proc/1/environ; then
+        virtual="Lxc"
+    elif [[ -f /proc/user_beancounters ]]; then
+        virtual="OpenVZ"
+    elif [[ "$virtualx" == *kvm-clock* ]]; then
+        virtual="KVM"
+    elif [[ "$cname" == *KVM* ]]; then
+        virtual="KVM"
+    elif [[ "$virtualx" == *"VMware Virtual Platform"* ]]; then
+        virtual="VMware"
+    elif [[ "$virtualx" == *"Parallels Software International"* ]]; then
+        virtual="Parallels"
+    elif [[ "$virtualx" == *VirtualBox* ]]; then
+        virtual="VirtualBox"
+    elif [[ -e /proc/xen ]]; then
+        virtual="Xen"
+    elif [[ "$sys_manu" == *"Microsoft Corporation"* ]]; then
+        if [[ "$sys_product" == *"Virtual Machine"* ]]; then
+            if [[ "$sys_ver" == *"7.0"* || "$sys_ver" == *"Hyper-V" ]]; then
+                virtual="Hyper-V"
+            else
+                virtual="Microsoft Virtual Machine"
+            fi
+        fi
+#   else
+#       virtual="Dedicated"
+    fi
+fi
 
 
 
@@ -279,12 +294,14 @@ fi
 
 # 共享盒子 邻居信息 ------------------------------------------------------------------------------------------
 
-serverfqdn=$( hostname -f )
+serverfqdn=$( hostname -f 2>1 )
 Seedbox=Unknown
 echo $serverfqdn | grep -q feral          && Seedbox=FH
 echo $serverfqdn | grep -q seedhost       && Seedbox=SH
 echo $serverfqdn | grep -q pulsedmedia    && Seedbox=PM
 echo $serverfqdn | grep -q ultraseedbox   && Seedbox=USB
+echo $serverfqdn | grep -q appbox         && Seedbox=AppBox && Docker=1
+echo $serverfqdn | grep -q seedboxes.cc   && Seedbox=Sbcc   && Docker=1
 [[ $Seedbox == FH ]] && df -hPl | grep -q "/media/md" && FH_SSD=1
 
 [[ $debug == 1 ]] && echo -e "Seedbox=$Seedbox  FH_SSD=$FH_SSD"
