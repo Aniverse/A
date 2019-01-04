@@ -7,7 +7,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.0.4
+ScriptVersion=1.1.0.5
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -246,7 +246,7 @@ if [[ $EUID = 0 ]]; then
     virtual="$(virt-what)" 2>/dev/null
 # https://raw.githubusercontent.com/oooldking/script/master/superbench_git.sh
 else
-    virtualx=$(dmesg) 2>/dev/null
+    virtualx=$(dmesg 2>1) 
 
     if  [ $(which dmidecode) ]; then
         sys_manu=$(dmidecode -s system-manufacturer) 2>/dev/null
@@ -258,18 +258,18 @@ else
         sys_ver=""
     fi
     
-    if grep docker /proc/1/cgroup -qa; then
+    if grep docker /proc/1/cgroup -qa 2>/dev/null ; then
         virtual="Docker"
-    elif grep lxc /proc/1/cgroup -qa; then
+    elif grep lxc /proc/1/cgroup -qa 2>/dev/null; then
         virtual="Lxc"
-    elif grep -qa container=lxc /proc/1/environ; then
+    elif grep -qa container=lxc /proc/1/environ 2>/dev/null; then
         virtual="Lxc"
     elif [[ -f /proc/user_beancounters ]]; then
         virtual="OpenVZ"
     elif [[ "$virtualx" == *kvm-clock* ]]; then
         virtual="KVM"
-    elif [[ "$cname" == *KVM* ]]; then
-        virtual="KVM"
+#   elif [[ "$cname" == *KVM* ]]; then
+#       virtual="KVM"
     elif [[ "$virtualx" == *"VMware Virtual Platform"* ]]; then
         virtual="VMware"
     elif [[ "$virtualx" == *"Parallels Software International"* ]]; then
@@ -818,8 +818,8 @@ echo -e  "  内存大小              ${cyan}$tram MB ($uram MB 已用)${jiacu}"
 echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
 echo
 
-[[ ! $Seedbox == FH ]] && _show_disk_info | tee -a ~/_show_disk_info
-[[ $(cat ~/_show_disk_info) ]] && echo && rm -f ~/_show_disk_info
+_show_disk_info | tee -a ~/_show_disk_info
+[[ $(cat ~/_show_disk_info 2>1) ]] && echo && rm -f ~/_show_disk_info
 # if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then echo ; fi
 
 
