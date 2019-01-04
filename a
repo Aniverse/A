@@ -6,7 +6,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.9.4
+ScriptVersion=1.0.9.5
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -332,11 +332,11 @@ neighbors_same_disk_num=$(cat ~/neighbors_all | grep "$current_disk" | wc -l)
 if [[ $FH_SSD == 1 ]];then
     current_disk_size=($( LANG=C df -hPl | grep $(pwd) | awk '{print $2}' ))
     current_disk_total_used=($( LANG=C df -hPl | grep $(pwd) | awk '{print $3}' ))
-    current_disk_self_used=$( du -sh ~ | awk -F " " '{print $1}' )
+    current_disk_self_used=$( du -sh ~ 2>1 | awk -F " " '{print $1}' )
 else
     current_disk_size=($( LANG=C df -hPl | grep $current_disk | awk '{print $2}' ))
     current_disk_total_used=($( LANG=C df -hPl | grep $current_disk | awk '{print $3}' ))
-    current_disk_self_used=$( du -sh ~ | awk -F " " '{print $1}' )
+    current_disk_self_used=$( du -sh ~ 2>1 | awk -F " " '{print $1}' )
 fi
 
 #current_disk_avai=($( LANG=C df -hPl | grep $current_disk | awk '{print $4}' ))
@@ -370,6 +370,10 @@ done ; echo ${total_size} ; }
 # 其实这个判定对于独服可能不太对
 #disk_par_num=$(df -lh | grep -P "/home[0-9]+|media|home|mnt" | wc -l)
 disk_par_num=$(cat ~/par_list | wc -l)
+# 这个估计没毛病，Docker、独服、KVM 下都没问题的样子，别的不知道
+# disk_par_num=$(lsblk --nodeps --noheadings --output NAME,SIZE,ROTA --exclude 1,2,11 2>1 | wc -l)
+
+
 # / 为最大分区时，数字 +1
 [[ $(df -lh | grep $(df -k | sort -rn -k4 | awk '{print $1}' | head -1) | awk '{print $NF}') == / ]] && disk_par_num=$(expr $disk_par_num + 1)
 
@@ -379,8 +383,11 @@ disk_size2=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot
 disk_total_size=$( calc_disk ${disk_size1[@]} )
 disk_used_size=$( calc_disk ${disk_size2[@]} )
 
-
-
+# 2019.01.04 今天才知道原来 lsblk 还能看硬盘型号……
+# lsblk --nodeps --noheadings --exclude 1,2,11 --output NAME,SIZE,ROTA,MODEL 2>1
+disk_size=$(lsblk --nodeps --noheadings --output SIZE 2>1 | awk '{print $1}')
+disk_total_size=$( calc_disk ${disk_size[@]} )
+#disk_used_size=$( du -sh ~ 2>1 | awk -F " " '{print $1}' | sed "s/G//" )
 
 
 
@@ -455,7 +462,9 @@ ls /dev/disk/by-id 2>/dev/null | grep -q md-   && Raid=Soft
 ls /dev/disk/by-id 2>/dev/null | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u > ~/disk.info
 
 cat ~/disk.info 2>/dev/null | sed -e 's/\(.*\)_/\1:/' | sed "s/:.*//" | sort -u > ~/disk.info.2
-disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
+# disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
+disk_num=$( lsblk --nodeps --noheadings --output NAME,SIZE,ROTA --exclude 1,2,11 2>1 | wc -l )
+
 disk_model_num=$( cat ~/disk.info.2 2>/dev/null | wc -l )
 
 [[ $debug == 1 ]] && echo -e "\n" && cat ~/disk.info.2 && echo -e "\n"
@@ -777,8 +786,6 @@ speed_test(){
 function _menu() { clear ; echo
 echo -e  " ${baizise}${bold}                  This is the choice of Steins;Gate                   ${jiacu} "
 
-[[ ! $Seedbox == Unknown ]] && SeedboxDiskTotalFlagOne="总" ; [[ $Seedbox == Unknown ]] && SeedboxDiskTotalFlagTwo="  "
-
 echo
 echo -e  "  CPU 型号              ${cyan}$CPUNum$cname${jiacu}"
 echo -e  "  CPU 核心              ${cyan}合计 ${cpucores} 核心，${cputhreads} 线程${jiacu}"
@@ -787,13 +794,22 @@ echo -e  "  内存大小              ${cyan}$tram MB ($uram MB 已用)${jiacu}"
 [[ ! $swap == 0 ]] &&
 echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
 
+
 if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then echo ; fi
 
-[[ ! $Seedbox == FH ]] && _show_disk_info
-[[ ! $Seedbox == Unknown ]] && DiskParNumDisplay="共 $disk_par_num 个硬盘分区，合计 "
-echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagTwo}     ${cyan}${DiskParNumDisplay}$disk_total_size GB ($disk_used_size GB 已用)${jiacu}"
 
-[[ ! $Seedbox == Unknown ]] &&
+[[ ! $Seedbox == FH ]] && _show_disk_info
+
+
+# [[ ! $Seedbox == Unknown ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 "
+# [[ ! $Seedbox == Unknown ]] && SeedboxDiskTotalFlagOne="总" ; [[ $Seedbox == Unknown ]] && SeedboxDiskTotalFlagTwo="  "
+[[ ! $disk_num =~(0|1) ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 " && SeedboxDiskTotalFlagOne="总" && SeedboxDiskTotalFlagTwo="" ; SeedboxDiskTotalFlagTwo="  "
+echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagTwo}     ${cyan}${DiskNumDisplay}$disk_total_size GB${jiacu}"
+# 已用容量这个要分类讨论有点麻烦，扔了算了……
+# ($disk_used_size GB 已用)
+
+
+[[ ! $Seedbox == Unknown ]] && [[ ! $virtual == Docker ]] &&
 echo -e  "  当前硬盘大小          ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
 echo -e  "  共享盒子邻居数量      ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
 
