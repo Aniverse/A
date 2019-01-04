@@ -2,11 +2,12 @@
 # Author: Aniverse
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
-# bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
+# bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a) -f
+#
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.9.8
+ScriptVersion=1.1.0.0
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -469,11 +470,11 @@ ls /dev/disk/by-id 2>/dev/null | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-pa
 
 if [[ $virtual == Docker ]] || [[ $Seedbox == FH ]]; then
 lsblk --nodeps --noheadings --output MODEL --exclude 1,2,11 2>1 > ~/disk.info
-cat ~/disk.info | grep -q LSI && echo > ~/disk.info
-cat ~/disk.info | grep -qE "MR[0-9]+-" && echo > ~/disk.info
-cat ~/disk.info | grep -qE [Rr][Aa][Ii][Dd] && echo > ~/disk.info
-cat ~/disk.info | grep -q "LOGICAL VOLUME" && echo > ~/disk.info  # OP 10欧 HP
-cat ~/disk.info | grep -q "Virtual Disk" && echo > ~/disk.info    # OP 10欧 DELL
+cat ~/disk.info | grep -q LSI && rm -f ~/disk.info && touch ~/disk.info
+cat ~/disk.info | grep -qE "MR[0-9]+-" && rm -f ~/disk.info && touch ~/disk.info
+cat ~/disk.info | grep -qE [Rr][Aa][Ii][Dd] && rm -f ~/disk.info && touch ~/disk.info
+cat ~/disk.info | grep -q "LOGICAL VOLUME" && rm -f ~/disk.info && touch ~/disk.info  # OP 10欧 HP
+cat ~/disk.info | grep -q "Virtual Disk" && rm -f ~/disk.info && touch ~/disk.info    # OP 10欧 DELL
 # 这里我也不知道有多少种情况，乱写了
 # MegaRAID 这个在 seedboes.cc（MR9271-8iCC）、Hz 16TB HWR（MR9260-4i） 上测试通过
 fi
@@ -815,10 +816,9 @@ echo -e  "  内存大小              ${cyan}$tram MB ($uram MB 已用)${jiacu}"
 echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
 
 
+[[ ! $Seedbox == FH ]] && _show_disk_info | tee -a ~/_show_disk_info
+[[ $(cat ~/_show_disk_info) ]] && echo && rm -f ~/_show_disk_info
 # if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then echo ; fi
-
-
-[[ ! $Seedbox == FH ]] && _show_disk_info
 
 
 # [[ ! $Seedbox == Unknown ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 "
