@@ -6,17 +6,18 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.8.4
+ScriptVersion=1.0.9
 SCRIPTUPDATE=2019.01.04
 
 debug=0
 show_ip=1
 show_ipip=1
 test_io=1
+full_ip=0
 
 # 运行参数 --------------------------------------------------------------------------------------------------------
 
-OPTS=$(getopt -n "$0" -o abcd --long "debug,no-ip,no-ipip,no-io" -- "$@")
+OPTS=$(getopt -n "$0" -o abcdf --long "debug,no-ip,no-ipip,no-io,full-ip" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -25,6 +26,7 @@ while true; do
     -b | --no-ipip     ) show_ipip=0   ; shift ;;
     -c | --no-io       ) test_io=0     ; shift ;;
     -d | --debug       ) debug=1       ; shift ;;
+    -f | --full-ip     ) full_ip=1     ; shift ;;
     -- ) shift; break ;;
      * ) break ;;
   esac
@@ -83,6 +85,19 @@ function isInternalIpAddress() { echo $1 | grep -qE '(192\.168\.((\d{1,2})|(1\d{
 
 
 
+# 遮掉 IP 末位
+function redact_ip() {
+    case "$1" in
+        *.*)
+            printf '%s.xxx\n' "$(printf '%s\n' "$1" | cut -d . -f 1-3)"
+            ;;
+        *:*)
+            printf '%s:xxxx\n' "$(printf '%s\n' "$1" | cut -d : -f 1-3)"
+            ;;
+    esac
+}
+
+
 
 function _ip() {
 
@@ -95,7 +110,10 @@ isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -
 isValidIpAddress    "$serveripv4" || { echo "${red}${shanshuo}WARNING ${jiacu}${underline}Failed to detect your public IPv4 address, use internal address instead${jiacu}" ; serveripv4=$( ip route get 8.8.8.8 | awk '{print $3}' | head -1 ) ; }
 
 echo -e "${bold}正在检查服务器的 IPv6 信息 ...${normal}"
-serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -n1 )
+serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -1 )
+
+serveripv6_show=$serveripv6 ; [[ $full_ip == 1 ]] && serveripv6_show=$(redact_ip "$serveripv6")
+serveripv4_show=$serveripv4 ; [[ $full_ip == 1 ]] && serveripv4_show=$(redact_ip "$serveripv4")
 
 }
 
@@ -149,11 +167,11 @@ running_kernel=$(uname -r )
 arch=$( uname -m )         # 架构，可以识别 ARM
 lbit=$( getconf LONG_BIT ) # 只显示多少位，无法识别 ARM
 
-DISTRO=`  awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release  `
-DISTROL=`  echo $DISTRO | tr 'A-Z' 'a-z'  `
-[[ $DISTRO =~ (Ubuntu|Debian) ]]  && CODENAME=`  cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -n1  `
-[[ $DISTRO == Ubuntu ]] && osversion=`  grep Ubuntu /etc/issue | head -1 | grep -oE  "[0-9.]+"  `
-[[ $DISTRO == Debian ]] && osversion=`  cat /etc/debian_version  `
+DISTRO=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
+DISTROL=$(echo $DISTRO | tr 'A-Z' 'a-z')
+[[ $DISTRO =~ (Ubuntu|Debian) ]]  && CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -1)
+[[ $DISTRO == Ubuntu ]] && osversion=$(grep Ubuntu /etc/issue | head -1 | grep -oE  "[0-9.]+")
+[[ $DISTRO == Debian ]] && osversion=$(cat /etc/debian_version)
 [[ $KNA == CentOS ]] && DISTRO=$( get_opsy )
 
 [[ $(command -v dpkg) ]] && {
@@ -172,8 +190,8 @@ dpkg -l | grep pve-kernel    | awk '{print $2}' >> ~/system_kernel_list ; }
 
 echo -e "${bold}正在检查 TCP 信息 ...${normal}"
 
-tcp_control=$( cat /proc/sys/net/ipv4/tcp_congestion_control )
-tcp_control_all=$( cat /proc/sys/net/ipv4/tcp_available_congestion_control )
+tcp_control=$( cat /proc/sys/net/ipv4/tcp_congestion_control 2>1 )
+tcp_control_all=$( cat /proc/sys/net/ipv4/tcp_available_congestion_control 2>1 )
 
 tcp_c_name=$tcp_control
 [[ $tcp_control == bbr_powered ]] && tcp_c_name="bbr_powered (用 Vicer 脚本安装的 Yankee 版魔改 BBR)"
@@ -183,8 +201,8 @@ tcp_c_name=$tcp_control
 # 检查理论上内核是否支持锐速
 SSKernel="${red}否${jiacu}"
 URLKernel=https://raw.githubusercontent.com/0oVicero0/serverSpeeder_kernel/master/serverSpeeder.txt
-AcceVer=$(wget --no-check-certificate -qO- "$URLKernel" |grep "$KNA/" |grep "/x$KernelBit/" |grep "/$running_kernel/" |awk -F'/' '{print $NF}' |sort -n -k 2 -t '_' |tail -n 1)
-MyKernel=$(wget --no-check-certificate -qO- "$URLKernel" |grep "$KNA/" |grep "/x$KernelBit/" |grep "/$running_kernel/" |grep "$AcceVer" |tail -n 1)
+AcceVer=$(wget --no-check-certificate -qO- "$URLKernel" | grep "$KNA/" | grep "/x$KernelBit/" | grep "/$running_kernel/" | awk -F'/' '{print $NF}' | sort -n -k 2 -t '_' |tail -1)
+MyKernel=$(wget --no-check-certificate -qO- "$URLKernel" | grep "$KNA/" | grep "/x$KernelBit/" | grep "/$running_kernel/" | grep "$AcceVer" |tail -1)
 [[ ! -z "$MyKernel" ]] && SSKernel="${green}是${jiacu}"
 
 # 检查理论上内核是否支持原版 BBR
@@ -771,9 +789,9 @@ echo
 
 
 [[ $show_ip == 1 ]] && {
-echo -e  "  IPv4 地址             ${green}$serveripv4${jiacu}"
+echo -e  "  IPv4 地址             ${green}$serveripv4_show${jiacu}"
 [[ $serveripv6 ]] &&
-echo -e  "  IPv6 地址             ${green}$serveripv6${jiacu}"
+echo -e  "  IPv6 地址             ${green}$serveripv6_show${jiacu}"
 [[ ! $Seedbox == Unknown ]] &&
 echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}" ; }
 
