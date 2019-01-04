@@ -7,7 +7,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.0.3
+ScriptVersion=1.1.0.4
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -833,7 +833,7 @@ echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagT
 
 
 [[ ! $Seedbox == Unknown ]] && [[ ! $virtual == Docker ]] &&
-echo -e  "  当前硬盘大小          ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
+echo -e  "  当前硬盘分区大小      ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
 echo -e  "  共享盒子邻居数量      ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
 
 
