@@ -7,7 +7,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.0.1
+ScriptVersion=1.1.0.2
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -489,18 +489,19 @@ disk_model_num=$( cat ~/disk.info.2 2>/dev/null | wc -l )
 
 [[ $debug == 1 ]] && echo -e "\n" && cat ~/disk.info.2 && echo -e "\n"
 
-disk_model_1_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '1p')  2>/dev/null | wc -l )
-disk_model_2_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '2p')  2>/dev/null | wc -l )
-disk_model_3_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '3p')  2>/dev/null | wc -l )
-disk_model_4_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '4p')  2>/dev/null | wc -l )
-disk_model_5_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '5p')  2>/dev/null | wc -l )
-disk_model_6_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '6p')  2>/dev/null | wc -l )
-disk_model_7_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '7p')  2>/dev/null | wc -l )
-disk_model_8_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '8p')  2>/dev/null | wc -l )
-disk_model_9_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '9p')  2>/dev/null | wc -l )
-disk_model_0_num=$( cat ~/disk.info 2>/dev/null | grep $(cat ~/disk.info.2 2>/dev/null | sed -n '10p') 2>/dev/null | wc -l )
+disk_model_1_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '1p')"  2>/dev/null | wc -l )
+disk_model_2_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '2p')"  2>/dev/null | wc -l )
+disk_model_3_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '3p')"  2>/dev/null | wc -l )
+disk_model_4_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '4p')"  2>/dev/null | wc -l )
+disk_model_5_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '5p')"  2>/dev/null | wc -l )
+disk_model_6_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '6p')"  2>/dev/null | wc -l )
+disk_model_7_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '7p')"  2>/dev/null | wc -l )
+disk_model_8_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '8p')"  2>/dev/null | wc -l )
+disk_model_9_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '9p')"  2>/dev/null | wc -l )
+disk_model_0_num=$( cat ~/disk.info 2>/dev/null | grep "$(cat ~/disk.info.2 2>/dev/null | sed -n '10p')" 2>/dev/null | wc -l )
 
 [[ $debug == 1 ]] && echo -e "disk_model_1_num=$disk_model_1_num"
+[[ $debug == 1 ]] && echo -e "disk_model_2_num=$disk_model_2_num"
 
 }
 
