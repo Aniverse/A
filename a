@@ -6,7 +6,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.9.6
+ScriptVersion=1.0.9.7
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -803,7 +803,7 @@ echo -e  "  内存大小              ${cyan}$tram MB ($uram MB 已用)${jiacu}"
 echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
 
 
-if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then echo ; fi
+# if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then echo ; fi
 
 
 [[ ! $Seedbox == FH ]] && _show_disk_info
@@ -811,7 +811,8 @@ if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then echo ; fi
 
 # [[ ! $Seedbox == Unknown ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 "
 # [[ ! $Seedbox == Unknown ]] && SeedboxDiskTotalFlagOne="总" ; [[ $Seedbox == Unknown ]] && SeedboxDiskTotalFlagTwo="  "
-[[ ! $disk_num =~(0|1) ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 " && SeedboxDiskTotalFlagOne="总" && SeedboxDiskTotalFlagTwo="" ; SeedboxDiskTotalFlagTwo="  "
+SeedboxDiskTotalFlagTwo="  "
+[[ ! $disk_num =~(0|1) ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 " && SeedboxDiskTotalFlagOne="总" && SeedboxDiskTotalFlagTwo=""
 echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagTwo}     ${cyan}${DiskNumDisplay}$disk_total_size GB${jiacu}"
 # 已用容量这个要分类讨论有点麻烦，扔了算了……
 # ($disk_used_size GB 已用)
