@@ -7,7 +7,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.0.5
+ScriptVersion=1.1.0.6
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -536,7 +536,7 @@ fi
 function _show_disk_info () {
 
 # 检查能不能得到通电时间，能得到的话脚本运行应该比较正常吧？
-if [[ $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -oE "[0-9]+") ]]; then
+if [[ $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -Ev [A-Z] | grep -oE "[0-9]+") ]]; then
 
 disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 [[ $debug == 1 ]] && echo -e "disk_num=$disk_num"
