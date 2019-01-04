@@ -6,8 +6,8 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.8.3
-SCRIPTUPDATE=2018.12.19
+ScriptVersion=1.0.8.4
+SCRIPTUPDATE=2019.01.04
 
 debug=0
 show_ip=1
@@ -110,13 +110,16 @@ echo -e "${bold}正在检查服务器的其他 IP 信息 ... (可能要很久)${
 ipip_result=~/ipip_result
 wget --no-check-certificate -qO- https://www.ipip.net/ip.html > $ipip_result 2>&1
 
-  ipip_IP=$( cat $ipip_result | grep -A3 当前IP     | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+" | head -1 )
- ipip_ASN=$( cat $ipip_result | grep -C7 ASN数据    | grep -oE "AS[0-9]+" | head -1 )
-ipip_CIDR=$( cat $ipip_result | grep -C7 ASN数据    | grep -oE "[0-9]+.[0-9]+.[0-9]+.[0-9]+/[0-9]+" | head -1 )
+# ipip_Loc=$( cat $ipip_result | grep -A3 地理位置   | grep -v 地理位置 | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
+# ipip_ISP=$( cat $ipip_result | grep -A3 -E "运营商|所有者" | grep -Ev "运营商|所有者" | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
+
+  ipip_IP=$( cat $ipip_result | grep -A3 IP     | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | head -1 )
+ ipip_ASN=$( cat $ipip_result | grep -C7 ASN    | grep -oE "AS[0-9]+" | head -1 )
+ipip_CIDR=$( cat $ipip_result | grep -C7 ASN    | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+" | head -1 )
   ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" | head -1 )
 ipip_rDNS=$( cat $ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: //" )
- ipip_Loc=$( cat $ipip_result | grep -A3 地理位置   | grep -v 地理位置 | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
- ipip_ISP=$( cat $ipip_result | grep -A3 运营商     | grep -v 运营商   | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
+ ipip_Loc=$( cat $ipip_result | grep -A7 "https://tools.ipip.net/traceroute.php?ip=" | tail -1 | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
+ ipip_ISP=$( cat $ipip_result | grep -A9 "$ipip_Loc" | tail -1 | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
 
 #[[ $ipip_result == ~/ipip_result ]] && 
 rm -f $ipip_result
