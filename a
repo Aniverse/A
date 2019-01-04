@@ -7,7 +7,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.0.2
+ScriptVersion=1.1.0.3
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -539,6 +539,7 @@ function _show_disk_info () {
 if [[ $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -oE "[0-9]+") ]]; then
 
 disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
+[[ $debug == 1 ]] && echo -e "disk_num=$disk_num"
 
 # 2019.01.04：这个作为型号还是不太对，先去掉了
   # [[ ! -z $RC_Model ]] &&
@@ -815,7 +816,7 @@ echo -e  "  CPU 状态              ${cyan}当前主频 ${freq} MHz${jiacu}"
 echo -e  "  内存大小              ${cyan}$tram MB ($uram MB 已用)${jiacu}"
 [[ ! $swap == 0 ]] &&
 echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}"
-
+echo
 
 [[ ! $Seedbox == FH ]] && _show_disk_info | tee -a ~/_show_disk_info
 [[ $(cat ~/_show_disk_info) ]] && echo && rm -f ~/_show_disk_info
@@ -825,7 +826,7 @@ echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}
 # [[ ! $Seedbox == Unknown ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 "
 # [[ ! $Seedbox == Unknown ]] && SeedboxDiskTotalFlagOne="总" ; [[ $Seedbox == Unknown ]] && SeedboxDiskTotalFlagTwo="  "
 SeedboxDiskTotalFlagTwo="  "
-[[ ! $disk_num =~(0|1) ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 " && SeedboxDiskTotalFlagOne="总" && SeedboxDiskTotalFlagTwo=""
+[[ $disk_num -ge 2 ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 " && SeedboxDiskTotalFlagOne="总" && SeedboxDiskTotalFlagTwo=""
 echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagTwo}     ${cyan}${DiskNumDisplay}$disk_total_size GB${jiacu}"
 # 已用容量这个要分类讨论有点麻烦，扔了算了……
 # ($disk_used_size GB 已用)
