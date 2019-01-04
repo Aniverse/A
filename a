@@ -6,7 +6,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.0.9.7
+ScriptVersion=1.0.9.8
 SCRIPTUPDATE=2019.01.04
 
 debug=0
@@ -467,6 +467,17 @@ ls /dev/disk/by-id 2>/dev/null | grep -q md-   && Raid=Soft
 [[ ! $Raid == Hard ]] &&
 ls /dev/disk/by-id 2>/dev/null | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u > ~/disk.info
 
+if [[ $virtual == Docker ]] || [[ $Seedbox == FH ]]; then
+lsblk --nodeps --noheadings --output MODEL --exclude 1,2,11 2>1 > ~/disk.info
+cat ~/disk.info | grep -q LSI && echo > ~/disk.info
+cat ~/disk.info | grep -qE "MR[0-9]+-" && echo > ~/disk.info
+cat ~/disk.info | grep -qE [Rr][Aa][Ii][Dd] && echo > ~/disk.info
+cat ~/disk.info | grep -q "LOGICAL VOLUME" && echo > ~/disk.info  # OP 10欧 HP
+cat ~/disk.info | grep -q "Virtual Disk" && echo > ~/disk.info    # OP 10欧 DELL
+# 这里我也不知道有多少种情况，乱写了
+# MegaRAID 这个在 seedboes.cc（MR9271-8iCC）、Hz 16TB HWR（MR9260-4i） 上测试通过
+fi
+
 cat ~/disk.info 2>/dev/null | sed -e 's/\(.*\)_/\1:/' | sed "s/:.*//" | sort -u > ~/disk.info.2
 # disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 disk_num=$( lsblk --nodeps --noheadings --output NAME,SIZE,ROTA --exclude 1,2,11 2>1 | wc -l )
@@ -527,8 +538,9 @@ disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 # 检查能不能得到通电时间，能得到的话脚本运行应该比较正常吧？
 if [[ $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -oE "[0-9]+") ]]; then
 
-    [[ ! -z $RC_Model ]] &&
-    echo -e  "  磁盘阵列卡            ${cyan}$RC_Model${jiacu}"
+# 2019.01.04：这个作为型号还是不太对，先去掉了
+  # [[ ! -z $RC_Model ]] &&
+  # echo -e  "  磁盘阵列卡            ${cyan}$RC_Model${jiacu}"
 
 if [[ $disk_num == 1 ]]; then
     echo -e  "  硬盘信息              ${cyan}通电 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
