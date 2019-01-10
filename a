@@ -7,7 +7,7 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.0.7
+ScriptVersion=1.1.0.8
 SCRIPTUPDATE=2019.01.10
 
 debug=0
@@ -54,7 +54,7 @@ shanshuo=$(tput blink); wuguangbiao=$(tput civis); guangbiao=$(tput cnorm)
 
 # Ctrl+C 时恢复样式，删除无用文件
 cancel() { echo -e "${normal}"
-rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all ~/par_list
+rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all ~/par_list test_file_*
 exit ; }
 trap cancel SIGINT
 
@@ -899,4 +899,4 @@ echo ; }
 _menu
 [[ $test_io == 1 ]] && print_io
 
-rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all ~/par_list
+rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all ~/par_list test_file_*
