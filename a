@@ -7,8 +7,8 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.0.6
-SCRIPTUPDATE=2019.01.04
+ScriptVersion=1.1.0.7
+SCRIPTUPDATE=2019.01.10
 
 debug=0
 show_ip=1
@@ -52,6 +52,11 @@ heibaise=${black}${on_white}; jiacu=${normal}${bold}
 shanshuo=$(tput blink); wuguangbiao=$(tput civis); guangbiao=$(tput cnorm)
 
 
+# Ctrl+C 时恢复样式，删除无用文件
+cancel() { echo -e "${normal}"
+rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all ~/par_list
+exit ; }
+trap cancel SIGINT
 
 clear
 
