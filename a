@@ -7,8 +7,8 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.0.8
-SCRIPTUPDATE=2019.01.10
+ScriptVersion=1.1.0.9
+SCRIPTUPDATE=2019.02.21
 
 debug=0
 show_ip=1
@@ -320,7 +320,7 @@ echo $serverfqdn | grep -q seedboxes.cc   && Seedbox=Sbcc   && Docker=1
 # 所有硬盘分区
 df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker|md[0-9]+/[a-z].*' | sort -u > ~/par_list
 
-[[ ! $Seedbox == Unknown ]] && [[ ! $virtual == Docker ]] && {
+[[ ! $Seedbox == Unknown ]] && [[ ! $EUID = 0 ]] && [[ ! $virtual == Docker ]] && {
 
 echo -e "${bold}正在检查盒子的邻居情况 ...${normal}"
 
@@ -837,7 +837,7 @@ echo -e  "  ${SeedboxDiskTotalFlagOne}硬盘大小       ${SeedboxDiskTotalFlagT
 # ($disk_used_size GB 已用)
 
 
-[[ ! $Seedbox == Unknown ]] && [[ ! $virtual == Docker ]] &&
+[[ ! $Seedbox == Unknown ]] && [[ ! $EUID = 0 ]] && [[ ! $virtual == Docker ]] &&
 echo -e  "  当前硬盘分区大小      ${cyan}${current_disk_size}B (共 ${current_disk_total_used}B 已用，其中你用了 ${current_disk_self_used}B)${jiacu}" &&
 echo -e  "  共享盒子邻居数量      ${cyan}整台机器共 $neighbors_all_num 位邻居，其中同硬盘邻居 $neighbors_same_disk_num 位${jiacu}"
 
@@ -861,7 +861,8 @@ echo -e  "  IPv6 地址             ${green}$serveripv6_show${jiacu}"
 echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}" ; }
 
 [[ $show_ipip == 1 ]] && [[ ! -z $ipip_ISP ]] && {
-[[ $show_ip == 1 ]] && [[ ! -z $ipip_rDNS ]] && echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
+[[ ! -z $ipip_rDNS ]] && [[ ! $Seedbox == Unknown || $full_ip == 1 ]] && 
+echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
 echo -e  "  运营商                ${green}$ipip_ISP${jiacu}"
 echo -e  "  ASN 信息              ${green}$ipip_ASN, $ipip_AS${jiacu}"
 echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}" ; }
