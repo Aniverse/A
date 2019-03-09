@@ -7,8 +7,8 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.0.9
-SCRIPTUPDATE=2019.02.21
+ScriptVersion=1.1.1.0
+SCRIPTUPDATE=2019.03.09
 
 debug=0
 show_ip=1
@@ -145,7 +145,7 @@ wget --no-check-certificate -qO- https://www.ipip.net/ip.html > $ipip_result 2>&
 ipip_CIDR=$( cat $ipip_result | grep -C7 ASN    | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+" | head -1 )
   ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" | head -1 )
 ipip_rDNS=$( cat $ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: //" )
- ipip_Loc=$( cat $ipip_result | grep -A7 "https://tools.ipip.net/traceroute.php?ip=" | tail -1 | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
+ ipip_Loc=$( cat $ipip_result | grep -A10 "https://tools.ipip.net/traceroute.php?ip=" | grep 720px | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
  ipip_ISP=$( cat $ipip_result | grep "display: inline-block;text-align: center;width: 720px;float: left;line-height: 46px" | sed -n '2p' | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
 
 #[[ $ipip_result == ~/ipip_result ]] && 
