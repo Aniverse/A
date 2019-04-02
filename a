@@ -7,9 +7,9 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-# Thanks to git.io/superbench.sh and bench.sh
+# Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.1.1.1
+ScriptVersion=1.2.0
 SCRIPTUPDATE=2019.04.02
 
 debug=0
@@ -56,7 +56,7 @@ shanshuo=$(tput blink); wuguangbiao=$(tput civis); guangbiao=$(tput cnorm)
 
 # Ctrl+C 时恢复样式，删除无用文件
 cancel() { echo -e "${normal}"
-rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all ~/par_list test_file_*
+rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all ~/par_list test_file_* ./ioping.static
 exit ; }
 trap cancel SIGINT
 
@@ -672,6 +672,53 @@ load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ 
 
 
 
+# These codes are from nench.sh, https://github.com/n-st/nench
+# ----------------------------------------------------------------------------------------------
+Bps_to_MiBps() { awk '{ printf "%.2f MiB/s\n", $0 / 1024 / 1024 } END { if (NR == 0) { print "error" } }' ; }
+Bps_to_MBps() { awk '{ printf "%.0f MB/s\n", $0 / 1000 / 1000 } END { if (NR == 0) { print "error" } }' ; }
+Bps_to_MBps_1f() { awk '{ printf "%.1f MB/s\n", $0 / 1000 / 1000 } END { if (NR == 0) { print "error" } }' ; }
+dd_benchmark() {
+LC_ALL=C dd if=/dev/zero of=test_$$ bs=64k count=16k conv=fdatasync 2>&1 | awk -F, '
+{ io=$NF ; }
+END { if (io ~ /TB\/s/) {printf("%.0f\n", 1000*1000*1000*1000*io)}
+else if (io ~ /GB\/s/) {printf("%.0f\n", 1000*1000*1000*io)}
+else if (io ~ /MB\/s/) {printf("%.0f\n", 1000*1000*io)}
+else if (io ~ /KB\/s/) {printf("%.0f\n", 1000*io)}
+else { printf("%.0f", 1*io)} ; }'
+rm -f test_$$ ; }
+#io1=$( dd_benchmark )
+#printf '    1st run:    %s\n' "$(printf '%d\n' "$io1" | Bps_to_MiBps)"
+
+if [[ ! $(which ioping) ]]; then
+    wget -qO ioping.static -t1 -T5 http://wget.racing/ioping.static
+    chmod +x ioping.static
+    ioping_cmd="./ioping.static"
+else
+    ioping_cmd="ioping"
+fi
+# ----------------------------------------------------------------------------------------------
+ioping_benchmark() {
+tmp=$("$ioping_cmd" -DRL -w 5 . | tail -2 | head -1 | awk -F ', ' '{print $NF}')
+echo $tmp | awk -F, '
+{ io=$NF ; }
+END { if (io ~ /TiB\/s/) {printf("%.0f\n", 1024*1024*1024*1024*io)}
+else if (io ~ /GiB\/s/) {printf("%.0f\n", 1024*1024*1024*io)}
+else if (io ~ /MiB\/s/) {printf("%.0f\n", 1024*1024*io)}
+else if (io ~ /KiB\/s/) {printf("%.0f\n", 1024*io)}
+else { printf("%.0f", 1*io)} ; }'
+}
+ioping_benchmark2() {
+tmp=$("$ioping_cmd" -DR -w 5 . | tail -2 | head -1 | awk -F ', ' '{print $(NF-1)}')
+echo $tmp | awk -F, '
+{ io=$NF ; }
+END { if (io ~ /m\ iops/) {printf("%.0f\n", 1000*1000*io)}
+else if (io ~ /k\ iops/) {printf("%.0f\n", 1000*io)}
+else { printf("%.0f", 1*io)} ; }'
+}
+# ----------------------------------------------------------------------------------------------
+
+
+
 
 
 # dd IO 测试
@@ -693,13 +740,10 @@ freedisk() {
 	fi
 }
 
-# 显示 IO 测试结果
 print_io() {
-
 	writemb=$(freedisk)
 	writemb_size="$(( writemb / 2 ))MB"
 	[[ $writemb_size == "1024MB" ]] && writemb_size="1.0 GB"
-
 	if [[ $writemb != "1" ]]; then
         # 因为有些情况下前两次测试 IO 速度异常的高，所以多跑两次次但是不计入统计
 		echo -n "  I/O 速度 ( 不统计 )   "
@@ -734,6 +778,43 @@ print_io() {
 		echo -e " ${red}硬盘剩余空间不足，无法进行 IO 测试！${normal}"
 	fi
 echo ; }
+
+print_io_v2() {
+#echo -e  "  ${jiacu}当前脚本版本          1.1.1.1${normal}\n"
+echo -n "  dd 顺序写入 (1st)     " ; dd_write_1=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_1 | Bps_to_MBps)${normal}"
+echo -n "  dd 顺序写入 (2nd)     " ; dd_write_2=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_2 | Bps_to_MBps)${normal}"
+echo -n "  dd 顺序写入 (3rd)     " ; dd_write_3=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_3 | Bps_to_MBps)${normal}"
+echo -n "  dd 顺序写入 (4th)     " ; dd_write_4=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_4 | Bps_to_MBps)${normal}"
+echo -n "  dd 顺序写入 (5th)     " ; dd_write_5=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_5 | Bps_to_MBps)${normal}"
+ddsum=$(echo -e "$dd_write_1\\n$dd_write_2\\n$dd_write_3\\n$dd_write_4\\n$dd_write_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$dd_write_1'+'$dd_write_2'+'$dd_write_3'+'$dd_write_4'+'$dd_write_5'-max-min}')
+ddavg=$(awk 'BEGIN{printf "%.1f", '$ddsum' / 3}')
+# 去掉了最高值和最低值后的平均速度
+echo -n "  dd 顺序写入 (avg)     " ; echo -e "${yellow}$(echo $ddavg | Bps_to_MBps_1f)${normal}\n"
+
+echo -n "  ioping 顺序读取 (1st) " ; ioping_read_1=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_1 | Bps_to_MBps)${normal}"
+echo -n "  ioping 顺序读取 (2nd) " ; ioping_read_2=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_2 | Bps_to_MBps)${normal}"
+echo -n "  ioping 顺序读取 (3rd) " ; ioping_read_3=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_3 | Bps_to_MBps)${normal}"
+echo -n "  ioping 顺序读取 (4th) " ; ioping_read_4=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_4 | Bps_to_MBps)${normal}"
+echo -n "  ioping 顺序读取 (5th) " ; ioping_read_5=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_5 | Bps_to_MBps)${normal}"
+iopingsum=$(echo -e "$ioping_read_1\\n$ioping_read_2\\n$ioping_read_3\\n$ioping_read_4\\n$ioping_read_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$ioping_read_1'+'$ioping_read_2'+'$ioping_read_3'+'$ioping_read_4'+'$ioping_read_5'-max-min}')
+iopingavg=$(awk 'BEGIN{printf "%.1f", '$iopingsum' / 3}')
+# 去掉了最高值和最低值后的平均速度
+echo -n "  ioping 顺序读取 (avg) " ; echo -e "${yellow}$(echo $iopingavg | Bps_to_MBps_1f)${normal}\n"
+
+echo -n "  ioping 随机读取 (1st) " ; ioping_4k_read_1=$(ioping_benchmark2) ; echo -e "${yellow}$ioping_4k_read_1 iops${normal}"
+echo -n "  ioping 随机读取 (2nd) " ; ioping_4k_read_2=$(ioping_benchmark2) ; echo -e "${yellow}$ioping_4k_read_2 iops${normal}"
+echo -n "  ioping 随机读取 (3rd) " ; ioping_4k_read_3=$(ioping_benchmark2) ; echo -e "${yellow}$ioping_4k_read_3 iops${normal}"
+echo -n "  ioping 随机读取 (4th) " ; ioping_4k_read_4=$(ioping_benchmark2) ; echo -e "${yellow}$ioping_4k_read_4 iops${normal}"
+echo -n "  ioping 随机读取 (5th) " ; ioping_4k_read_5=$(ioping_benchmark2) ; echo -e "${yellow}$ioping_4k_read_5 iops${normal}"
+ioping4ksum=$(echo -e "$ioping_4k_read_1\\n$ioping_4k_read_2\\n$ioping_4k_read_3\\n$ioping_4k_read_4\\n$ioping_4k_read_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$ioping_4k_read_1'+'$ioping_4k_read_2'+'$ioping_4k_read_3'+'$ioping_4k_read_4'+'$ioping_4k_read_5'-max-min}')
+ioping4kavg=$(awk 'BEGIN{printf "%.1f", '$ioping4ksum' / 3}')
+# 去掉了最高值和最低值后的平均速度
+echo -n "  ioping 随机读取 (avg) " ; echo -e "${yellow}$ioping4kavg iops${normal}"
+}
+
+
+
+
 
 # Speedtest 以后再加上
 
@@ -904,6 +985,6 @@ echo ; }
 [[ $show_ip == 1 ]] && _ip
 [[ $show_ipip == 1 ]] && _ipip
 _menu
-[[ $test_io == 1 ]] && print_io
+[[ $test_io == 1 ]] && print_io_v2
 
-rm -f ~/disk.info ~/disk.info.2 ~/system_kernel_list ~/neighbors_all ~/par_list test_file_*
+cancel
