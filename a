@@ -9,7 +9,7 @@
 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.2
+ScriptVersion=1.2.2.1
 SCRIPTUPDATE=2019.04.02
 
 debug=0
@@ -462,11 +462,13 @@ case "$raidcard" in
                ;;
     NVMe     ) for i in `seq 0 9` ; do
                    [[ $( nvme smart-log /dev/nvme$i 2>&1 | grep power_on_hours ) ]] &&
-			       echo "disk-$(expr $i + 1) text $(nvme smart-log /dev/nvme$i | grep power_on_hours | grep -oE "[0-9,]+" | sed "s/,//") $(udevadm info --name=/dev/nvme${i}n1 | grep "disk/by-id/nvme-" | head -1 | sed "s|S: disk/by-id/nvme-||" | awk -F '_' '{print $1,$2}')" >> ~/disk.info
+			       echo "disk-$(expr $i + 1) text $(nvme smart-log /dev/nvme$i | grep power_on_hours | grep -oE "[0-9,]+" | sed "s/,//") $(nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g")" >> ~/disk.info
 			   done
                ;;
 esac
 
+# nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g"
+# udevadm info --name=/dev/nvme${i}n1 | grep "disk/by-id/nvme-" | head -1 | sed "s|S: disk/by-id/nvme-||" | awk -F '_' '{print $1,$2}'
 [[ $debug == 1 ]] && echo -e "raidcard=$raidcard" ; }
 
 
