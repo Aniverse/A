@@ -7,8 +7,10 @@
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 # bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
 
-ScriptVersion=1.1.1.0
-SCRIPTUPDATE=2019.03.09
+# Thanks to git.io/superbench.sh and bench.sh
+
+ScriptVersion=1.1.1.1
+SCRIPTUPDATE=2019.04.02
 
 debug=0
 show_ip=1
@@ -143,7 +145,9 @@ wget --no-check-certificate -qO- https://www.ipip.net/ip.html > $ipip_result 2>&
   ipip_IP=$( cat $ipip_result | grep -A3 IP     | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | head -1 )
  ipip_ASN=$( cat $ipip_result | grep -C7 ASN    | grep -oE "AS[0-9]+" | head -1 )
 ipip_CIDR=$( cat $ipip_result | grep -C7 ASN    | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+" | head -1 )
-  ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" | head -1 )
+# 2019.04.02 原先的已失效
+# ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" | head -1 )
+ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -o "$ipip_ASN.*</a" | cut -d '>' -f2 | cut -d '<' -f1 )
 ipip_rDNS=$( cat $ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: //" )
  ipip_Loc=$( cat $ipip_result | grep -A10 "https://tools.ipip.net/traceroute.php?ip=" | grep 720px | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
  ipip_ISP=$( cat $ipip_result | grep "display: inline-block;text-align: center;width: 720px;float: left;line-height: 46px" | sed -n '2p' | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
@@ -179,10 +183,11 @@ lbit=$( getconf LONG_BIT ) # 只显示多少位，无法识别 ARM
 
 DISTRO=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
 DISTROL=$(echo $DISTRO | tr 'A-Z' 'a-z')
-[[ $DISTRO =~ (Ubuntu|Debian) ]]  && CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -1)
+[[ $DISTRO =~ (Ubuntu|Debian) ]] && CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -1)
 [[ $DISTRO == Ubuntu ]] && osversion=$(grep Ubuntu /etc/issue | head -1 | grep -oE  "[0-9.]+")
 [[ $DISTRO == Debian ]] && osversion=$(cat /etc/debian_version)
-[[ $KNA == CentOS ]] && DISTRO=$( get_opsy )
+#[[ $KNA =~ (CentOS|Fedora) ]] && DISTRO=$( get_opsy )
+[[ ! $DISTRO =~ (Ubuntu|Debian) ]] && DISTRO=$( get_opsy )
 
 [[ $(command -v dpkg) ]] && {
 rm -f ~/system_kernel_list
@@ -324,6 +329,7 @@ df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docke
 
 echo -e "${bold}正在检查盒子的邻居情况 ...${normal}"
 
+current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//")
 [[ $Seedbox == USB    ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11    这样子的
 [[ $Seedbox == PM     ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home       这样子的
 [[ $Seedbox == SH     ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home22     这样子的
@@ -864,7 +870,7 @@ echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}" ; }
 [[ ! -z $ipip_rDNS ]] && [[ ! $Seedbox == Unknown || $full_ip == 1 ]] && 
 echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
 echo -e  "  运营商                ${green}$ipip_ISP${jiacu}"
-echo -e  "  ASN 信息              ${green}$ipip_ASN, $ipip_AS${jiacu}"
+echo -e  "  AS  信息              ${green}$ipip_ASN, $ipip_AS${jiacu}"
 echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}" ; }
 
 [[ $show_ip == 1 || $show_ipip == 1 ]] && echo
