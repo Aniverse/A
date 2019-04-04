@@ -9,8 +9,8 @@
 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.2.1
-SCRIPTUPDATE=2019.04.02
+ScriptVersion=1.2.2.3
+SCRIPTUPDATE=2019.04.04
 
 debug=0
 show_ip=1
@@ -96,7 +96,7 @@ function isInternalIpAddress() { echo $1 | grep -qE '(192\.168\.((\d{1,2})|(1\d{
 
 
 
-# 遮掉 IP 末位
+# 遮掉 IP 末位，copied from nench.sh
 function redact_ip() {
     case "$1" in
         *.*)
@@ -232,16 +232,6 @@ if version_ge $kernel_vvv 4.9.3 && ! version_ge $kernel_vvv 4.16  ; then NQLKern
 [[ ` ps aux | grep appex | grep -v grep ` ]] && SSrunning="${green}是${jiacu}" || SSrunning="${red}否${jiacu}"
 if [[ $tcp_control =~ (nanqinlang|tsunami|bbr|bbr2|bbr_powered) ]]; then bbrinuse="${green}是${jiacu}"
 else bbrinuse="${red}否${jiacu}" ; fi
-# if [[ `lsmod | grep -E "bbr|nanqinlang|tsunami"` ]] ; then bbrinuse="${green}是${jiacu}" ; else bbrinuse="${red}否${jiacu}" ; fi
-
-# echo -e  "  当前可以使用的 TCP 拥塞控制算法      ${green}$tcp_control_all${jiacu}"
-# echo -e  "  当前内核是否支持 原版 BBR            $BBRKernel"
-# echo -e  "  当前内核是否支持 Yankee 版魔改 BBR   $YKKernel"
-# echo -e  "  当前内核是否支持 南琴浪 版魔改 BBR   $NQLKernel"
-# echo -e  "  当前内核是否支持 Vicer  版锐速       $SSKernel"
-# echo -e  "  当前 BBR  是否已启用                 $bbrinuse"
-# echo -e  "  当前 锐速 是否已启用                 $SSrunning"
-
 
 # Virt-what 相关 ----------------------------------------------------------------------------------------------
 
@@ -467,6 +457,8 @@ case "$raidcard" in
                ;;
 esac
 
+# 高版本 smartctl 也可以看 NVMe 的 smart，不过需要编译，放在一键脚本里还是太麻烦了
+# 还可以用 lsblk --nodeps --noheadings --exclude 1,2,11 --output NAME,SIZE,ROTA,MODEL 2>1
 # nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g"
 # udevadm info --name=/dev/nvme${i}n1 | grep "disk/by-id/nvme-" | head -1 | sed "s|S: disk/by-id/nvme-||" | awk -F '_' '{print $1,$2}'
 [[ $debug == 1 ]] && echo -e "raidcard=$raidcard" ; }
@@ -572,6 +564,7 @@ disk_num=$( cat ~/disk.info 2>/dev/null | wc -l )
 # 2019.01.04：这个作为型号还是不太对，先去掉了
   # [[ ! -z $RC_Model ]] &&
   # echo -e  "  磁盘阵列卡            ${cyan}$RC_Model${jiacu}"
+# 2019.04.03 啥时候改成 for？
 
 if [[ $disk_num == 1 ]]; then
     echo -e  "  硬盘信息              ${cyan}通电 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat ~/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
@@ -814,6 +807,26 @@ iopingsum=$(echo -e "$ioping_read_1\\n$ioping_read_2\\n$ioping_read_3\\n$ioping_
 iopingavg=$(awk 'BEGIN{printf "%.1f", '$iopingsum' / 3}')
 # 去掉了最高值和最低值后的平均速度
 echo -n "  ioping 顺序读取 (avg) " ; echo -e "${yellow}$(echo $iopingavg | Bps_to_MBps_1f)${normal}\n"
+
+echo -n "  随机读取 (1st)        " ; ioping_4k_read_1=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_1 iops${normal}"
+echo -n "  随机读取 (2nd)        " ; ioping_4k_read_2=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_2 iops${normal}"
+echo -n "  随机读取 (3rd)        " ; ioping_4k_read_3=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_3 iops${normal}"
+echo -n "  随机读取 (4th)        " ; ioping_4k_read_4=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_4 iops${normal}"
+echo -n "  随机读取 (5th)        " ; ioping_4k_read_5=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_5 iops${normal}"
+random_r_sum=$(echo -e "$ioping_4k_read_1\\n$ioping_4k_read_2\\n$ioping_4k_read_3\\n$ioping_4k_read_4\\n$ioping_4k_read_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$ioping_4k_read_1'+'$ioping_4k_read_2'+'$ioping_4k_read_3'+'$ioping_4k_read_4'+'$ioping_4k_read_5'-max-min}')
+random_r_avg=$(awk 'BEGIN{printf "%.1f", '$random_r_sum' / 3}')
+# 去掉了最高值和最低值后的平均速度
+echo -n "  随机读取 (avg)        " ; echo -e "${yellow}$random_r_avg iops${normal}\n"
+
+echo -n "  随机写入 (1st)        " ; ioping_4k_write_1=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_1 iops${normal}"
+echo -n "  随机写入 (2nd)        " ; ioping_4k_write_2=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_2 iops${normal}"
+echo -n "  随机写入 (3rd)        " ; ioping_4k_write_3=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_3 iops${normal}"
+echo -n "  随机写入 (4th)        " ; ioping_4k_write_4=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_4 iops${normal}"
+echo -n "  随机写入 (5th)        " ; ioping_4k_write_5=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_5 iops${normal}"
+random_w_sum=$(echo -e "$ioping_4k_write_1\\n$ioping_4k_write_2\\n$ioping_4k_write_3\\n$ioping_4k_write_4\\n$ioping_4k_write_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$ioping_4k_write_1'+'$ioping_4k_write_2'+'$ioping_4k_write_3'+'$ioping_4k_write_4'+'$ioping_4k_write_5'-max-min}')
+random_w_avg=$(awk 'BEGIN{printf "%.1f", '$random_w_sum' / 3}')
+# 去掉了最高值和最低值后的平均速度
+echo -n "  随机写入 (avg)        " ; echo -e "${yellow}$random_w_avg iops${normal}"
 }
 
 print_io_v2() {
@@ -826,31 +839,7 @@ echo -n "  顺序写入 (5th)        " ; dd_write_5=$(dd_benchmark) ; echo -e "$
 ddsum=$(echo -e "$dd_write_1\\n$dd_write_2\\n$dd_write_3\\n$dd_write_4\\n$dd_write_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$dd_write_1'+'$dd_write_2'+'$dd_write_3'+'$dd_write_4'+'$dd_write_5'-max-min}')
 ddavg=$(awk 'BEGIN{printf "%.1f", '$ddsum' / 3}')
 # 去掉了最高值和最低值后的平均速度
-echo -n "  顺序写入 (avg)        " ; echo -e "${yellow}$(echo $ddavg | Bps_to_MBps_1f)${normal}\n"
-
-
-
-echo -n "  随机读取 (1st)        " ; ioping_4k_read_1=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_1 iops${normal}"
-echo -n "  随机读取 (2nd)        " ; ioping_4k_read_2=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_2 iops${normal}"
-echo -n "  随机读取 (3rd)        " ; ioping_4k_read_3=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_3 iops${normal}"
-echo -n "  随机读取 (4th)        " ; ioping_4k_read_4=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_4 iops${normal}"
-echo -n "  随机读取 (5th)        " ; ioping_4k_read_5=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_5 iops${normal}"
-random_r_sum=$(echo -e "$ioping_4k_read_1\\n$ioping_4k_read_2\\n$ioping_4k_read_3\\n$ioping_4k_read_4\\n$ioping_4k_read_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$ioping_4k_read_1'+'$ioping_4k_read_2'+'$ioping_4k_read_3'+'$ioping_4k_read_4'+'$ioping_4k_read_5'-max-min}')
-random_r_avg=$(awk 'BEGIN{printf "%.1f", '$random_r_sum' / 3}')
-# 去掉了最高值和最低值后的平均速度
-echo -n "  随机读取 (avg)        " ; echo -e "${yellow}$random_r_avg iops${normal}\n"
-
-
-
-echo -n "  随机写入 (1st)        " ; ioping_4k_write_1=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_1 iops${normal}"
-echo -n "  随机写入 (2nd)        " ; ioping_4k_write_2=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_2 iops${normal}"
-echo -n "  随机写入 (3rd)        " ; ioping_4k_write_3=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_3 iops${normal}"
-echo -n "  随机写入 (4th)        " ; ioping_4k_write_4=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_4 iops${normal}"
-echo -n "  随机写入 (5th)        " ; ioping_4k_write_5=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_5 iops${normal}"
-random_w_sum=$(echo -e "$ioping_4k_write_1\\n$ioping_4k_write_2\\n$ioping_4k_write_3\\n$ioping_4k_write_4\\n$ioping_4k_write_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$ioping_4k_write_1'+'$ioping_4k_write_2'+'$ioping_4k_write_3'+'$ioping_4k_write_4'+'$ioping_4k_write_5'-max-min}')
-random_w_avg=$(awk 'BEGIN{printf "%.1f", '$random_w_sum' / 3}')
-# 去掉了最高值和最低值后的平均速度
-echo -n "  随机写入 (avg)        " ; echo -e "${yellow}$random_w_avg iops${normal}"
+echo -n "  顺序写入 (avg)        " ; echo -e "${yellow}$(echo $ddavg | Bps_to_MBps_1f)${normal}"
 }
 
 
