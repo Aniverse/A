@@ -9,7 +9,7 @@
 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.2.5
+ScriptVersion=1.2.2.6
 SCRIPTUPDATE=2019.05.03
 
 debug=0
@@ -20,7 +20,7 @@ full_ip=0
 
 # 运行参数 --------------------------------------------------------------------------------------------------------
 
-OPTS=$(getopt -n "$0" -o abcdfghi --long "debug,no-ip,no-ipip,no-io,full-ip,down-test,speedtest,iperf_test" -- "$@")
+OPTS=$(getopt -n "$0" -o abcdfghi --long "debug,no-ip,no-ipip,no-io,full-ip,down-test,speedtest,iperf_test,ioping" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -33,6 +33,7 @@ while true; do
     -g | --down-test   ) down-test=1     ; shift ;;
     -h | --speedtest   ) spd_test=1      ; shift ;;
     -i | --iperf       ) iperf_test=1    ; shift ;;
+         --ioping      ) do_ioping=1     ; shift ;;
     -- ) shift; break ;;
      * ) break ;;
   esac
@@ -816,6 +817,7 @@ print_io() {
 echo ; }
 
 ioping_1() {
+echo
 echo -n "  ioping 顺序读取 (1st) " ; ioping_read_1=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_1 | Bps_to_MBps)${normal}"
 echo -n "  ioping 顺序读取 (2nd) " ; ioping_read_2=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_2 | Bps_to_MBps)${normal}"
 echo -n "  ioping 顺序读取 (3rd) " ; ioping_read_3=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_3 | Bps_to_MBps)${normal}"
@@ -1034,5 +1036,6 @@ echo ; }
 [[ $show_ipip == 1 ]] && _ipip
 _menu
 [[ $test_io == 1 ]] && print_io_v2
+[[ $do_ioping == 1 ]] && ioping_1
 
 cancel
