@@ -9,7 +9,7 @@
 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.2.6
+ScriptVersion=1.2.2.8
 SCRIPTUPDATE=2019.05.03
 
 debug=0
@@ -534,21 +534,24 @@ disk_model_0_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.inf
 # 事实上 VPS 可能也有独立的硬盘，不过我懒得管他了。。。
 if [[ $EUID = 0 ]] && [[ ! "$(virt-what)" ]]; then
 
+fdisk -l 2>/dev/null | grep /dev/nvme -q && nvme=yes
 
-[[ -n $(fdisk -l 2>/dev/null|grep /dev/nvme) ]] && nvme=yes
-
-    if [[ $nvme == yes ]] && [ ! $(which nvme) ]; then
+    if [[ $nvme == yes ]] && [[ ! $(which nvme) ]]; then
         echo -e "${bold}正在更新系统源 ...${normal}"
         apt-get update >/dev/null 2>&1
+        yum makecache >/dev/null 2>&1
         echo -e "${bold}正在安装 nvme-cli 与 smartmontools ...${normal}"
         DEBIAN_FRONTEND=noninteractive apt-get -y install nvme-cli smartmontools >/dev/null 2>&1
+        yum install -y nvme-cli smartmontools >/dev/null 2>&1
     fi
 
-    if [ -z $nvme ] && [ ! -e /usr/sbin/smartctl ]; then
+    if [[ -z $nvme ]] && [[ ! -e /usr/sbin/smartctl ]]; then
         echo -e "${bold}正在更新系统源 ...${normal}"
         apt-get update >/dev/null 2>&1
+        yum makecache >/dev/null 2>&1
         echo -e "${bold}正在安装 smartmontools ...${normal}"
         DEBIAN_FRONTEND=noninteractive apt-get -y install smartmontools >/dev/null 2>&1
+        yum install -y smartmontools >/dev/null 2>&1
     fi
 
   # result=$(smartctl -a $(result=$(cat /proc/mounts) && echo $(echo "$result" | awk '/data=ordered/{print $1}') | awk '{print $1}') 2>&1) && power_time=$(echo "$result" | awk '/Power_On/{print $10}') # echo $power_time
