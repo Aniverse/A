@@ -537,7 +537,7 @@ if [[ $EUID = 0 ]] && [[ ! "$(virt-what)" ]]; then
 
 [[ -n $(fdisk -l 2>/dev/null|grep /dev/nvme) ]] && nvme=yes
 
-    if [ $nvme = yes ] && [ ! $(which nvme) ]; then
+    if [[ $nvme == yes ]] && [ ! $(which nvme) ]; then
         echo -e "${bold}正在更新系统源 ...${normal}"
         apt-get update >/dev/null 2>&1
         echo -e "${bold}正在安装 nvme-cli 与 smartmontools ...${normal}"
