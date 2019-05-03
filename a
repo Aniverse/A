@@ -9,8 +9,8 @@
 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.2.4
-SCRIPTUPDATE=2019.04.14
+ScriptVersion=1.2.2.5
+SCRIPTUPDATE=2019.05.03
 
 debug=0
 show_ip=1
@@ -424,6 +424,8 @@ if [[ -n `lspci|grep -i "RAID bus controller"|grep "MegaRAID"` ]]; then
 elif [[ -n `lspci|grep -i "RAID bus controller"|grep "Hewlett-Packard"` ]]; then
     raidcard=HP-RAID
     RC_Model="$(lspci|grep -i "RAID bus controller"|grep "Hewlett-Packard" | awk -F ":" '{print $3}' | sed "s/^ //")"
+elif [[ -n `lspci|grep -i "RAID bus controller"|grep "Adaptec"` ]]; then
+    raidcard=Adaptec
 elif [[ -n `lspci|grep -i "SCSI controller"` ]]; then
     raidcard=SCSI
     RC_Model="$(lspci|grep -i "SCSI controller" | awk -F ":" '{print $3}' | sed "s/^ //")"
@@ -440,24 +442,29 @@ case "$raidcard" in
                    echo "disk-$d $i $(smartctl -a $i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a $i | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
                done
                ;;
-    MegaRAID ) for i in `seq 0 9` ; do
+    MegaRAID ) for i in `seq 0 99` ; do
 			       [[ $( smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
 			       echo "disk-$(expr $i + 1) text $(smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d megaraid,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
 			   done
                ;;
-    HP-RAID  ) for i in `seq 0 11` ; do
+    HP-RAID  ) for i in `seq 0 99` ; do
                    [[ $( smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
 			       echo "disk-$(expr $i + 1) text $(smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d cciss,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
 			   done
                ;;
-    SCSI     ) for i in `seq 0 9` ; do
+    SCSI     ) for i in `seq 0 99` ; do
                    [[ $( smartctl -a /dev/sg$i | grep Power_On_Hours ) ]] &&
 			       echo "disk-$(expr $i + 1) text $(smartctl -a /dev/sg$i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a /dev/sg$i | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
 			   done
                ;;
-    NVMe     ) for i in `seq 0 9` ; do
+    NVMe     ) for i in `seq 0 99` ; do
                    [[ $( nvme smart-log /dev/nvme$i 2>&1 | grep power_on_hours ) ]] &&
 			       echo "disk-$(expr $i + 1) text $(nvme smart-log /dev/nvme$i | grep power_on_hours | grep -oE "[0-9,]+" | sed "s/,//") $(nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g")" >> $HOME/disk.info
+			   done
+               ;;
+    Adaptec  ) for i in `seq 0 99` ; do
+                   [[ $( smartctl -a /dev/sg$i | grep Power_On_Hours ) ]] &&
+			       echo "disk-$(expr $i + 1) text $(smartctl -a /dev/sg$i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a /dev/sg$i | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
 			   done
                ;;
 esac
@@ -466,7 +473,7 @@ esac
 # 还可以用 lsblk --nodeps --noheadings --exclude 1,2,11 --output NAME,SIZE,ROTA,MODEL 2>1
 # nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g"
 # udevadm info --name=/dev/nvme${i}n1 | grep "disk/by-id/nvme-" | head -1 | sed "s|S: disk/by-id/nvme-||" | awk -F '_' '{print $1,$2}'
-[[ $debug == 1 ]] && echo -e "raidcard=$raidcard" ; }
+[[ $debug == 1 ]] && echo -e "raidcard=$raidcard" && cp -f $HOME/disk.info $HOME/.disk.info ; }
 
 
 
@@ -583,21 +590,27 @@ elif [[ $disk_num -ge 2 ]]; then
     [[ $disk_num -ge 5 ]] &&
     echo -e  "  第五块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '5p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '5p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 6 ]] &&
-    echo -e  "  第六块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '6p' | awk '{print $}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '6p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第六块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '6p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '6p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 7 ]] &&
-    echo -e  "  第七块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '7p' | awk '{print $}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '7p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第七块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '7p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '7p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 8 ]] &&
-    echo -e  "  第八块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '8p' | awk '{print $}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '8p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第八块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '8p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '8p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 9 ]] &&
-    echo -e  "  第九块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '9p' | awk '{print $}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '9p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第九块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '9p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '9p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 10 ]] &&
-    echo -e  "  第十块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '10p' | awk '{print $}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '10p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第十块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '10p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '10p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 11 ]] &&
-    echo -e  "  第十一块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '11p' | awk '{print $}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '11p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第十一块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '11p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '11p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 12 ]] &&
-    echo -e  "  第十二块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '12p' | awk '{print $}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '12p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第十二块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '12p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '12p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 13 ]] &&
-    echo -e  "  暂时不支持 12 块以上硬盘……${jiacu}"
+    echo -e  "  第十三块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '13p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '13p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    [[ $disk_num -ge 14 ]] &&
+    echo -e  "  第十四块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '14p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '14p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    [[ $disk_num -ge 15 ]] &&
+    echo -e  "  第十五块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '15p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '15p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    [[ $disk_num -ge 16 ]] &&
+    echo -e  "  暂时不支持 16 块以上硬盘……${jiacu}"
 fi
 
                 else
