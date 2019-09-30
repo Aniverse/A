@@ -13,6 +13,7 @@ No IP               bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -a
 No IPIP             bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -b
 No IOtest           bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -c
 No IPIP & IOtest    bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -bc
+IOPS test           bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -j
 ```
 
 ![00](https://github.com/Aniverse/A/raw/i/pictures/00.png)

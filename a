@@ -9,18 +9,19 @@
 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.2.9
-SCRIPTUPDATE=2019.06.01
+ScriptVersion=1.2.3.0
+SCRIPTUPDATE=2019.09.30
 
 debug=0
 show_ip=1
 show_ipip=1
 test_io=1
+test_iops=0
 full_ip=0
 
 # 运行参数 --------------------------------------------------------------------------------------------------------
 
-OPTS=$(getopt -n "$0" -o abcdfghi --long "debug,no-ip,no-ipip,no-io,full-ip,down-test,speedtest,iperf_test,ioping" -- "$@")
+OPTS=$(getopt -n "$0" -o abcdfghij --long "debug,no-ip,no-ipip,no-io,full-ip,down-test,speedtest,iperf_test,ioping,iops" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -34,6 +35,7 @@ while true; do
     -h | --speedtest   ) spd_test=1      ; shift ;;
     -i | --iperf       ) iperf_test=1    ; shift ;;
          --ioping      ) do_ioping=1     ; shift ;;
+    -j | --iops        ) test_iops=1     ; shift ;;
     -- ) shift; break ;;
      * ) break ;;
   esac
@@ -850,16 +852,20 @@ echo -n "  随机写入 (avg)        " ; echo -e "${yellow}$random_w_avg iops${n
 }
 
 print_io_v2() {
-#echo -e  "  ${jiacu}当前脚本版本          1.2.1${normal}\n"
-echo -n "  顺序写入 (1st)        " ; dd_write_1=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_1 | Bps_to_MBps)${normal}"
-echo -n "  顺序写入 (2nd)        " ; dd_write_2=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_2 | Bps_to_MBps)${normal}"
-echo -n "  顺序写入 (3rd)        " ; dd_write_3=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_3 | Bps_to_MBps)${normal}"
-echo -n "  顺序写入 (4th)        " ; dd_write_4=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_4 | Bps_to_MBps)${normal}"
-echo -n "  顺序写入 (5th)        " ; dd_write_5=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_5 | Bps_to_MBps)${normal}"
-ddsum=$(echo -e "$dd_write_1\\n$dd_write_2\\n$dd_write_3\\n$dd_write_4\\n$dd_write_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$dd_write_1'+'$dd_write_2'+'$dd_write_3'+'$dd_write_4'+'$dd_write_5'-max-min}')
-ddavg=$(awk 'BEGIN{printf "%.1f", '$ddsum' / 3}')
-# 去掉了最高值和最低值后的平均速度
-echo -n "  顺序写入 (avg)        " ; echo -e "${yellow}$(echo $ddavg | Bps_to_MBps_1f)${normal}"
+if [[ $test_iops == 1 ]]; then
+    bash <(wget -qO- https://github.com/amefs/fio-bench/raw/master/fio-bench_zh-cn.sh -o /dev/null)
+else
+    #echo -e  "  ${jiacu}当前脚本版本          1.2.1${normal}\n"
+    echo -n "  顺序写入 (1st)        " ; dd_write_1=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_1 | Bps_to_MBps)${normal}"
+    echo -n "  顺序写入 (2nd)        " ; dd_write_2=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_2 | Bps_to_MBps)${normal}"
+    echo -n "  顺序写入 (3rd)        " ; dd_write_3=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_3 | Bps_to_MBps)${normal}"
+    echo -n "  顺序写入 (4th)        " ; dd_write_4=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_4 | Bps_to_MBps)${normal}"
+    echo -n "  顺序写入 (5th)        " ; dd_write_5=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_5 | Bps_to_MBps)${normal}"
+    ddsum=$(echo -e "$dd_write_1\\n$dd_write_2\\n$dd_write_3\\n$dd_write_4\\n$dd_write_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$dd_write_1'+'$dd_write_2'+'$dd_write_3'+'$dd_write_4'+'$dd_write_5'-max-min}')
+    ddavg=$(awk 'BEGIN{printf "%.1f", '$ddsum' / 3}')
+    # 去掉了最高值和最低值后的平均速度
+    echo -n "  顺序写入 (avg)        " ; echo -e "${yellow}$(echo $ddavg | Bps_to_MBps_1f)${normal}"
+fi
 }
 
 
