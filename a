@@ -2,6 +2,8 @@
 # Author: Aniverse
 # https://github.com/Aniverse/A
 # bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
+# bash -c "$(wget -qO- https://git.io/JvTRm)"
+
 # bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a) -f
 #
 # wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
@@ -9,8 +11,8 @@
 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.3.0
-SCRIPTUPDATE=2019.09.30
+ScriptVersion=1.2.4.0
+SCRIPTUPDATE=2020.02.12
 
 debug=0
 show_ip=1
@@ -852,7 +854,9 @@ echo -n "  随机写入 (avg)        " ; echo -e "${yellow}$random_w_avg iops${n
 }
 
 print_io_v2() {
-if [[ $test_iops == 1 ]]; then
+if [[ $test_iops == 1 ]] || [[ $raidcard == NVMe ]]; then
+    [[ ! $EUID = 0 ]] && echo -e "${JG} 建议使用 root 权限来运行本脚本的 fio 测试！${normal}\n"
+    [[ $raidcard == NVMe ]] && echo -e "${ZY} 检测到你使用的是 NVMe 硬盘，使用 fio 代替 dd 进行测试${normal}\n"
     bash <(wget -qO- https://github.com/amefs/fio-bench/raw/master/fio-bench_zh-cn.sh -o /dev/null)
 else
     #echo -e  "  ${jiacu}当前脚本版本          1.2.1${normal}\n"
@@ -1031,7 +1035,11 @@ echo
 rm -f $HOME/system_kernel_list >/dev/null 2>&1 ; }
 
 echo -e  "  ${jiacu}当前脚本版本          $ScriptVersion${normal}"
-echo ; }
+echo
+
+[[ $CODENAME == buster ]] && ls $HOME | grep -q images && echo -e 
+
+}
 
 
 
