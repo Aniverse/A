@@ -4,8 +4,8 @@
 # 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.7.0
-SCRIPTUPDATE=2020.02.20
+ScriptVersion=1.2.8
+SCRIPTUPDATE=2020.02.21
 
 ########################################################################################################
 
@@ -464,8 +464,11 @@ case "$raidcard" in
 			   done
                ;;
     NVMe     ) for i in `seq 0 99` ; do
-                   [[ $( nvme smart-log /dev/nvme$i 2>&1 | grep power_on_hours ) ]] &&
-			       echo "disk-$(expr $i + 1) text $(nvme smart-log /dev/nvme$i | grep power_on_hours | grep -oE "[0-9,]+" | sed "s/,//") $(nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g")" >> $HOME/disk.info
+                   if [[ $( nvme smart-log /dev/nvme$i 2>&1 | grep power_on_hours ) ]]; then
+                       model=$(nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g")
+                       [[ ${#model} -le 6 ]] && model=$(smartctl -a /dev/nvme${i}n1 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')
+			           echo "disk-$(expr $i + 1) text $(nvme smart-log /dev/nvme$i | grep power_on_hours | grep -oE "[0-9,]+" | sed "s/,//") $model" >> $HOME/disk.info
+                   fi
 			   done
                ;;
     Adaptec  ) for i in `seq 0 99` ; do
@@ -738,8 +741,10 @@ if [[ $test_iops == 1 ]] || [[ $raidcard == NVMe ]]; then
     [[ ! $EUID = 0 ]] && echo -e "  ${JG} 建议使用 root 权限来运行本脚本的 fio 测试！${normal}\n"
     [[ $raidcard == NVMe ]] && echo -e "  ${ZY} 检测到你使用的是 NVMe 硬盘，使用 fio 代替 dd 进行测试${normal}\n"
     bash <(wget -qO- https://github.com/amefs/fio-bench/raw/master/fio-bench_zh-cn.sh -o /dev/null) -o /tmp/fio-bench.txt
-    _menu ; echo -ne "${yellow}${bold}"
-    cat /tmp/fio-bench.txt | tail -n +2 | sed "s/Test Item/测试项目 /" | sed -e "s|^|  |"
+    _menu
+  # echo -ne "${yellow}${bold}" ; cat /tmp/fio-bench.txt | tail -n +2 | sed "s/Test Item/测试项目 /" | sed -e "s|^|  |"
+  # echo ; cat /tmp/fio-bench.txt | tail -n +2 | sed -r -e "s/Test Item/${cyan}测试项目${normal} /" -e "s|^|  |" -e "s|(\b[0-9.]+\b)|${yellow}\1${normal}|g" -e "s|([GMK]B/s)|${yellow}\1${normal}|g" -e "s/([读写速IP][取入度OS])/${cyan}\1${normal}/g" -e "s/-Q32T1/${cyan}-Q32T1${normal}/g" -e "s/4K/${cyan}4K${normal}/g" -e "s/Seq/${cyan}Seq${normal}/g"
+    echo ; cat /tmp/fio-bench.txt | tail -n +2 | sed -r -e "s/Test Item/测试项目 /" -e "s|^|  |" -e "s|(\b[0-9.]+\b)|${yellow}\1${normal}|g" -e "s|([GMK]B/s)|${yellow}\1${normal}|g"
     echo -e "${normal}"
 else
     [[ $SSD == yes ]] && echo -e "  ${ZY} 检测到你服务器里有固态硬盘，建议使用 fio 代替 dd 进行测试${normal}" &&
