@@ -4,7 +4,7 @@
 # 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.6.0
+ScriptVersion=1.2.7.0
 SCRIPTUPDATE=2020.02.20
 
 ########################################################################################################
@@ -28,7 +28,7 @@ full_ip=0
 
 # 运行参数 --------------------------------------------------------------------------------------------------------
 
-OPTS=$(getopt -n "$0" -o abcdfghij --long "debug,no-ip,no-ipip,no-io,full-ip,down-test,speedtest,iperf_test,ioping,iops" -- "$@")
+OPTS=$(getopt -n "$0" -o abcdfghij --long "debug,no-ip,no-ipip,no-io,full-ip,iops" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -38,10 +38,6 @@ while true; do
     -c | --no-io       ) test_io=0       ; shift ;;
     -d | --debug       ) debug=1         ; shift ;;
     -f | --full-ip     ) full_ip=1       ; shift ;;
-    -g | --down-test   ) down-test=1     ; shift ;;
-    -h | --speedtest   ) spd_test=1      ; shift ;;
-    -i | --iperf       ) iperf_test=1    ; shift ;;
-         --ioping      ) do_ioping=1     ; shift ;;
     -j | --iops        ) test_iops=1     ; shift ;;
     -- ) shift; break ;;
      * ) break ;;
@@ -369,6 +365,9 @@ fi
 
 
 echo -e "${bold}正在检查硬盘信息 ...${normal}"
+
+cat /sys/block/sd*/queue/rotational 2>/dev/null | grep -q 0 && SSD=yes
+cat /sys/block/vd*/queue/rotational 2>/dev/null | grep -q 0 && SSD=yes
 
 # 硬盘大小计算
 calc_disk() {
@@ -736,11 +735,15 @@ rm -f test_$$ ; }
 
 print_io_v2() {
 if [[ $test_iops == 1 ]] || [[ $raidcard == NVMe ]]; then
-    [[ ! $EUID = 0 ]] && echo -e "${JG} 建议使用 root 权限来运行本脚本的 fio 测试！${normal}\n"
-    [[ $raidcard == NVMe ]] && echo -e "${ZY} 检测到你使用的是 NVMe 硬盘，使用 fio 代替 dd 进行测试${normal}\n"
-    bash <(wget -qO- https://github.com/amefs/fio-bench/raw/master/fio-bench_zh-cn.sh -o /dev/null)
+    [[ ! $EUID = 0 ]] && echo -e "  ${JG} 建议使用 root 权限来运行本脚本的 fio 测试！${normal}\n"
+    [[ $raidcard == NVMe ]] && echo -e "  ${ZY} 检测到你使用的是 NVMe 硬盘，使用 fio 代替 dd 进行测试${normal}\n"
+    bash <(wget -qO- https://github.com/amefs/fio-bench/raw/master/fio-bench_zh-cn.sh -o /dev/null) -o /tmp/fio-bench.txt
+    _menu ; echo -ne "${yellow}${bold}"
+    cat /tmp/fio-bench.txt | tail -n +2 | sed "s/Test Item/测试项目 /" | sed -e "s|^|  |"
+    echo -e "${normal}"
 else
-    #echo -e  "  ${jiacu}当前脚本版本          1.2.1${normal}\n"
+    [[ $SSD == yes ]] && echo -e "  ${ZY} 检测到你服务器里有固态硬盘，建议使用 fio 代替 dd 进行测试${normal}" &&
+    echo -e "              ${blue}${bold}bash <(wget -qO- git.io/ceshi) -j${normal}\n"
     echo -n "  顺序写入 (1st)        " ; dd_write_1=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_1 | Bps_to_MBps)${normal}"
     echo -n "  顺序写入 (2nd)        " ; dd_write_2=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_2 | Bps_to_MBps)${normal}"
     echo -n "  顺序写入 (3rd)        " ; dd_write_3=$(dd_benchmark) ; echo -e "${yellow}$(echo $dd_write_3 | Bps_to_MBps)${normal}"
@@ -821,23 +824,12 @@ echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}" ; }
 
 [[ $show_ip == 1 || $show_ipip == 1 ]] && echo
 
-
-
 echo -e  "  操作系统              ${green}$DISTRO $osversion $CODENAME ($arch)${jiacu}"
 [[ $running_kernel ]] &&
 echo -e  "  系统内核              ${green}$running_kernel${jiacu}"
 [[ $tcp_c_name ]] &&
 echo -e  "  TCP 拥塞控制算法      ${green}$tcp_c_name${jiacu}"
 echo
-
-
-
-# 等于把这段注释掉
-[[ $EUID = 1234 ]] && [[ -e $HOME/system_kernel_list ]] && {
-echo -e  "  当前系统内所有已安装的 kernel／headers／modules 列表\n"
-cat -n $HOME/system_kernel_list | sed 's/\t/ /g' | sed "s/ linux-/) ${green}linux-/g" | sed "s/     /  ${magenta}(0/g" | sed "s/    /  ${magenta}(/g"
-echo
-rm -f $HOME/system_kernel_list >/dev/null 2>&1 ; }
 
 echo -e  "  ${jiacu}当前脚本版本          $ScriptVersion${normal}"
 echo
