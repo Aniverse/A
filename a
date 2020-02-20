@@ -1,19 +1,24 @@
 #!/bin/bash
 # Author: Aniverse
 # https://github.com/Aniverse/A
-# bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
-# bash -c "$(wget -qO- https://git.io/JvTRm)"
-
-# bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a) -f
-#
-# wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
-# bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
-
+# 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.4.0
-SCRIPTUPDATE=2020.02.12
+ScriptVersion=1.2.5.0
+SCRIPTUPDATE=2020.02.20
 
+########################################################################################################
+
+usage_guide() {
+bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
+bash -c "$(wget -qO- https://git.io/JvTRm)"
+bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a) -f
+wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
+bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
+s=/usr/local/bin/abench ; rm -f $s ; nano $s ; chmod 755 $s
+}
+
+########################################################################################################
 debug=0
 show_ip=1
 show_ipip=1
@@ -677,7 +682,10 @@ freq=$( awk -F: '/cpu MHz/ {freq=$2} END {print freq}' /proc/cpuinfo | sed 's/^[
 cpunumbers=$( grep 'physical id' /proc/cpuinfo | sort -u | wc -l )
 cpucores=$( expr $cpucores_single \* $cpunumbers )
 cputhreads=$( grep 'processor' /proc/cpuinfo | sort -u | wc -l )
-[[ $cpunumbers == 2 ]] && CPUNum='双路 ' ; [[ $cpunumbers == 4 ]] && CPUNum='四路 ' ; [[ $cpunumbers == 8 ]] && CPUNum='八路 '
+
+if [[ -z $virtual ]] || [[ $virtual == Docker ]]; then
+    [[ $cpunumbers == 2 ]] && CPUNum='双路 ' ; [[ $cpunumbers == 4 ]] && CPUNum='四路 ' ; [[ $cpunumbers == 8 ]] && CPUNum='八路 '
+fi
 
 # 内存
 tram=$( free -m | awk '/Mem/ {print $2}' )
