@@ -4,7 +4,7 @@
 # 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.5.0
+ScriptVersion=1.2.6.0
 SCRIPTUPDATE=2020.02.20
 
 ########################################################################################################
@@ -727,139 +727,12 @@ else if (io ~ /MB\/s/) {printf("%.0f\n", 1000*1000*io)}
 else if (io ~ /KB\/s/) {printf("%.0f\n", 1000*io)}
 else { printf("%.0f", 1*io)} ; }'
 rm -f test_$$ ; }
-#io1=$( dd_benchmark )
-#printf '    1st run:    %s\n' "$(printf '%d\n' "$io1" | Bps_to_MiBps)"
-
-if [[ ! $(which ioping) ]]; then
-    wget -qO ioping.static -t1 -T5 http://wget.racing/ioping.static
-    chmod +x ioping.static
-    ioping_cmd="./ioping.static"
-else
-    ioping_cmd="ioping"
-fi
-# ----------------------------------------------------------------------------------------------
-ioping_benchmark() {
-tmp=$("$ioping_cmd" -DRL -w 5 . | tail -2 | head -1 | awk -F ', ' '{print $NF}')
-echo $tmp | awk -F, '
-{ io=$NF ; }
-END { if (io ~ /TiB\/s/) {printf("%.0f\n", 1024*1024*1024*1024*io)}
-else if (io ~ /GiB\/s/) {printf("%.0f\n", 1024*1024*1024*io)}
-else if (io ~ /MiB\/s/) {printf("%.0f\n", 1024*1024*io)}
-else if (io ~ /KiB\/s/) {printf("%.0f\n", 1024*io)}
-else { printf("%.0f", 1*io)} ; }'
-}
-ioping_benchmark_4k_read() {
-tmp=$("$ioping_cmd" -DR -w 5 . | tail -2 | head -1 | awk -F ', ' '{print $(NF-1)}')
-echo $tmp | awk -F, '
-{ io=$NF ; }
-END { if (io ~ /m\ iops/) {printf("%.0f\n", 1000*1000*io)}
-else if (io ~ /k\ iops/) {printf("%.0f\n", 1000*io)}
-else { printf("%.0f", 1*io)} ; }'
-}
-ioping_benchmark_4k_write() {
-tmp=$("$ioping_cmd" -DWR -w 5 . | tail -2 | head -1 | awk -F ', ' '{print $(NF-1)}')
-echo $tmp | awk -F, '
-{ io=$NF ; }
-END { if (io ~ /m\ iops/) {printf("%.0f\n", 1000*1000*io)}
-else if (io ~ /k\ iops/) {printf("%.0f\n", 1000*io)}
-else { printf("%.0f", 1*io)} ; }'
-}
 # ----------------------------------------------------------------------------------------------
 
 
 
 
 
-# dd IO 测试
-io_test() { (LANG=C dd if=/dev/zero of=test_file_$$ bs=512K count=$1 conv=fdatasync && rm -f test_file_$$ ) 2>&1 | awk -F, '{io=$NF} END { print io}' | sed 's/^[ \t]*//;s/[ \t]*$//' ; }
-
-# 检查剩余空间
-freedisk() {
-	freespace=$( df -m . | awk 'NR==2 {print $4}' )
-	if [[ $freespace -gt 1024 ]]; then
-		printf "%s" $((1024*2))
-	elif [[ $freespace -gt 512 ]]; then
-		printf "%s" $((512*2))
-	elif [[ $freespace -gt 256 ]]; then
-		printf "%s" $((256*2))
-	elif [[ $freespace -gt 128 ]]; then
-		printf "%s" $((128*2))
-	else
-		printf 1
-	fi
-}
-
-print_io() {
-	writemb=$(freedisk)
-	writemb_size="$(( writemb / 2 ))MB"
-	[[ $writemb_size == "1024MB" ]] && writemb_size="1.0 GB"
-	if [[ $writemb != "1" ]]; then
-        # 因为有些情况下前两次测试 IO 速度异常的高，所以多跑两次次但是不计入统计
-		echo -n "  I/O 速度 ( 不统计 )   "
-		io1=$( io_test $writemb )
-		echo -e "${yellow}$io1${normal}"
-		echo -n "  I/O 速度 ( 不统计 )   "
-		io2=$( io_test $writemb )
-		echo -e "${yellow}$io2${normal}"
-		echo -n "  I/O 速度 ( $writemb_size )   "
-		io3=$( io_test $writemb )
-		echo -e "${yellow}$io3${normal}"
-		echo -n "  I/O 速度 ( $writemb_size )   "
-		io4=$( io_test $writemb )
-		echo -e "${yellow}$io4${normal}"
-        echo -n "  I/O 速度 ( $writemb_size )   "
-		io5=$( io_test $writemb )
-		echo -e "${yellow}$io5${normal}"
-		ioraw1=$( echo $io1 | awk 'NR==1 {print $1}' )
-		[ "`echo $io1 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw1=$( awk 'BEGIN{print '$ioraw1' * 1024}' )
-		ioraw2=$( echo $io2 | awk 'NR==1 {print $1}' )
-		[ "`echo $io2 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw2=$( awk 'BEGIN{print '$ioraw2' * 1024}' )
-		ioraw3=$( echo $io3 | awk 'NR==1 {print $1}' )
-		[ "`echo $io3 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw3=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
-		ioraw4=$( echo $io4 | awk 'NR==1 {print $1}' )
-		[ "`echo $io4 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw4=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
-		ioraw5=$( echo $io5 | awk 'NR==1 {print $1}' )
-		[ "`echo $io5 | awk 'NR==1 {print $2}'`" == "GB/s" ] && ioraw5=$( awk 'BEGIN{print '$ioraw3' * 1024}' )
-		ioall=$( awk 'BEGIN{print '$ioraw3' + '$ioraw4' + '$ioraw5'}' )
-		ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 3}' )
-		echo -e "  I/O 速度 (  平均  )   ${yellow}$ioavg MB/s${normal}"
-	else
-		echo -e " ${red}硬盘剩余空间不足，无法进行 IO 测试！${normal}"
-	fi
-echo ; }
-
-ioping_1() {
-echo
-echo -n "  ioping 顺序读取 (1st) " ; ioping_read_1=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_1 | Bps_to_MBps)${normal}"
-echo -n "  ioping 顺序读取 (2nd) " ; ioping_read_2=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_2 | Bps_to_MBps)${normal}"
-echo -n "  ioping 顺序读取 (3rd) " ; ioping_read_3=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_3 | Bps_to_MBps)${normal}"
-echo -n "  ioping 顺序读取 (4th) " ; ioping_read_4=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_4 | Bps_to_MBps)${normal}"
-echo -n "  ioping 顺序读取 (5th) " ; ioping_read_5=$(ioping_benchmark) ; echo -e "${yellow}$(echo $ioping_read_5 | Bps_to_MBps)${normal}"
-iopingsum=$(echo -e "$ioping_read_1\\n$ioping_read_2\\n$ioping_read_3\\n$ioping_read_4\\n$ioping_read_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$ioping_read_1'+'$ioping_read_2'+'$ioping_read_3'+'$ioping_read_4'+'$ioping_read_5'-max-min}')
-iopingavg=$(awk 'BEGIN{printf "%.1f", '$iopingsum' / 3}')
-# 去掉了最高值和最低值后的平均速度
-echo -n "  ioping 顺序读取 (avg) " ; echo -e "${yellow}$(echo $iopingavg | Bps_to_MBps_1f)${normal}\n"
-
-echo -n "  随机读取 (1st)        " ; ioping_4k_read_1=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_1 iops${normal}"
-echo -n "  随机读取 (2nd)        " ; ioping_4k_read_2=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_2 iops${normal}"
-echo -n "  随机读取 (3rd)        " ; ioping_4k_read_3=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_3 iops${normal}"
-echo -n "  随机读取 (4th)        " ; ioping_4k_read_4=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_4 iops${normal}"
-echo -n "  随机读取 (5th)        " ; ioping_4k_read_5=$(ioping_benchmark_4k_read) ; echo -e "${yellow}$ioping_4k_read_5 iops${normal}"
-random_r_sum=$(echo -e "$ioping_4k_read_1\\n$ioping_4k_read_2\\n$ioping_4k_read_3\\n$ioping_4k_read_4\\n$ioping_4k_read_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$ioping_4k_read_1'+'$ioping_4k_read_2'+'$ioping_4k_read_3'+'$ioping_4k_read_4'+'$ioping_4k_read_5'-max-min}')
-random_r_avg=$(awk 'BEGIN{printf "%.1f", '$random_r_sum' / 3}')
-# 去掉了最高值和最低值后的平均速度
-echo -n "  随机读取 (avg)        " ; echo -e "${yellow}$random_r_avg iops${normal}\n"
-
-echo -n "  随机写入 (1st)        " ; ioping_4k_write_1=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_1 iops${normal}"
-echo -n "  随机写入 (2nd)        " ; ioping_4k_write_2=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_2 iops${normal}"
-echo -n "  随机写入 (3rd)        " ; ioping_4k_write_3=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_3 iops${normal}"
-echo -n "  随机写入 (4th)        " ; ioping_4k_write_4=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_4 iops${normal}"
-echo -n "  随机写入 (5th)        " ; ioping_4k_write_5=$(ioping_benchmark_4k_write) ; echo -e "${yellow}$ioping_4k_write_5 iops${normal}"
-random_w_sum=$(echo -e "$ioping_4k_write_1\\n$ioping_4k_write_2\\n$ioping_4k_write_3\\n$ioping_4k_write_4\\n$ioping_4k_write_5" | awk 'BEGIN{max="'$first_num'";min="'first_num'"}{if($1>max){max=$1};if($1<min){min=$1}}END{print '$ioping_4k_write_1'+'$ioping_4k_write_2'+'$ioping_4k_write_3'+'$ioping_4k_write_4'+'$ioping_4k_write_5'-max-min}')
-random_w_avg=$(awk 'BEGIN{printf "%.1f", '$random_w_sum' / 3}')
-# 去掉了最高值和最低值后的平均速度
-echo -n "  随机写入 (avg)        " ; echo -e "${yellow}$random_w_avg iops${normal}"
-}
 
 print_io_v2() {
 if [[ $test_iops == 1 ]] || [[ $raidcard == NVMe ]]; then
@@ -881,82 +754,6 @@ fi
 }
 
 
-
-
-
-# Speedtest 以后再加上
-
-print_speedtest() {
-	printf "%-18s%-18s%-20s%-12s\n" " Node Name" "Upload Speed" "Download Speed" "Latency"
-    speed_test '' 'Speedtest.net'
-    # 法国节点
-    speed_test '6027'  'FDC Servers  Paris       FRA'
-	speed_test '5022'  'Online.net   Paris       FRA'
-	speed_test '5022'  'Ikoula       Reims       FRA'
-    # 英国节点
-	speed_test '6032'  'FDC Servers  London      GER'
-	speed_test '' '          '
-	speed_test '' '          '
-	speed_test '' '          '
-    # 德国节点
-	speed_test '3585' 'LeaseWeb      Frankfurt   DEU'
-	speed_test '' '          '
-	speed_test '' '          '
-	speed_test '' '          '
-	speed_test '' '          '
-	speed_test '' '          '
-    # 荷兰节点
-	speed_test '3587'  'LeaseWeb     Haarlem     NLD'
-	speed_test '6554'  'WorldStream  Naaldwijk   NLD'
-	speed_test '13218' 'XS4ALL       Amsterdam   NLD'
-    speed_test '9913'  'FDC Servers  Amsterdam   NLD'
-	speed_test '2438'  'i3D          Amsterdam   NLD' # 这节点老挂
-	speed_test '3386'  'NFOrce       Amsterdam   NLD'
-	rm -rf speedtest.py
-}
-
-speed_test(){
-	if [[ $1 == '' ]]; then
-		temp=$(python speedtest.py --share 2>&1)
-		is_down=$(echo "$temp" | grep 'Download') 
-		if [[ ${is_down} ]]; then
-	        local REDownload=$(echo "$temp" | awk -F ':' '/Download/{print $2}')
-	        local reupload=$(echo "$temp" | awk -F ':' '/Upload/{print $2}')
-	        local relatency=$(echo "$temp" | awk -F ':' '/Hosted/{print $2}')
-	        local nodeName=$2
-
-	        temp=$(echo "${REDownload}" | awk -F ' ' '{print $1}')
-	        if [[ $(awk -v num1=${temp} -v num2=0 'BEGIN{print(num1>num2)?"1":"0"}') -eq 1 ]]; then
-	        	printf "${yellow}%-17s${GREEN}%-18s${RED}%-20s${SKYBLUE}%-12s${PLAIN}\n" " ${nodeName}" "${reupload}" "${REDownload}" "${relatency}"
-	        fi
-		else
-	        local cerror="ERROR"
-		fi
-	else
-		temp=$(python speedtest.py --server $1 --share 2>&1)
-		is_down=$(echo "$temp" | grep 'Download') 
-		if [[ ${is_down} ]]; then
-	        local REDownload=$(echo "$temp" | awk -F ':' '/Download/{print $2}')
-	        local reupload=$(echo "$temp" | awk -F ':' '/Upload/{print $2}')
-	        local relatency=$(echo "$temp" | awk -F ':' '/Hosted/{print $2}')
-	        #local relatency=$(pingtest $3)
-	        temp=$(echo "$relatency" | awk -F '.' '{print $1}')
-        	if [[ ${temp} -gt 1000 ]]; then
-            	relatency=" 000.000 ms"
-        	fi
-	        local nodeName=$2
-
-	        temp=$(echo "${REDownload}" | awk -F ' ' '{print $1}')
-	        if [[ $(awk -v num1=${temp} -v num2=0 'BEGIN{print(num1>num2)?"1":"0"}') -eq 1 ]]; then
-	        	printf "${yellow}%-17s${GREEN}%-18s${RED}%-20s${SKYBLUE}%-12s${PLAIN}\n" " ${nodeName}" "${reupload}" "${REDownload}" "${relatency}"
-			fi
-		else
-	        local cerror="ERROR"
-		fi
-	fi
-}
-
-# 考虑做个 iperf 和 iperf3 测试？？？
 
 
 
@@ -1058,6 +855,5 @@ echo
 [[ $show_ipip == 1 ]] && _ipip
 _menu
 [[ $test_io == 1 ]] && print_io_v2
-[[ $do_ioping == 1 ]] && ioping_1
 
 cancel
