@@ -4,12 +4,15 @@
 # 
 # Thanks to git.io/superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.8
+ScriptVersion=1.2.8.1
 SCRIPTUPDATE=2020.02.21
 
 ########################################################################################################
 
 usage_guide() {
+wget -qO- git.io/ceshi | bash
+bash <(wget -qO- git.io/ceshi) -j
+######
 bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 bash -c "$(wget -qO- https://git.io/JvTRm)"
 bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a) -f
@@ -743,9 +746,9 @@ if [[ $test_iops == 1 ]] || [[ $raidcard == NVMe ]]; then
     bash <(wget -qO- https://github.com/amefs/fio-bench/raw/master/fio-bench_zh-cn.sh -o /dev/null) -o /tmp/fio-bench.txt
     _menu
   # echo -ne "${yellow}${bold}" ; cat /tmp/fio-bench.txt | tail -n +2 | sed "s/Test Item/测试项目 /" | sed -e "s|^|  |"
-  # echo ; cat /tmp/fio-bench.txt | tail -n +2 | sed -r -e "s/Test Item/${cyan}测试项目${normal} /" -e "s|^|  |" -e "s|(\b[0-9.]+\b)|${yellow}\1${normal}|g" -e "s|([GMK]B/s)|${yellow}\1${normal}|g" -e "s/([读写速IP][取入度OS])/${cyan}\1${normal}/g" -e "s/-Q32T1/${cyan}-Q32T1${normal}/g" -e "s/4K/${cyan}4K${normal}/g" -e "s/Seq/${cyan}Seq${normal}/g"
-    echo ; cat /tmp/fio-bench.txt | tail -n +2 | sed -r -e "s/Test Item/测试项目 /" -e "s|^|  |" -e "s|(\b[0-9.]+\b)|${yellow}\1${normal}|g" -e "s|([GMK]B/s)|${yellow}\1${normal}|g"
-    echo -e "${normal}"
+  # cat /tmp/fio-bench.txt | tail -n +2 | sed -r -e "s/Test Item/${cyan}测试项目${normal} /" -e "s|^|  |" -e "s|(\b[0-9.]+\b)|${yellow}\1${normal}|g" -e "s|([GMK]B/s)|${yellow}\1${normal}|g" -e "s/([读写速IP][取入度OS])/${cyan}\1${normal}/g" -e "s/-Q32T1/${cyan}-Q32T1${normal}/g" -e "s/4K/${cyan}4K${normal}/g" -e "s/Seq/${cyan}Seq${normal}/g"
+    cat /tmp/fio-bench.txt | tail -n +2 | sed -r -e "s/Test Item/测试项目 /" -e "s|^|  |" -e "s|(\b[0-9.]+\b)|${yellow}\1${normal}|g" -e "s|([GMK]B/s)|${yellow}\1${normal}|g"
+  # echo -e "${normal}"
 else
     [[ $SSD == yes ]] && echo -e "  ${ZY} 检测到你服务器里有固态硬盘，建议使用 fio 代替 dd 进行测试${normal}" &&
     echo -e "              ${blue}${bold}bash <(wget -qO- git.io/ceshi) -j${normal}\n"
