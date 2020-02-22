@@ -4,7 +4,7 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.8.2
+ScriptVersion=1.2.8.3
 SCRIPTUPDATE=2020.02.22
 
 ########################################################################################################
@@ -542,7 +542,6 @@ disk_model_0_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.inf
 
 
  
-# 硬盘通电时间与型号检查，可能只有单个硬盘的独服才有效
 # 事实上 VPS 可能也有独立的硬盘，不过我懒得管他了。。。
 if [[ $EUID = 0 ]] && [[ ! "$(virt-what)" ]]; then
 
@@ -711,7 +710,7 @@ load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ 
 
 
 
-
+[[ $EUID = 0 ]] && wget -qO /usr/local/bin/abench https://github.com/Aniverse/A/raw/i/a && chmod 755 /usr/local/bin/abench
 
 # 测试 ----------------------------------------------------------------------------------------------
 
