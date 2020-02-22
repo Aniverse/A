@@ -2,17 +2,17 @@
 # Author: Aniverse
 # https://github.com/Aniverse/A
 # 
-# Thanks to git.io/superbench.sh    bench.sh   nench.sh
+# Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.8.1
-SCRIPTUPDATE=2020.02.21
+ScriptVersion=1.2.8.2
+SCRIPTUPDATE=2020.02.22
 
 ########################################################################################################
 
 usage_guide() {
 wget -qO- git.io/ceshi | bash
 bash <(wget -qO- git.io/ceshi) -j
-######
+##########################################
 bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 bash -c "$(wget -qO- https://git.io/JvTRm)"
 bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a) -f
@@ -150,7 +150,8 @@ wget --no-check-certificate -qO- https://www.ipip.net/ip.html > $ipip_result 2>&
 
   ipip_IP=$( cat $ipip_result | grep -A3 IP     | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | head -1 )
  ipip_ASN=$( cat $ipip_result | grep -C7 ASN    | grep -oE "AS[0-9]+" | head -1 )
-ipip_CIDR=$( cat $ipip_result | grep -C7 ASN    | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+" | head -1 )
+#ipip_CIDR=$( cat $ipip_result | grep -C7 ASN    | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+" | head -1 )
+ipip_CIDR=$( cat $ipip_result | grep -C15 CIDR | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+" | head -1 )
 # 2019.04.02 原先的已失效
 # ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" | head -1 )
 ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -o "$ipip_ASN.*</a" | cut -d '>' -f2 | cut -d '<' -f1 )
@@ -244,14 +245,14 @@ else bbrinuse="${red}否${jiacu}" ; fi
 
 echo -e "${bold}正在检查虚拟化技术 ...${normal}"
 
-if [[ $EUID = 0 ]]; then
-    wget --no-check-certificate -qO /usr/local/bin/virt-what https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what
-    mkdir -p /usr/lib/virt-what
-    wget --no-check-certificate -qO /usr/lib/virt-what/virt-what-cpuid-helper https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what-cpuid-helper
-    chmod +x /usr/local/bin/virt-what /usr/lib/virt-what/virt-what-cpuid-helper
-    virtual="$(virt-what)" 2>/dev/null
+#if [[ $EUID = 0 ]]; then
+#    wget --no-check-certificate -qO /usr/local/bin/virt-what https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what
+#    mkdir -p /usr/lib/virt-what
+#    wget --no-check-certificate -qO /usr/lib/virt-what/virt-what-cpuid-helper https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what-cpuid-helper
+#    chmod +x /usr/local/bin/virt-what /usr/lib/virt-what/virt-what-cpuid-helper
+#    virtual="$(virt-what)" 2>/dev/null
 # https://raw.githubusercontent.com/oooldking/script/master/superbench_git.sh
-else
+#else
     virtualx=$(dmesg 2>1) 
 
     if  [ $(which dmidecode) ]; then
@@ -295,7 +296,7 @@ else
 #   else
 #       virtual="Dedicated"
     fi
-fi
+#fi
 
 
 
