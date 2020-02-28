@@ -4,7 +4,7 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.9.1
+ScriptVersion=1.2.9.2
 SCRIPTUPDATE=2020.02.28
 
 ########################################################################################################
@@ -119,7 +119,7 @@ function redact_ip() {
 function _ip() {
 
 echo -e "${bold}正在检查服务器的 IPv4 信息 ...${normal}"
-serveripv4=$( ip route get 8.8.8.8 | awk '{print $3}' | head -1 )
+serveripv4=$( ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p' )
 
 isInternalIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- v4.ipv6-test.com/api/myip.php )
 isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
@@ -395,12 +395,6 @@ disk_par_num=$(cat $HOME/par_list | wc -l)
 # / 为最大分区时，数字 +1
 [[ $(df -lh | grep $(df -k | sort -rn -k4 | awk '{print $1}' | head -1) | awk '{print $NF}') == / ]] && disk_par_num=$(expr $disk_par_num + 1)
 
-# 计算总共空间的时候，排除掉 FH SSD 每个用户限额的空间；计算已用空间的时候不排除（因为原先的单个 md 已用空间只有 128k/256k）
-disk_size1=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker|md[0-9]+/[a-z]*' | awk '{print $2}' ))
-disk_size2=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker' | awk '{print $3}' ))
-disk_total_size=$( calc_disk ${disk_size1[@]} )
-disk_used_size=$( calc_disk ${disk_size2[@]} )
-
 # 2019.01.04 今天才知道原来 lsblk 还能看硬盘型号……
 # 2019.04.08 改进下输出
 
@@ -408,9 +402,20 @@ disk_used_size=$( calc_disk ${disk_size2[@]} )
 # lsblk --exclude 1,2,11 --output NAME,SIZE,ROTA,TYPE,MOUNTPOINT,MODEL
 # lsblk -dn -e 1,2,11 -o MODEL
 
-disk_size=$(lsblk --nodeps --noheadings --output SIZE 2>1 | awk '{print $1}')
-disk_total_size=$( calc_disk ${disk_size[@]} )
+#disk_size=$(lsblk --nodeps --noheadings --output SIZE 2>1 | awk '{print $1}')
+#disk_total_size=$( calc_disk ${disk_size[@]} )
 #disk_used_size=$( du -sh $HOME 2>1 | awk -F " " '{print $1}' | sed "s/G//" )
+
+# 2020.02.28 lsblk／fdisk -l 计算硬盘空间的好处是，一些没格式化或者没挂载的硬盘也能算出来，但是还是容易出错
+# 下边这个是各类 bench 脚本通用的，还是用这个算了，起码算错了也没什么大不了的，因为大家都错了……
+
+# 计算总共空间的时候，排除掉 FH SSD 每个用户限额的空间；计算已用空间的时候不排除（因为原先的单个 md 已用空间只有 128k/256k）
+disk_size1=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem|docker|md[0-9]+/[a-z]*' | awk '{print $2}' ))
+disk_size1=($( LANG=C df -hPl | grep -wvP '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem|docker|md[0-9]+/[a-z]*' | awk '{print $3}' ))
+disk_total_size=$( calc_disk ${disk_size1[@]} )
+disk_used_size=$( calc_disk ${disk_size2[@]} )
+
+
 
 
 
