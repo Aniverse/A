@@ -4,8 +4,8 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.9.0
-SCRIPTUPDATE=2020.02.23
+ScriptVersion=1.2.9.1
+SCRIPTUPDATE=2020.02.28
 
 ########################################################################################################
 
@@ -449,7 +449,7 @@ case "$raidcard" in
     NoRaid   ) disk=$(fdisk -l 2>/dev/null| grep -i dev |egrep -v "(/dev/[brm])"| awk '/:/ {print $2}'| cut -f 1 -d ":") ; d=0
                for i in $disk; do
                    d=$(expr $d + 1)
-                   echo "disk-$d $i $(smartctl -a $i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a $i | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
+                   echo "disk-$d $i $(smartctl -a $i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a $i | grep "Device Model"| grep -vi qemu | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
                done
                ;;
     MegaRAID ) for i in `seq 0 99` ; do
@@ -501,7 +501,7 @@ ls /dev/disk/by-id 2>/dev/null | grep -q md-   && Raid=Soft
 [[ $debug == 1 ]] && echo -e "Raid=$Raid"
 
 [[ ! $Raid == Hard ]] &&
-ls /dev/disk/by-id 2>/dev/null | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u > $HOME/disk.info
+ls /dev/disk/by-id 2>/dev/null | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u | grep -vi qemu > $HOME/disk.info
 
 if [[ $virtual == Docker ]] || [[ $Seedbox == FH ]]; then
 lsblk --nodeps --noheadings --output MODEL --exclude 1,2,11 2>1 > $HOME/disk.info
@@ -515,6 +515,7 @@ cat $HOME/disk.info | grep -q "Virtual Disk" && rm -f $HOME/disk.info && touch $
 fi
 
 cat $HOME/disk.info 2>/dev/null | sed -e 's/\(.*\)_/\1:/' | sed "s/:.*//" | sort -u > $HOME/disk.info.2
+
 # disk_num=$( cat $HOME/disk.info 2>/dev/null | wc -l )
 disk_num=$( lsblk --nodeps --noheadings --output NAME,SIZE,ROTA --exclude 1,2,11 2>1 | wc -l )
 
@@ -543,7 +544,7 @@ disk_model_0_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.inf
 
  
 # 事实上 VPS 可能也有独立的硬盘，不过我懒得管他了。。。
-if [[ $EUID = 0 ]] && [[ ! "$virtual" ]]; then
+if [[ $EUID = 0 ]] && [[ -z "$virtual" ]]; then
 
 fdisk -l 2>/dev/null | grep /dev/nvme -q && nvme=yes
 
