@@ -4,7 +4,7 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.9.4
+ScriptVersion=1.2.9.5
 SCRIPTUPDATE=2020.03.06
 
 ########################################################################################################
@@ -15,6 +15,7 @@ bash <(wget -qO- git.io/ceshi) -j
 ##########################################
 bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
 bash -c "$(wget -qO- https://git.io/JvTRm)"
+bash <(wget -qO- git.io/ceshi) -abc
 bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a) -f
 wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
 bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
