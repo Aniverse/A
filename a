@@ -4,8 +4,8 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.9.5
-SCRIPTUPDATE=2020.03.06
+ScriptVersion=1.2.9.6
+SCRIPTUPDATE=2020.03.13
 
 ########################################################################################################
 
@@ -343,7 +343,8 @@ current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//")
 getent passwd | grep -Ev "$(whoami)|root" | grep -E "/bin/sh|/bin/bash" | grep -E "home|home[0-9]+|media" > $HOME/neighbors_all
 
 neighbors_all_num=$(cat $HOME/neighbors_all | wc -l)
-neighbors_same_disk_num=$(cat $HOME/neighbors_all | grep "$current_disk" | wc -l)
+neighbors_same_disk_num=$(cat $HOME/neighbors_all | grep "$current_disk/" | wc -l)
+# grep "$current_disk/" 是为了防止 current_disk=/home1 时，把 /home11 这些也算进来
 
 if [[ $FH_SSD == 1 ]];then
     current_disk_size=($( LANG=C df -hPl | grep $(pwd) | awk '{print $2}' ))
