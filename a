@@ -4,7 +4,7 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.9.7
+ScriptVersion=1.2.9.8
 SCRIPTUPDATE=2020.04.07
 
 ########################################################################################################
@@ -70,52 +70,6 @@ trap cancel SIGINT
 clear
 
 # IP 信息相关 -------------------------------------------------------------------------------------------------
-
-
-# 已经不用了的代码
-function _ip_info_old () {
-echo -e "${bold}正在检查服务器的地理位置（可能不准） ...${normal}"
-result=$( wget -t1 -T10 -qO- http://freeapi.ipip.net/$serveripv4 )
-country=$( echo $result | awk -F '"' '{print $2}' )
-region=$( echo $result | awk -F '"' '{print $4}' )
-city=$( echo $result | awk -F '"' '{print $6}' )
-citydisplay=$( echo "$city, ")
-#isp=$( echo $result | awk -F '"' '{print $10}' )
-echo -e "${bold}正在检查服务器的 ISP ...${normal}"
-isp=$( wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/json | grep \"org\" | awk -F '"' '{print $4}' )
-echo -e "${bold}正在检查服务器的 ASN ...${normal}"
-asn=$(wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/asn/)
-
-# serveripv4=$( ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:" )
-# serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' )
-# serveripv6=$( wget --no-check-certificate -qO- -t1 -T8 ipv6.icanhazip.com )
-# [ -n "$(grep 'eth0:' /proc/net/dev)" ] && wangka=eth0 || wangka=`cat /proc/net/dev |awk -F: 'function trim(str){sub(/^[ \t]*/,"",str); sub(/[ \t]*$/,"",str); return str } NR>2 {print trim($1)}'  |grep -Ev '^lo|^sit|^stf|^gif|^dummy|^vmnet|^vir|^gre|^ipip|^ppp|^bond|^tun|^tap|^ip6gre|^ip6tnl|^teql|^venet|^he-ipv6|^docker' |awk 'NR==1 {print $0}'`
-# wangka=` ifconfig -a | grep -B 1 $(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}') | head -n1 | awk '{print $1}' | sed "s/:$//"  `
-# wangka=`  ip route get 8.8.8.8 | awk '{print $5}'  `
-# serverlocalipv6=$( ip addr show dev $wangka | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | head -n1 )
-}
-
-### 是否为 IP 地址 ###
-function isValidIpAddress() { echo $1 | grep -qE '^[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?$' ; }
-
-### 是否为内网 IP 地址 ###
-function isInternalIpAddress() { echo $1 | grep -qE '(192\.168\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(172\.((1[6-9])|(2\d)|(3[0-1]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(10\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))' ; }
-
-
-
-# 遮掉 IP 末位，copied from nench.sh
-function redact_ip() {
-    case "$1" in
-        *.*)
-            printf '%s.xxx\n' "$(printf '%s\n' "$1" | cut -d . -f 1-3)"
-            ;;
-        *:*)
-            printf '%s:xxxx\n' "$(printf '%s\n' "$1" | cut -d : -f 1-3)"
-            ;;
-    esac
-}
-
-
 
 function _ip() {
 
