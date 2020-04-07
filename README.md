@@ -1,19 +1,21 @@
 
-## A, I/O bench and system info
+## I/O bench and system info
 
+以下四种用法都可以  
 ```
+bash <(wget -qO- git.io/ceshi)
+bash <(curl -Ls git.io/ceshi)
 bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
-bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a)
-bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a)
 wget -q https://github.com/Aniverse/A/raw/i/a && bash a
 ```
 
+高级用法  
 ```
-No IP               bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -a
-No IPIP             bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -b
-No IOtest           bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -c
-No IPIP & IOtest    bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -bc
-IOPS test           bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -j
+No IP                bash <(wget -qO- git.io/ceshi) -a
+No IPIP              bash <(wget -qO- git.io/ceshi) -b
+No IOtest            bash <(wget -qO- git.io/ceshi) -c
+No IP, IPIP, IOTEST  bash <(wget -qO- git.io/ceshi) -abc
+IOPS test            bash <(wget -qO- git.io/ceshi) -j
 ```
 
 ![00](https://github.com/Aniverse/A/raw/i/pictures/00.png)
@@ -27,18 +29,8 @@ IOPS test           bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -j
 ![Ikoula-20Euro-SSD](https://github.com/Aniverse/A/raw/i/pictures/Ikoula-20Euro-SSD.png)
 
 
-### A Troubleshooting
+### Troubleshooting
 
 如果碰到 `-sh: syntax error near unexpected token ('` 的提示，先输入 `bash`，再执行脚本  
 已知未解决的问题：某些软／硬 RAID 硬盘检测不到  
 如果还有什么别的问题，请开 issue  
-
-
-## B, sysctl info
-
-```
-bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/b)"
-bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/b)
-wget -q https://github.com/Aniverse/A/raw/i/b && bash b
-```
-
