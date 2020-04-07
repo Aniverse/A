@@ -4,8 +4,8 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.9.6
-SCRIPTUPDATE=2020.03.13
+ScriptVersion=1.2.9.7
+SCRIPTUPDATE=2020.04.07
 
 ########################################################################################################
 
@@ -179,23 +179,14 @@ echo -e "${bold}正在检查操作系统与内核 ...${normal}"
 [ -f /etc/os-release     ] && KNA=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
 [ -f /etc/lsb-release    ] && KNA=$(awk -F'[="]+' '/DISTRIB_ID/{print $2}' /etc/lsb-release)
 
-get_opsy() {
-[ -f /etc/redhat-release ] && awk '{print ($1,$3$HOME/^[0-9]/?$3:$4)}' /etc/redhat-release && return
-[ -f /etc/os-release     ] && awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release && return
-[ -f /etc/lsb-release    ] && awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release && return ; }
+source <(wget -qO- https://github.com/Aniverse/inexistence/raw/master/00.Installation/check-sys)
 
-running_kernel=$(uname -r 2>1 )
-arch=$( uname -m 2>1 )     # 架构，可以识别 ARM
-lbit=$( getconf LONG_BIT ) # 只显示多少位，无法识别 ARM
-[ -z $arch ] && arch=$(echo "x$(getconf LONG_BIT)")
-
-DISTRO=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
-DISTROL=$(echo $DISTRO | tr 'A-Z' 'a-z')
-[[ $DISTRO =~ (Ubuntu|Debian) ]] && CODENAME=$(cat /etc/os-release | grep VERSION= | tr '[A-Z]' '[a-z]' | sed 's/\"\|(\|)\|[0-9.,]\|version\|lts//g' | awk '{print $2}' | head -1)
-[[ $DISTRO == Ubuntu ]] && osversion=$(grep Ubuntu /etc/issue | head -1 | grep -oE  "[0-9.]+")
-[[ $DISTRO == Debian ]] && osversion=$(cat /etc/debian_version)
-#[[ $KNA =~ (CentOS|Fedora) ]] && DISTRO=$( get_opsy )
-[[ ! $DISTRO =~ (Ubuntu|Debian) ]] && DISTRO=$( get_opsy )
+#    wget --no-check-certificate -qO /usr/local/bin/virt-what https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what
+#    mkdir -p /usr/lib/virt-what
+#    wget --no-check-certificate -qO /usr/lib/virt-what/virt-what-cpuid-helper https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what-cpuid-helper
+#    chmod +x /usr/local/bin/virt-what /usr/lib/virt-what/virt-what-cpuid-helper
+#    virtual="$(virt-what)" 2>/dev/null
+# https://raw.githubusercontent.com/oooldking/script/master/superbench_git.sh
 
 [[ $(command -v dpkg) ]] && {
 rm -f $HOME/system_kernel_list
@@ -241,63 +232,6 @@ if version_ge $kernel_vvv 4.9.3 && ! version_ge $kernel_vvv 4.16  ; then NQLKern
 if [[ $tcp_control =~ (nanqinlang|tsunami|bbr|bbr2|bbr_powered) ]]; then bbrinuse="${green}是${jiacu}"
 else bbrinuse="${red}否${jiacu}" ; fi
 
-# Virt-what 相关 ----------------------------------------------------------------------------------------------
-
-
-echo -e "${bold}正在检查虚拟化技术 ...${normal}"
-
-#if [[ $EUID = 0 ]]; then
-#    wget --no-check-certificate -qO /usr/local/bin/virt-what https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what
-#    mkdir -p /usr/lib/virt-what
-#    wget --no-check-certificate -qO /usr/lib/virt-what/virt-what-cpuid-helper https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what-cpuid-helper
-#    chmod +x /usr/local/bin/virt-what /usr/lib/virt-what/virt-what-cpuid-helper
-#    virtual="$(virt-what)" 2>/dev/null
-# https://raw.githubusercontent.com/oooldking/script/master/superbench_git.sh
-#else
-    virtualx=$(dmesg 2>1) 
-
-    if  [ $(which dmidecode) ]; then
-        sys_manu=$(dmidecode -s system-manufacturer) 2>/dev/null
-        sys_product=$(dmidecode -s system-product-name) 2>/dev/null
-        sys_ver=$(dmidecode -s system-version) 2>/dev/null
-    else
-        sys_manu=""
-        sys_product=""
-        sys_ver=""
-    fi
-    
-    if grep docker /proc/1/cgroup -qa 2>/dev/null ; then
-        virtual="Docker"
-    elif grep lxc /proc/1/cgroup -qa 2>/dev/null; then
-        virtual="Lxc"
-    elif grep -qa container=lxc /proc/1/environ 2>/dev/null; then
-        virtual="Lxc"
-    elif [[ -f /proc/user_beancounters ]]; then
-        virtual="OpenVZ"
-    elif [[ "$virtualx" == *kvm-clock* ]]; then
-        virtual="KVM"
-#   elif [[ "$cname" == *KVM* ]]; then
-#       virtual="KVM"
-    elif [[ "$virtualx" == *"VMware Virtual Platform"* ]]; then
-        virtual="VMware"
-    elif [[ "$virtualx" == *"Parallels Software International"* ]]; then
-        virtual="Parallels"
-    elif [[ "$virtualx" == *VirtualBox* ]]; then
-        virtual="VirtualBox"
-    elif [[ -e /proc/xen ]]; then
-        virtual="Xen"
-    elif [[ "$sys_manu" == *"Microsoft Corporation"* ]]; then
-        if [[ "$sys_product" == *"Virtual Machine"* ]]; then
-            if [[ "$sys_ver" == *"7.0"* || "$sys_ver" == *"Hyper-V" ]]; then
-                virtual="Hyper-V"
-            else
-                virtual="Microsoft Virtual Machine"
-            fi
-        fi
-#   else
-#       virtual="Dedicated"
-    fi
-#fi
 
 
 
