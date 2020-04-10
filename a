@@ -445,7 +445,7 @@ disk_model_0_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.inf
 
  
 # 事实上 VPS 可能也有独立的硬盘，不过我懒得管他了。。。
-if [[ $EUID = 0 ]] && [[ -z "$virtual" ]]; then
+if [[ $EUID = 0 ]] && [[ "$virtual" == "No Virtualization Detected" ]]; then
 
 fdisk -l 2>/dev/null | grep /dev/nvme -q && nvme=yes
 
@@ -494,6 +494,7 @@ disk_num=$( cat $HOME/disk.info 2>/dev/null | wc -l )
   # [[ ! -z $RC_Model ]] &&
   # echo -e  "  磁盘阵列卡            ${cyan}$RC_Model${jiacu}"
 # 2019.04.03 啥时候改成 for？
+# 2020.04.10 一年过去了，这个代码看着还是那么的蠢，但我……目前没动力学习怎么改
 
 if [[ $disk_num == 1 ]]; then
     echo -e  "  硬盘信息              ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
