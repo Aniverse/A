@@ -4,8 +4,8 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.2.9.8
-SCRIPTUPDATE=2020.04.07
+ScriptVersion=1.3.0.0
+SCRIPTUPDATE=2020.04.11
 
 ########################################################################################################
 
@@ -63,128 +63,33 @@ CW="${bold}${baihongse} ERROR ${jiacu}";ZY="${baihongse}${bold} ATTENTION ${jiac
 
 # Ctrl+C 时恢复样式，删除无用文件
 cancel() { echo -e "${normal}"
-rm -f $HOME/disk.info $HOME/disk.info.2 $HOME/system_kernel_list $HOME/neighbors_all $HOME/par_list test_file_* ./ioping.static ./1
+rm -f $HOME/disk.info   $HOME/disk.info.2   $HOME/system_kernel_list   $HOME/neighbors_all   $HOME/par_list   test_file_*   $PWD/1   $HOME/ipapi
 exit ; }
 trap cancel SIGINT
 
+
+
+
 clear
 
+
 # IP 信息相关 -------------------------------------------------------------------------------------------------
-
-function _ip() {
-
-echo -e "${bold}正在检查服务器的 IPv4 信息 ...${normal}"
-serveripv4=$( ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p' )
-
-isInternalIpAddress "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- v4.ipv6-test.com/api/myip.php )
-isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T6 -qO- checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
-isValidIpAddress    "$serveripv4" || serveripv4=$( wget --no-check-certificate -t1 -T7 -qO- ipecho.net/plain )
-isValidIpAddress    "$serveripv4" || { echo "${red}${shanshuo}WARNING ${jiacu}${underline}Failed to detect your public IPv4 address, use internal address instead${jiacu}" ; serveripv4=$( ip route get 8.8.8.8 | awk '{print $3}' | head -1 ) ; }
-
-echo -e "${bold}正在检查服务器的 IPv6 信息 ...${normal}"
-serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -1 )
-
-serveripv6_show=$(redact_ip "$serveripv6") ; [[ $full_ip == 1 ]] && serveripv6_show=$serveripv6
-serveripv4_show=$(redact_ip "$serveripv4") ; [[ $full_ip == 1 ]] && serveripv4_show=$serveripv4
-
-}
-
-
-
-function _ipip() {
-echo -e "${bold}正在检查服务器的其他 IP 信息 ... (可能要很久)${normal}"
-
-#ipip_result=/tmp/ipip_result ; touch $ipip_result 2> /dev/null || ipip_result=$HOME/ipip_result
-#[[ ! -e $ipip_result ]] && 
-
-ipip_result=$HOME/ipip_result
-wget --no-check-certificate -qO- https://www.ipip.net/ip.html > $ipip_result 2>&1
-
-# ipip_Loc=$( cat $ipip_result | grep -A3 地理位置   | grep -v 地理位置 | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
-# ipip_ISP=$( cat $ipip_result | grep -A3 -E "运营商|所有者" | grep -Ev "运营商|所有者" | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
-
-  ipip_IP=$( cat $ipip_result | grep -A3 IP     | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | head -1 )
- ipip_ASN=$( cat $ipip_result | grep -C7 ASN    | grep -oE "AS[0-9]+" | head -1 )
-#ipip_CIDR=$( cat $ipip_result | grep -C7 ASN    | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+" | head -1 )
-ipip_CIDR=$( cat $ipip_result | grep -C15 CIDR | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+" | head -1 )
-# 2019.04.02 原先的已失效
-# ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" | head -1 )
-ipip_AS=$( cat $ipip_result | grep -A1 $ipip_CIDR | grep -v $ipip_CIDR | grep -o "$ipip_ASN.*</a" | cut -d '>' -f2 | cut -d '<' -f1 )
-ipip_rDNS=$( cat $ipip_result | grep -oE "rDNS: [a-zA-Z0-9.-]+" | sed "s/rDNS: //" )
- ipip_Loc=$( cat $ipip_result | grep -A10 "https://tools.ipip.net/traceroute.php?ip=" | grep 720px | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
- ipip_ISP=$( cat $ipip_result | grep "display: inline-block;text-align: center;width: 720px;float: left;line-height: 46px" | sed -n '2p' | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
-
-#[[ $ipip_result == $HOME/ipip_result ]] && 
-rm -f $ipip_result
-
-}
-
-
-
-
-
-# 操作系统、内核等参数检测 ---------------------------------------------------------------------------------------
-
-
-
-echo -e "${bold}正在检查操作系统与内核 ...${normal}"
-
-[ -f /etc/redhat-release ] && KNA=$(awk '{print $1}' /etc/redhat-release)
-[ -f /etc/os-release     ] && KNA=$(awk -F'[= "]' '/PRETTY_NAME/{print $3}' /etc/os-release)
-[ -f /etc/lsb-release    ] && KNA=$(awk -F'[="]+' '/DISTRIB_ID/{print $2}' /etc/lsb-release)
-
+echo -e "${bold}正在获取 check-sys 与 abench ...${normal}"
+[[ $EUID = 0 ]] && wget -qO /usr/local/bin/abench https://github.com/Aniverse/A/raw/i/a && chmod 755 /usr/local/bin/abench
 source <(wget -qO- https://github.com/Aniverse/inexistence/raw/master/00.Installation/check-sys)
-
-#    wget --no-check-certificate -qO /usr/local/bin/virt-what https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what
-#    mkdir -p /usr/lib/virt-what
-#    wget --no-check-certificate -qO /usr/lib/virt-what/virt-what-cpuid-helper https://github.com/Aniverse/inexistence/raw/master/03.Files/app/virt-what-cpuid-helper
-#    chmod +x /usr/local/bin/virt-what /usr/lib/virt-what/virt-what-cpuid-helper
-#    virtual="$(virt-what)" 2>/dev/null
-# https://raw.githubusercontent.com/oooldking/script/master/superbench_git.sh
-
-[[ $(command -v dpkg) ]] && {
-rm -f $HOME/system_kernel_list
-dpkg -l | grep linux-image   | awk '{print $2}' >  $HOME/system_kernel_list
-dpkg -l | grep linux-headers | awk '{print $2}' >> $HOME/system_kernel_list
-dpkg -l | grep linux-modules | awk '{print $2}' >> $HOME/system_kernel_list
-dpkg -l | grep ovhkernel     | awk '{print $2}' >> $HOME/system_kernel_list
-dpkg -l | grep pve-kernel    | awk '{print $2}' >> $HOME/system_kernel_list ; }
-
-
-
-# TCP 信息相关 ---------------------------------------------------------------------------------------------------
-
-
-
+# IP 信息相关 -------------------------------------------------------------------------------------------------
+function _ip() {
+    ipv4_check
+    ipv6_check
+}
+# TCP-CC 信息相关 -------------------------------------------------------------------------------------------------
 echo -e "${bold}正在检查 TCP 信息 ...${normal}"
-
 tcp_control=$( cat /proc/sys/net/ipv4/tcp_congestion_control 2>1 )
 tcp_control_all=$( cat /proc/sys/net/ipv4/tcp_available_congestion_control 2>1 )
-
 tcp_c_name=$tcp_control
 [[ $tcp_control == bbr_powered ]] && tcp_c_name="bbr_powered (用 Vicer 脚本安装的 Yankee 版魔改 BBR)"
 [[ $tcp_control == tsunami     ]] && tcp_c_name="tsunami (Yankee 版魔改 BBR)"
 [[ $tcp_control == nanqinlang  ]] && tcp_c_name="nanqinlang (南琴浪版魔改 BBR)"
-
-# 检查理论上内核是否支持锐速
-SSKernel="${red}否${jiacu}"
-URLKernel=https://raw.githubusercontent.com/0oVicero0/serverSpeeder_kernel/master/serverSpeeder.txt
-AcceVer=$(wget --no-check-certificate -qO- "$URLKernel" | grep "$KNA/" | grep "/x$KernelBit/" | grep "/$running_kernel/" | awk -F'/' '{print $NF}' | sort -n -k 2 -t '_' | tail -1)
-MyKernel=$(wget --no-check-certificate -qO- "$URLKernel" | grep "$KNA/" | grep "/x$KernelBit/" | grep "/$running_kernel/" | grep "$AcceVer" | tail -1)
-[[ ! -z "$MyKernel" ]] && SSKernel="${green}是${jiacu}"
-
-# 检查理论上内核是否支持原版 BBR
-function version_ge(){ test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1" ; }
-
-kernel_vvv=$( uname -r | cut -d- -f1 )
-if version_ge $kernel_vvv 4.9                                     ; then BBRKernel="${green}是${jiacu}" ; else BBRKernel="${red}否${jiacu}" ; fi
-if version_ge $kernel_vvv 4.10 && ! version_ge $kernel_vvv 4.16   ; then YKKernel="${green}是${jiacu}"  ; else YKKernel="${red}否${jiacu}"  ; fi
-if version_ge $kernel_vvv 4.9.3 && ! version_ge $kernel_vvv 4.16  ; then NQLKernel="${green}是${jiacu}" ; else NQLKernel="${red}否${jiacu}" ; fi
-
-# 检查 锐速 与 BBR 是否已启用
-[[ ` ps aux | grep appex | grep -v grep ` ]] && SSrunning="${green}是${jiacu}" || SSrunning="${red}否${jiacu}"
-if [[ $tcp_control =~ (nanqinlang|tsunami|bbr|bbr2|bbr_powered) ]]; then bbrinuse="${green}是${jiacu}"
-else bbrinuse="${red}否${jiacu}" ; fi
 
 
 
@@ -264,16 +169,6 @@ cat /sys/block/sd*/queue/rotational 2>/dev/null | grep -q 0 && SSD=yes
 cat /sys/block/vd*/queue/rotational 2>/dev/null | grep -q 0 && SSD=yes
 
 # 硬盘大小计算
-calc_disk() {
-local total_size=0 ; local array=$@
-for size in ${array[@]} ; do
-[ "${size}" == "0" ] && size_t=0 || size_t=`echo ${size:0:${#size}-1}`
-[ "`echo ${size:(-1)}`" == "K" ] && size=0
-[ "`echo ${size:(-1)}`" == "M" ] && size=$( awk 'BEGIN{printf "%.1f", '$size_t' / 1024}' )
-[ "`echo ${size:(-1)}`" == "T" ] && size=$( awk 'BEGIN{printf "%.1f", '$size_t' * 1024}' )
-[ "`echo ${size:(-1)}`" == "G" ] && size=${size_t}
-total_size=$( awk 'BEGIN{printf "%.1f", '$total_size' + '$size'}' )
-done ; echo ${total_size} ; }
 
 # 其实这个判定对于独服可能不太对
 #disk_par_num=$(df -lh | grep -P "/home[0-9]+|media|home|mnt" | wc -l)
@@ -580,40 +475,17 @@ fi
 
 echo -e "${bold}正在检查其他硬件信息 ...${normal}"
 
-# CPU
-cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
-cores=$( awk -F: '/model name/ {core++} END {print core}' /proc/cpuinfo )
-cpucores_single=$( grep 'core id' /proc/cpuinfo | sort -u | wc -l )
-freq=$( awk -F: '/cpu MHz/ {freq=$2} END {print freq}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
-# physical_cpu_number=$( grep 'physical id' /proc/cpuinfo | cut -c15-17 )
-# cpu_percent=$( top -b -n 1 | grep Cpu | awk '{print $2}' | cut -f 1 -d "." )
-cpunumbers=$( grep 'physical id' /proc/cpuinfo | sort -u | wc -l )
-cpucores=$( expr $cpucores_single \* $cpunumbers )
-cputhreads=$( grep 'processor' /proc/cpuinfo | sort -u | wc -l )
-
-if [[ -z $virtual ]] || [[ $virtual == Docker ]]; then
-    [[ $cpunumbers == 2 ]] && CPUNum='双路 ' ; [[ $cpunumbers == 4 ]] && CPUNum='四路 ' ; [[ $cpunumbers == 8 ]] && CPUNum='八路 '
-fi
-
-# 内存
-tram=$( free -m | awk '/Mem/ {print $2}' )
-uram=$( free -m | awk '/Mem/ {print $3}' )
-swap=$( free -m | awk '/Swap/ {print $2}' )
-uswap=$( free -m | awk '/Swap/ {print $3}' )
-memory_usage=`free -m |grep -i mem | awk '{printf ("%.2f\n",$3/$2*100)}'`%
-
-users=`users | wc -w`
-date=$( date +%Y-%m-%d" "%H:%M:%S )
-processes=`ps aux | wc -l`
-
-uptime1=$( awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d days %d hour %d min\n",a,b,c)}' /proc/uptime )
-uptime2=`uptime | grep -ohe 'up .*' | sed 's/,/\ hours/g' | awk '{ printf $2" "$3 }'`
-load=$( w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//' )
+hardware_check_1
 
 
 
 
-[[ $EUID = 0 ]] && wget -qO /usr/local/bin/abench https://github.com/Aniverse/A/raw/i/a && chmod 755 /usr/local/bin/abench
+
+
+
+
+
+
 
 # 测试 ----------------------------------------------------------------------------------------------
 
@@ -728,10 +600,8 @@ echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}" ; }
 
 [[ $show_ipip == 1 ]] && [[ ! -z $ipip_ISP ]] && {
 [[ ! -z $ipip_rDNS ]] && [[ ! $Seedbox == Unknown || $full_ip == 1 ]] && 
-echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
-echo -e  "  运营商                ${green}$ipip_ISP${jiacu}"
-echo -e  "  AS  信息              ${green}$ipip_ASN, $ipip_AS${jiacu}"
-echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}" ; }
+echo -e  "  AS  信息              ${green}$asnnnnn, $isppppp${jiacu}"
+echo -e  "  地理位置              ${green}$country, $regionn, $cityyyy{jiacu}" ; }
 
 [[ $show_ip == 1 || $show_ipip == 1 ]] && echo
 
@@ -755,7 +625,7 @@ echo
 # 结构 ----------------------------------------------------------------------------------------------
 
 [[ $show_ip == 1 ]] && _ip
-[[ $show_ipip == 1 ]] && _ipip
+[[ $show_ipip == 1 ]] && ip_ipapi
 _menu
 [[ $test_io == 1 ]] && print_io_v2
 
