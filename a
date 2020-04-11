@@ -4,25 +4,25 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.3.1.4
+ScriptVersion=1.3.1.5
 SCRIPTUPDATE=2020.04.11
 
 ########################################################################################################
 
 usage_guide() {
-wget -qO- git.io/ceshi | bash
-bash <(wget -qO- git.io/ceshi) -j
-##########################################
-bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
-bash -c "$(wget -qO- https://git.io/JvTRm)"
-bash <(wget -qO- git.io/ceshi) -abc
-bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a) -f
-wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
-bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
-s=/usr/local/bin/abench ; rm -f $s ; nano $s ; chmod 755 $s
+    wget -qO- git.io/ceshi | bash
+    bash <(wget -qO- git.io/ceshi) -j
+    bash -c "$(wget -qO- https://github.com/Aniverse/A/raw/i/a)"
+    bash -c "$(wget -qO- https://git.io/JvTRm)"
+    bash <(wget -qO- git.io/ceshi) -abc
+    bash <(curl -s https://raw.githubusercontent.com/Aniverse/A/i/a) -f
+    wget -qO a https://github.com/Aniverse/A/raw/i/a && bash a -abc
+    bash <(wget -qO- https://github.com/Aniverse/A/raw/i/a) -ac
+    s=/usr/local/bin/abench ; rm -f $s ; nano $s ; chmod 755 $s
 }
 
 ########################################################################################################
+
 debug=0
 show_ip=1
 show_ipip=1
@@ -307,8 +307,8 @@ echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}"
             fi
 
             if [[ $show_ipip == 1 ]] && [[ -n $asnnnnn ]]; then
-echo -e  "  AS  信息              ${green}$asnnnnn, $isppppp${jiacu}"
-echo -e  "  地理位置              ${green}$country, $regionn, $cityyyy{jiacu}"
+echo -e  "  ASN 信息              ${green}$asnnnnn, $isppppp${jiacu}"
+echo -e  "  地理位置              ${green}$country, $regionn, $cityyyy${jiacu}"
             fi
 
     [[ $show_ip == 1 || $show_ipip == 1 ]] && echo
