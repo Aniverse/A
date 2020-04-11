@@ -4,7 +4,7 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.3.1.3
+ScriptVersion=1.3.1.4
 SCRIPTUPDATE=2020.04.11
 
 ########################################################################################################
@@ -306,7 +306,7 @@ echo -e  "  IPv6 地址             ${green}$serveripv6_show${jiacu}"
 echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}"
             fi
 
-            if [[ $show_ipip == 1 ]] && [[ ! -z $ipip_ISP ]]; then
+            if [[ $show_ipip == 1 ]] && [[ -n $asnnnnn ]]; then
 echo -e  "  AS  信息              ${green}$asnnnnn, $isppppp${jiacu}"
 echo -e  "  地理位置              ${green}$country, $regionn, $cityyyy{jiacu}"
             fi
@@ -332,7 +332,7 @@ echo -e  "  ${jiacu}当前脚本版本          $ScriptVersion${normal}"
 # 结构 ----------------------------------------------------------------------------------------------
 
 [[ $show_ip == 1 ]] && _ip
-[[ $show_ipip == 1 ]] && ip_ipapi
+[[ $show_ipip == 1 ]] && echo -e "${bold}正在检查 ASN 等信息 ...${normal}" && ip_ipapi
 _menu
 [[ $test_io == 1 ]] && print_io_v2
 
