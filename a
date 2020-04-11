@@ -88,8 +88,8 @@ echo -e "${bold}正在获取 check-sys 与 abench ...${normal}"
 [[ $EUID = 0 ]] && wget -qO /usr/local/bin/abench https://github.com/Aniverse/A/raw/i/a && chmod 755 /usr/local/bin/abench
 source <(wget -qO- https://github.com/Aniverse/inexistence/raw/master/00.Installation/check-sys)
 ##############################################################################################################################
-tcp_control=$( cat /proc/sys/net/ipv4/tcp_congestion_control 2>1 )
-tcp_control_all=$( cat /proc/sys/net/ipv4/tcp_available_congestion_control 2>1 )
+tcp_control=$( cat /proc/sys/net/ipv4/tcp_congestion_control 2>&1 )
+tcp_control_all=$( cat /proc/sys/net/ipv4/tcp_available_congestion_control 2>&1 )
 tcp_c_name=$tcp_control
 [[ $tcp_control == bbr_powered ]] && tcp_c_name="bbr_powered (用 Vicer 脚本安装的 Yankee 版魔改 BBR)"
 [[ $tcp_control == tsunami     ]] && tcp_c_name="tsunami (Yankee 版魔改 BBR)"
@@ -107,10 +107,7 @@ disk_size2=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|overlay|shm|udev|devtmp
 disk_total_size=$( calc_disk ${disk_size1[@]} )
 disk_used_size=$( calc_disk ${disk_size2[@]} )
 
-
-
- 
-# 事实上 VPS 可能也有独立的硬盘，不过我懒得管他了。。。
+# 事实上 VPS 可能也有独立的硬盘，不过我懒得管他了...
 if [[ $EUID = 0 ]] && [[ "$virtual" == "No Virtualization Detected" ]]; then
     fdisk -l 2>/dev/null | grep /dev/nvme -q && nvme=yes
     if [[ $nvme == yes ]] && [[ ! $(which nvme) ]]; then
@@ -286,7 +283,7 @@ echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}
 echo
 
 _show_disk_info | tee -a $HOME/_show_disk_info
-[[ $(cat $HOME/_show_disk_info 2>1) ]] && echo && rm -f $HOME/_show_disk_info
+[[ $(cat $HOME/_show_disk_info 2>&1) ]] && echo && rm -f $HOME/_show_disk_info
 # if [[ ! $Seedbox == Unknown ]] || [[ ! $disk_num == 0 ]]; then echo ; fi
 
 
