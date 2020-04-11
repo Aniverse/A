@@ -4,7 +4,7 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.3.0.0
+ScriptVersion=1.3.1.0
 SCRIPTUPDATE=2020.04.11
 
 ########################################################################################################
@@ -62,143 +62,45 @@ heibaise=${black}${on_white}   ; heihuangse=${on_yellow}${black}
 CW="${bold}${baihongse} ERROR ${jiacu}";ZY="${baihongse}${bold} ATTENTION ${jiacu}";JG="${baihongse}${bold} WARNING ${jiacu}"
 
 # Ctrl+C 时恢复样式，删除无用文件
-cancel() { echo -e "${normal}"
-rm -f $HOME/disk.info   $HOME/disk.info.2   $HOME/system_kernel_list   $HOME/neighbors_all   $HOME/par_list   test_file_*   $PWD/1   $HOME/ipapi
-exit ; }
+cancel() {
+    echo -e "${normal}"
+    rm -rf $HOME/.abench
+    rm -f $HOME/.abench/disk.info   $HOME/.abench/disk.info.2    $HOME/.abench/neighbors_all   $HOME/.abench/par_list   test_file_*   $PWD/1   $HOME/ipapi
+    # exit
+}
 trap cancel SIGINT
 
-
-
-
-clear
-
-
-# IP 信息相关 -------------------------------------------------------------------------------------------------
-echo -e "${bold}正在获取 check-sys 与 abench ...${normal}"
-[[ $EUID = 0 ]] && wget -qO /usr/local/bin/abench https://github.com/Aniverse/A/raw/i/a && chmod 755 /usr/local/bin/abench
-source <(wget -qO- https://github.com/Aniverse/inexistence/raw/master/00.Installation/check-sys)
-# IP 信息相关 -------------------------------------------------------------------------------------------------
 function _ip() {
     ipv4_check
     ipv6_check
 }
-# TCP-CC 信息相关 -------------------------------------------------------------------------------------------------
-echo -e "${bold}正在检查 TCP 信息 ...${normal}"
+
+
+mkdir -p $HOME/.abench
+
+
+
+
+##############################################################################################################################
+[[ $debug != 1 ]] && clear
+##############################################################################################################################
+echo -e "${bold}正在获取 check-sys 与 abench ...${normal}"
+[[ $EUID = 0 ]] && wget -qO /usr/local/bin/abench https://github.com/Aniverse/A/raw/i/a && chmod 755 /usr/local/bin/abench
+source <(wget -qO- https://github.com/Aniverse/inexistence/raw/master/00.Installation/check-sys)
+##############################################################################################################################
 tcp_control=$( cat /proc/sys/net/ipv4/tcp_congestion_control 2>1 )
 tcp_control_all=$( cat /proc/sys/net/ipv4/tcp_available_congestion_control 2>1 )
 tcp_c_name=$tcp_control
 [[ $tcp_control == bbr_powered ]] && tcp_c_name="bbr_powered (用 Vicer 脚本安装的 Yankee 版魔改 BBR)"
 [[ $tcp_control == tsunami     ]] && tcp_c_name="tsunami (Yankee 版魔改 BBR)"
 [[ $tcp_control == nanqinlang  ]] && tcp_c_name="nanqinlang (南琴浪版魔改 BBR)"
-
-
-
-
-
-
-
-# 共享盒子 邻居信息 ------------------------------------------------------------------------------------------
-
-serverfqdn=$( hostname -f 2>1 )
-[ -z $serverfqdn ] && serverfqdn=$( hostname 2>1 )
-
-Seedbox=Unknown
-echo $serverfqdn | grep -q feral          && Seedbox=FH
-echo $serverfqdn | grep -q seedhost       && Seedbox=SH
-echo $serverfqdn | grep -q pulsedmedia    && Seedbox=PM
-echo $serverfqdn | grep -q ultraseedbox   && Seedbox=USB
-echo $serverfqdn | grep -q appbox         && Seedbox=AppBox && Docker=1
-echo $serverfqdn | grep -q seedboxes.cc   && Seedbox=Sbcc   && Docker=1
-[[ $Seedbox == FH ]] && df -hPl | grep -q "/media/md" && FH_SSD=1
-
-[[ $debug == 1 ]] && echo -e "Seedbox=$Seedbox  FH_SSD=$FH_SSD"
-
-# 所有硬盘分区
-df -hPl | grep -wvP '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker|md[0-9]+/[a-z].*' | sort -u > $HOME/par_list
-
-[[ ! $Seedbox == Unknown ]] && [[ ! $EUID = 0 ]] && [[ ! $virtual == Docker ]] && {
-
-echo -e "${bold}正在检查盒子的邻居情况 ...${normal}"
-
-current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//")
-[[ $Seedbox == USB    ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11    这样子的
-[[ $Seedbox == PM     ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home       这样子的
-[[ $Seedbox == SH     ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home22     这样子的
-[[ $Seedbox == FH     ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /media/sdk1 这样子的，或者 /media/98811
-[[ $Seedbox == DSD    ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /           这样子的
-[[ $Seedbox == Sbcc   ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home/user  这样子的
-[[ $Seedbox == AppBox ]] && [[ ! $(whoami) == root  ]] && current_disk=/home/$(whoami)
-[[ $Seedbox == AppBox ]] && [[   $(whoami) == root  ]] && current_disk=/root
-# /media/sdr1/home 这样子的，一些老的 FH HDD 会出现这样的
-[[ $Seedbox == FH  ]] && echo $current_disk | grep -q "/home" && current_disk=$(echo $current_disk | sed "s/\/home//") && FH_HOME=1
-
-# 所有邻居
-getent passwd | grep -Ev "$(whoami)|root" | grep -E "/bin/sh|/bin/bash" | grep -E "home|home[0-9]+|media" > $HOME/neighbors_all
-
-neighbors_all_num=$(cat $HOME/neighbors_all | wc -l)
-neighbors_same_disk_num=$(cat $HOME/neighbors_all | grep "$current_disk/" | wc -l)
-# grep "$current_disk/" 是为了防止 current_disk=/home1 时，把 /home11 这些也算进来
-
-if [[ $FH_SSD == 1 ]];then
-    current_disk_size=($( LANG=C df -hPl | grep $(pwd) | awk '{print $2}' ))
-    current_disk_total_used=($( LANG=C df -hPl | grep $(pwd) | awk '{print $3}' ))
-    current_disk_self_used=$( du -sh $HOME 2>1 | awk -F " " '{print $1}' )
-else
-    current_disk_size=($( LANG=C df -hPl | grep $current_disk | awk '{print $2}' ))
-    current_disk_total_used=($( LANG=C df -hPl | grep $current_disk | awk '{print $3}' ))
-    current_disk_self_used=$( du -sh $HOME 2>1 | awk -F " " '{print $1}' )
-fi
-
-#current_disk_avai=($( LANG=C df -hPl | grep $current_disk | awk '{print $4}' ))
-#current_disk_perc=($( LANG=C df -hPl | grep $current_disk | awk '{print $5}' ))
-
-}
-
-
-
-
-
-
-
-# 硬盘信息 ----------------------------------------------------------------------------------------------
-
-
+##############################################################################################################################
+echo -e "${bold}正在检查其他硬件信息 ...${normal}" ; hardware_check_1
+seedbox_check
+##############################################################################################################################
 echo -e "${bold}正在检查硬盘信息 ...${normal}"
-
 cat /sys/block/sd*/queue/rotational 2>/dev/null | grep -q 0 && SSD=yes
 cat /sys/block/vd*/queue/rotational 2>/dev/null | grep -q 0 && SSD=yes
-
-# 硬盘大小计算
-
-# 其实这个判定对于独服可能不太对
-#disk_par_num=$(df -lh | grep -P "/home[0-9]+|media|home|mnt" | wc -l)
-disk_par_num=$(cat $HOME/par_list | wc -l)
-# 这个估计没毛病，Docker、独服、KVM 下都没问题的样子，别的不知道
-# disk_par_num=$(lsblk --nodeps --noheadings --output NAME,SIZE,ROTA --exclude 1,2,11 2>1 | wc -l)
-
-
-# / 为最大分区时，数字 +1
-[[ $(df -lh | grep $(df -k | sort -rn -k4 | awk '{print $1}' | head -1) | awk '{print $NF}') == / ]] && disk_par_num=$(expr $disk_par_num + 1)
-
-# 2019.01.04 今天才知道原来 lsblk 还能看硬盘型号……
-# 2019.04.08 改进下输出
-
-# lsblk --nodeps --exclude 1,2,11 --output NAME,SIZE,ROTA,MODEL | awk '{if ($3 == 0) {$3="SSD"} if ($3 == 1) {$3="HDD"} ; printf("%-5s%7s%5s   %-10s%-15s\n", $1, $2, $3, $4, $5)}' 2>&1
-# lsblk --exclude 1,2,11 --output NAME,SIZE,ROTA,TYPE,MOUNTPOINT,MODEL
-# lsblk -dn -e 1,2,11 -o MODEL
-
-#disk_size=$(lsblk --nodeps --noheadings --output SIZE 2>1 | awk '{print $1}')
-#disk_total_size=$( calc_disk ${disk_size[@]} )
-#disk_used_size=$( du -sh $HOME 2>1 | awk -F " " '{print $1}' | sed "s/G//" )
-
-# 2020.02.28 lsblk／fdisk -l 计算硬盘空间的好处是，一些没格式化或者没挂载的硬盘也能算出来，但是还是容易出错
-# 下边这个是各类 bench 脚本通用的，还是用这个算了，起码算错了也没什么大不了的，因为大家都错了……
-
-# superbench
-# disk_size1=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $2}' ))
-# bench.sh
-# disk_size1=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker' | awk '{print $2}' ))
-
 # 计算总共空间的时候，排除掉 FH SSD 每个用户限额的空间；计算已用空间的时候不排除（因为原先的单个 md 已用空间只有 128k/256k）
 disk_size1=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem|docker|md[0-9]+/[a-z]*' | awk '{print $2}' ))
 disk_size2=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem|docker|md[0-9]+/[a-z]*' | awk '{print $3}' ))
@@ -213,79 +115,6 @@ disk_used_size=$( calc_disk ${disk_size2[@]} )
 
 
 
-
-
-# 检查 RAID 类型
-# Origin code from https://github.com/dave-pl/hwcheck
-function _disk_raid_check () {
-
-[[ $debug == 1 ]] && lspci | grep -E "RAID|SCSI|SATA"
-
-rm -f $HOME/disk.info
-
-if [[ -n `lspci|grep -i "RAID bus controller"|grep "MegaRAID"` ]]; then
-    raidcard=MegaRAID
-    RC_Model="$(lspci|grep -i "RAID bus controller"|grep "MegaRAID" | awk -F ":" '{print $3}' | sed "s/^ //")"
-elif [[ -n `lspci|grep -i "RAID bus controller"|grep "Hewlett-Packard"` ]]; then
-    raidcard=HP-RAID
-    RC_Model="$(lspci|grep -i "RAID bus controller"|grep "Hewlett-Packard" | awk -F ":" '{print $3}' | sed "s/^ //")"
-elif [[ -n `lspci|grep -i "RAID bus controller"|grep "Adaptec"` ]]; then
-    raidcard=Adaptec
-elif [[ -n `lspci|grep -i "SCSI controller"` ]]; then
-    raidcard=SCSI
-    RC_Model="$(lspci|grep -i "SCSI controller" | awk -F ":" '{print $3}' | sed "s/^ //")"
-elif [[ -n $(fdisk -l 2>/dev/null|grep /dev/nvme) ]]; then
-    raidcard=NVMe
-else
-    raidcard=NoRaid # 其实还有很多种情况检测不到的，不管了
-fi
-
-case "$raidcard" in
-    NoRaid   ) disk=$(fdisk -l 2>/dev/null| grep -i dev |egrep -v "(/dev/[brm])"| awk '/:/ {print $2}'| cut -f 1 -d ":") ; d=0
-               for i in $disk; do
-                   d=$(expr $d + 1)
-                   echo "disk-$d $i $(smartctl -a $i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a $i | grep "Device Model"| grep -vi qemu | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
-               done
-               ;;
-    MegaRAID ) for i in `seq 0 99` ; do
-			       [[ $( smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
-			       echo "disk-$(expr $i + 1) text $(smartctl -a -d megaraid,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d megaraid,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
-			   done
-               ;;
-    HP-RAID  ) for i in `seq 0 99` ; do
-                   [[ $( smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours ) ]] &&
-			       echo "disk-$(expr $i + 1) text $(smartctl -a -d cciss,$i /dev/sg0 | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a -d cciss,$i /dev/sg0 | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
-			   done
-               ;;
-    SCSI     ) for i in `seq 0 99` ; do
-                   [[ $( smartctl -a /dev/sg$i | grep Power_On_Hours ) ]] &&
-			       echo "disk-$(expr $i + 1) text $(smartctl -a /dev/sg$i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a /dev/sg$i | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
-			   done
-               ;;
-    NVMe     ) for i in `seq 0 99` ; do
-                   if [[ $( nvme smart-log /dev/nvme$i 2>&1 | grep power_on_hours ) ]]; then
-                       # model=$(nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g")
-                       # model="$(smartctl -a /dev/nvme${i}n1 | grep "Model Number:" | cut -d ":" -f 2 | sed -e 's/^[ \t]*//')"
-                       model=$(nvme id-ctrl /dev/nvme$i | grep -w mn | sed 's/^.*: //' | sed 's/ *$//')
-			           echo "disk-$(expr $i + 1) text $(nvme smart-log /dev/nvme$i | grep power_on_hours | grep -oE "[0-9,]+" | sed "s/,//") $model" >> $HOME/disk.info
-                   fi
-			   done
-               ;;
-    Adaptec  ) for i in `seq 0 99` ; do
-                   [[ $( smartctl -a /dev/sg$i | grep Power_On_Hours ) ]] &&
-			       echo "disk-$(expr $i + 1) text $(smartctl -a /dev/sg$i | grep Power_On_Hours | awk '{print $NF}') $(smartctl -a /dev/sg$i | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}')" >> $HOME/disk.info
-			   done
-               ;;
-esac
-
-# 高版本 smartctl 也可以看 NVMe 的 smart，不过需要编译，放在一键脚本里还是太麻烦了
-# 还可以用 lsblk --nodeps --noheadings --exclude 1,2,11 --output NAME,SIZE,ROTA,MODEL 2>1
-# nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g"
-# udevadm info --name=/dev/nvme${i}n1 | grep "disk/by-id/nvme-" | head -1 | sed "s|S: disk/by-id/nvme-||" | awk -F '_' '{print $1,$2}'
-[[ $debug == 1 ]] && echo -e "raidcard=$raidcard" && cp -f $HOME/disk.info $HOME/.disk.info ; }
-
-
-
 # 共享盒子检查为主，其他的没试过
 function _disk_check_no_root () {
 
@@ -297,40 +126,40 @@ ls /dev/disk/by-id 2>/dev/null | grep -q md-   && Raid=Soft
 [[ $debug == 1 ]] && echo -e "Raid=$Raid"
 
 [[ ! $Raid == Hard ]] &&
-ls /dev/disk/by-id 2>/dev/null | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u | grep -vi qemu > $HOME/disk.info
+ls /dev/disk/by-id 2>/dev/null | grep -oE "ata-.*" | sed "s/ata-//" | sed "s/-part.*//" | grep -oE "[a-zA-Z0-9_-]+" | grep -v 0m | sort -u | grep -vi qemu > $HOME/.abench/disk.info
 
 if [[ $virtual == Docker ]] || [[ $Seedbox == FH ]]; then
-lsblk --nodeps --noheadings --output MODEL --exclude 1,2,11 2>1 > $HOME/disk.info
-cat $HOME/disk.info | grep -q LSI && rm -f $HOME/disk.info && touch $HOME/disk.info
-cat $HOME/disk.info | grep -qE "MR[0-9]+-" && rm -f $HOME/disk.info && touch $HOME/disk.info
-cat $HOME/disk.info | grep -qE [Rr][Aa][Ii][Dd] && rm -f $HOME/disk.info && touch $HOME/disk.info
-cat $HOME/disk.info | grep -q "LOGICAL VOLUME" && rm -f $HOME/disk.info && touch $HOME/disk.info  # OP 10欧 HP
-cat $HOME/disk.info | grep -q "Virtual Disk" && rm -f $HOME/disk.info && touch $HOME/disk.info    # OP 10欧 DELL
+lsblk --nodeps --noheadings --output MODEL --exclude 1,2,11 2>1 > $HOME/.abench/disk.info
+cat $HOME/.abench/disk.info | grep -q LSI && rm -f $HOME/.abench/disk.info && touch $HOME/.abench/disk.info
+cat $HOME/.abench/disk.info | grep -qE "MR[0-9]+-" && rm -f $HOME/.abench/disk.info && touch $HOME/.abench/disk.info
+cat $HOME/.abench/disk.info | grep -qE [Rr][Aa][Ii][Dd] && rm -f $HOME/.abench/disk.info && touch $HOME/.abench/disk.info
+cat $HOME/.abench/disk.info | grep -q "LOGICAL VOLUME" && rm -f $HOME/.abench/disk.info && touch $HOME/.abench/disk.info  # OP 10欧 HP
+cat $HOME/.abench/disk.info | grep -q "Virtual Disk" && rm -f $HOME/.abench/disk.info && touch $HOME/.abench/disk.info    # OP 10欧 DELL
 # 这里我也不知道有多少种情况，乱写了
 # MegaRAID 这个在 seedboes.cc（MR9271-8iCC）、Hz 16TB HWR（MR9260-4i）上测试通过
 fi
 
-cat $HOME/disk.info 2>/dev/null | sed -e 's/\(.*\)_/\1:/' | sed "s/:.*//" | sort -u > $HOME/disk.info.2
+cat $HOME/.abench/disk.info 2>/dev/null | sed -e 's/\(.*\)_/\1:/' | sed "s/:.*//" | sort -u > $HOME/.abench/disk.info.2
 
-# disk_num=$( cat $HOME/disk.info 2>/dev/null | wc -l )
+# disk_num=$( cat $HOME/.abench/disk.info 2>/dev/null | wc -l )
 disk_num=$( lsblk --nodeps --noheadings --output NAME,SIZE,ROTA --exclude 1,2,11 2>1 | wc -l )
 
 [[ $debug == 1 ]] && echo -e "disk_num=$disk_num"
 
-disk_model_num=$( cat $HOME/disk.info.2 2>/dev/null | wc -l )
+disk_model_num=$( cat $HOME/.abench/disk.info.2 2>/dev/null | wc -l )
 
-[[ $debug == 1 ]] && echo -e "\n" && cat $HOME/disk.info.2 && echo -e "\n"
+[[ $debug == 1 ]] && echo -e "\n" && cat $HOME/.abench/disk.info.2 && echo -e "\n"
 
-disk_model_1_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '1p')"  2>/dev/null | wc -l )
-disk_model_2_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '2p')"  2>/dev/null | wc -l )
-disk_model_3_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '3p')"  2>/dev/null | wc -l )
-disk_model_4_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '4p')"  2>/dev/null | wc -l )
-disk_model_5_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '5p')"  2>/dev/null | wc -l )
-disk_model_6_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '6p')"  2>/dev/null | wc -l )
-disk_model_7_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '7p')"  2>/dev/null | wc -l )
-disk_model_8_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '8p')"  2>/dev/null | wc -l )
-disk_model_9_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '9p')"  2>/dev/null | wc -l )
-disk_model_0_num=$( cat $HOME/disk.info 2>/dev/null | grep "$(cat $HOME/disk.info.2 2>/dev/null | sed -n '10p')" 2>/dev/null | wc -l )
+disk_model_1_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '1p')"  2>/dev/null | wc -l )
+disk_model_2_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '2p')"  2>/dev/null | wc -l )
+disk_model_3_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '3p')"  2>/dev/null | wc -l )
+disk_model_4_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '4p')"  2>/dev/null | wc -l )
+disk_model_5_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '5p')"  2>/dev/null | wc -l )
+disk_model_6_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '6p')"  2>/dev/null | wc -l )
+disk_model_7_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '7p')"  2>/dev/null | wc -l )
+disk_model_8_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '8p')"  2>/dev/null | wc -l )
+disk_model_9_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '9p')"  2>/dev/null | wc -l )
+disk_model_0_num=$( cat $HOME/.abench/disk.info 2>/dev/null | grep "$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '10p')" 2>/dev/null | wc -l )
 
 [[ $debug == 1 ]] && echo -e "disk_model_1_num=$disk_model_1_num"
 [[ $debug == 1 ]] && echo -e "disk_model_2_num=$disk_model_2_num"
@@ -362,12 +191,7 @@ fdisk -l 2>/dev/null | grep /dev/nvme -q && nvme=yes
         yum install -y smartmontools >/dev/null 2>&1
     fi
 
-  # result=$(smartctl -a $(result=$(cat /proc/mounts) && echo $(echo "$result" | awk '/data=ordered/{print $1}') | awk '{print $1}') 2>&1) && power_time=$(echo "$result" | awk '/Power_On/{print $10}') # echo $power_time
-  # disk_model=$(echo "$result" | grep "Device Model" | sed "s/Device Model[:]\?//" | awk '{print $1,$2,$3,$4}') # echo $disk_model
-  # echo "$result" | grep "Device Model" | sed "s/Device Model[:]\?.* \([a-zA-Z]\)/\1/"
-  # [[ ! -z $power_time ]] && showpowertime=1
-
-    _disk_raid_check
+    disk_check_raid
 
 else
 
@@ -380,9 +204,9 @@ fi
 function _show_disk_info () {
 
 # 检查能不能得到通电时间，能得到的话脚本运行应该比较正常吧？
-if [[ $(cat $HOME/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -Ev [A-Z] | grep -oE "[0-9]+") ]]; then
+if [[ $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}' | grep -Ev [A-Z] | grep -oE "[0-9]+") ]]; then
 
-disk_num=$( cat $HOME/disk.info 2>/dev/null | wc -l )
+disk_num=$( cat $HOME/.abench/disk.info 2>/dev/null | wc -l )
 [[ $debug == 1 ]] && echo -e "disk_num=$disk_num"
 
 # 2019.01.04：这个作为型号还是不太对，先去掉了
@@ -392,36 +216,36 @@ disk_num=$( cat $HOME/disk.info 2>/dev/null | wc -l )
 # 2020.04.10 一年过去了，这个代码看着还是那么的蠢，但我……目前没动力学习怎么改
 
 if [[ $disk_num == 1 ]]; then
-    echo -e  "  硬盘信息              ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  硬盘信息              ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
 elif [[ $disk_num -ge 2 ]]; then
-    echo -e  "  第一块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
-    echo -e  "  第二块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '2p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '2p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第一块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第二块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '2p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '2p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 3 ]] &&
-    echo -e  "  第三块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '3p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '3p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第三块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '3p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '3p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 4 ]] &&
-    echo -e  "  第四块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '4p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '4p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第四块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '4p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '4p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 5 ]] &&
-    echo -e  "  第五块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '5p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '5p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第五块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '5p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '5p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 6 ]] &&
-    echo -e  "  第六块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '6p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '6p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第六块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '6p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '6p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 7 ]] &&
-    echo -e  "  第七块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '7p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '7p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第七块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '7p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '7p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 8 ]] &&
-    echo -e  "  第八块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '8p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '8p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第八块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '8p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '8p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 9 ]] &&
-    echo -e  "  第九块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '9p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '9p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第九块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '9p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '9p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 10 ]] &&
-    echo -e  "  第十块硬盘            ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '10p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '10p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第十块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '10p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '10p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 11 ]] &&
-    echo -e  "  第十一块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '11p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '11p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第十一块硬盘          ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '11p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '11p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 12 ]] &&
-    echo -e  "  第十二块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '12p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '12p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第十二块硬盘          ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '12p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '12p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 13 ]] &&
-    echo -e  "  第十三块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '13p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '13p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第十三块硬盘          ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '13p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '13p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 14 ]] &&
-    echo -e  "  第十四块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '14p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '14p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第十四块硬盘          ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '14p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '14p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 15 ]] &&
-    echo -e  "  第十五块硬盘          ${cyan}通电 $(cat $HOME/disk.info 2>/dev/null | sed -n '15p' | awk '{print $3}') 小时，型号 $(cat $HOME/disk.info 2>/dev/null | sed -n '15p' | awk '{print $4,$5,$6,$7}')${jiacu}"
+    echo -e  "  第十五块硬盘          ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '15p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '15p' | awk '{print $4,$5,$6,$7}')${jiacu}"
     [[ $disk_num -ge 16 ]] &&
     echo -e  "  暂时不支持 16 块以上硬盘……${jiacu}"
 fi
@@ -429,30 +253,30 @@ fi
                 else
 
 if [[ $disk_model_num == 1 ]]; then
-    echo -e  "  硬盘型号              ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '1p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_1_num${jiacu}"
+    echo -e  "  硬盘型号              ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '1p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_1_num${jiacu}"
 elif [[ $disk_model_num -ge 2 ]]; then
-    echo -e  "  第一种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '1p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_1_num${jiacu}"
-    echo -e  "  第二种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '2p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_2_num${jiacu}"
+    echo -e  "  第一种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '1p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_1_num${jiacu}"
+    echo -e  "  第二种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '2p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_2_num${jiacu}"
 [[ $disk_model_num -ge 3 ]] &&
-    echo -e  "  第三种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '3p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_3_num${jiacu}"
+    echo -e  "  第三种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '3p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_3_num${jiacu}"
 [[ $disk_model_num -ge 4 ]] &&
-    echo -e  "  第四种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '4p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_4_num${jiacu}"
+    echo -e  "  第四种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '4p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_4_num${jiacu}"
 [[ $disk_model_num -ge 5 ]] &&
-    echo -e  "  第五种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '5p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_5_num${jiacu}"
+    echo -e  "  第五种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '5p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_5_num${jiacu}"
 [[ $disk_model_num -ge 6 ]] &&
-    echo -e  "  第六种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '6p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_6_num${jiacu}"
+    echo -e  "  第六种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '6p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_6_num${jiacu}"
 [[ $disk_model_num -ge 7 ]] &&
-    echo -e  "  第七种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '7p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_7_num${jiacu}"
+    echo -e  "  第七种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '7p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_7_num${jiacu}"
 [[ $disk_model_num -ge 8 ]] &&
-    echo -e  "  第八种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '8p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_8_num${jiacu}"
+    echo -e  "  第八种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '8p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_8_num${jiacu}"
 [[ $disk_model_num -ge 9 ]] &&
-    echo -e  "  第九种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '9p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_9_num${jiacu}"
+    echo -e  "  第九种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '9p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_9_num${jiacu}"
 [[ $disk_model_num -ge 10 ]] &&
-    echo -e  "  第十种硬盘            ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '10p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_10_num${jiacu}"
+    echo -e  "  第十种硬盘            ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '10p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_10_num${jiacu}"
 [[ $disk_model_num -ge 11 ]] &&
-    echo -e  "  第十一种硬盘          ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '11p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_11_num${jiacu}"
+    echo -e  "  第十一种硬盘          ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '11p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_11_num${jiacu}"
 [[ $disk_model_num -ge 12 ]] &&
-    echo -e  "  第十二种硬盘          ${cyan}$(cat $HOME/disk.info.2 2>/dev/null | sed -n '12p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_12_num${jiacu}"
+    echo -e  "  第十二种硬盘          ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '12p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_12_num${jiacu}"
 [[ $disk_model_num -ge 13 ]] &&
     echo -e  "  暂时不支持 12 种以上硬盘……${jiacu}"
 fi
@@ -466,28 +290,7 @@ fi
 
 
 
-
-
-
-
-
-# 其他硬件信息 ----------------------------------------------------------------------------------------------
-
-echo -e "${bold}正在检查其他硬件信息 ...${normal}"
-
-hardware_check_1
-
-
-
-
-
-
-
-
-
-
-
-# 测试 ----------------------------------------------------------------------------------------------
+# Benchmark ----------------------------------------------------------------------------------------------
 
 
 
@@ -549,7 +352,7 @@ fi
 
 
 # 主界面
-function _menu() { clear ; echo
+function _menu() { [[ $debug != 1 ]] && clear ; echo
 echo -e  " ${baizise}${bold}                  This is the choice of Steins;Gate                   ${jiacu} "
 
 echo
