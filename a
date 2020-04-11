@@ -4,7 +4,7 @@
 # 
 # Thanks to superbench.sh    bench.sh   nench.sh
 
-ScriptVersion=1.3.1.5
+ScriptVersion=1.3.1.6
 SCRIPTUPDATE=2020.04.11
 
 ########################################################################################################
@@ -69,12 +69,6 @@ cancel() {
     # exit
 }
 trap cancel SIGINT
-
-function _ip() {
-    ipv4_check
-    ipv6_check
-}
-
 
 mkdir -p $HOME/.abench
 
@@ -200,34 +194,24 @@ function _show_disk_info () {
 
 
 
-# Benchmark ----------------------------------------------------------------------------------------------
 
 
+# https://github.com/n-st/nench
+Bps_to_MiBps()   { awk '{ printf "%.2f MiB/s\n", $0 / 1024 / 1024 } END { if (NR == 0) { print "error" } }' ; }
+Bps_to_MBps()    { awk '{ printf "%.0f MB/s\n", $0 / 1000 / 1000  } END { if (NR == 0) { print "error" } }' ; }
+Bps_to_MBps_1f() { awk '{ printf "%.1f MB/s\n", $0 / 1000 / 1000  } END { if (NR == 0) { print "error" } }' ; }
+dd_benchmark()   {
+    LC_ALL=C dd if=/dev/zero of=test_$$ bs=64k count=16k conv=fdatasync 2>&1 | awk -F, '
+        { io=$NF ; }
+        END { if (io ~ /TB\/s/) {printf("%.0f\n", 1000*1000*1000*1000*io)}
+        else if (io ~ /GB\/s/) {printf("%.0f\n", 1000*1000*1000*io)}
+        else if (io ~ /MB\/s/) {printf("%.0f\n", 1000*1000*io)}
+        else if (io ~ /KB\/s/) {printf("%.0f\n", 1000*io)}
+        else { printf("%.0f", 1*io)} ; }'
+    rm -f test_$$
+}
 
-
-
-# These codes are from nench.sh, https://github.com/n-st/nench
-# ----------------------------------------------------------------------------------------------
-Bps_to_MiBps() { awk '{ printf "%.2f MiB/s\n", $0 / 1024 / 1024 } END { if (NR == 0) { print "error" } }' ; }
-Bps_to_MBps() { awk '{ printf "%.0f MB/s\n", $0 / 1000 / 1000 } END { if (NR == 0) { print "error" } }' ; }
-Bps_to_MBps_1f() { awk '{ printf "%.1f MB/s\n", $0 / 1000 / 1000 } END { if (NR == 0) { print "error" } }' ; }
-dd_benchmark() {
-LC_ALL=C dd if=/dev/zero of=test_$$ bs=64k count=16k conv=fdatasync 2>&1 | awk -F, '
-{ io=$NF ; }
-END { if (io ~ /TB\/s/) {printf("%.0f\n", 1000*1000*1000*1000*io)}
-else if (io ~ /GB\/s/) {printf("%.0f\n", 1000*1000*1000*io)}
-else if (io ~ /MB\/s/) {printf("%.0f\n", 1000*1000*io)}
-else if (io ~ /KB\/s/) {printf("%.0f\n", 1000*io)}
-else { printf("%.0f", 1*io)} ; }'
-rm -f test_$$ ; }
-# ----------------------------------------------------------------------------------------------
-
-
-
-
-
-
-print_io_v2() {
+io_bench() {
     if [[ $test_iops == 1 ]] || [[ $raidcard == NVMe ]]; then
         [[ $EUID != 0 ]] && echo -e "  ${JG} 建议使用 root 权限来运行本脚本的 fio 测试！${normal}\n"
         [[ $raidcard == NVMe ]] && echo -e "  ${ZY} 检测到你使用的是 NVMe 硬盘，使用 fio 代替 dd 进行测试${normal}\n"
@@ -256,10 +240,6 @@ print_io_v2() {
 
 
 
-# 正文 ----------------------------------------------------------------------------------------------
-
-
-
 
 # 主界面
 function _menu() {
@@ -275,8 +255,10 @@ echo -e  "  交换分区              ${cyan}$swap MB ($uswap MB 已用)${jiacu}
     echo
 
     _show_disk_info | tee -a $HOME/.abench/_show_disk_info
-    [[ $(cat $HOME/.abench/_show_disk_info 2>&1) ]] && echo && rm -f $HOME/.abench/_show_disk_info
-
+    if [[ -s $HOME/.abench/_show_disk_info ]]; then
+        echo # 增加一行
+        [[ $debug != 1 ]] && rm -f $HOME/.abench/_show_disk_info
+    fi
     # [[ ! $Seedbox == Unknown ]] && DiskNumDisplay="共 $disk_num 块硬盘，合计 "
     # [[ ! $Seedbox == Unknown ]] && SeedboxDiskTotalFlagOne="总" ; [[ $Seedbox == Unknown ]] && SeedboxDiskTotalFlagTwo="  "
     SeedboxDiskTotalFlagTwo="  "
@@ -331,9 +313,9 @@ echo -e  "  ${jiacu}当前脚本版本          $ScriptVersion${normal}"
 
 # 结构 ----------------------------------------------------------------------------------------------
 
-[[ $show_ip == 1 ]] && _ip
+[[ $show_ip   == 1 ]] && { ipv4_check ; ipv6_check ; }
 [[ $show_ipip == 1 ]] && echo -e "${bold}正在检查 ASN 等信息 ...${normal}" && ip_ipapi
 _menu
-[[ $test_io == 1 ]] && print_io_v2
+[[ $test_io == 1 ]] && io_bench
 
 cancel
