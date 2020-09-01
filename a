@@ -2,10 +2,14 @@
 # Author: Aniverse
 # https://github.com/Aniverse/A
 # 
-# Thanks to superbench.sh    bench.sh   nench.sh
+# Thanks to superbench.sh    bench.sh   nench.sh    yabs.sh
+# https://github.com/masonr/yet-another-bench-script
+# https://github.com/n-st/nench
+# https://www.oldking.net/599.html
+# https://teddysun.com/444.html
 
-ScriptVersion=1.3.1.7
-SCRIPTUPDATE=2020.06.29
+ScriptVersion=1.4.0
+SCRIPTUPDATE=2020.09.01
 
 ########################################################################################################
 
@@ -62,14 +66,14 @@ heibaise=${black}${on_white}   ; heihuangse=${on_yellow}${black}
 CW="${bold}${baihongse} ERROR ${jiacu}";ZY="${baihongse}${bold} ATTENTION ${jiacu}";JG="${baihongse}${bold} WARNING ${jiacu}"
 
 # Ctrl+C 时恢复样式，删除无用文件
-cancel() {
-    echo -e "${normal}"
+_cancel() {
     rm -rf $HOME/.abench
-    rm -f $HOME/.abench/disk.info   $HOME/.abench/disk.info.2    $HOME/.abench/neighbors_all   $HOME/.abench/par_list   test_file_*   $PWD/1   $HOME/ipapi
-    # exit
+    rm -f  test_file_*   1   $HOME/ipapi
+    exit
 }
-trap cancel SIGINT
+trap _cancel INT QUIT TERM
 
+export PATH=$HOME/.abench/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:$PATH
 mkdir -p $HOME/.abench
 
 
@@ -90,28 +94,15 @@ echo -e "${bold}正在检查硬盘信息 ...${normal}"
 # 计算总共空间的时候，排除掉 FH SSD 每个用户限额的空间；计算已用空间的时候不排除（因为原先的单个 md 已用空间只有 128k/256k）
 disk_size1=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem|docker|md[0-9]+/[a-z]*' | awk '{print $2}' ))
 disk_size2=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem|docker|md[0-9]+/[a-z]*' | awk '{print $3}' ))
+#shellcheck disable=SC2068
 disk_total_size=$( calc_disk ${disk_size1[@]} )
+#shellcheck disable=SC2068
 disk_used_size=$( calc_disk ${disk_size2[@]} )
 
 # 事实上 VPS 可能也有独立的硬盘，不过我懒得管他了...
 if [[ $EUID = 0 ]] && [[ "$virtual" == "No Virtualization Detected" ]]; then
-    fdisk -l 2>/dev/null | grep /dev/nvme -q && nvme=yes
-    if [[ $nvme == yes ]] && [[ ! $(which nvme) ]]; then
-        echo -e "${bold}正在更新系统源 ...${normal}"
-        apt-get update >/dev/null 2>&1
-        yum update >/dev/null 2>&1
-        echo -e "${bold}正在安装 nvme-cli 与 smartmontools ...${normal}"
-        DEBIAN_FRONTEND=noninteractive apt-get -y install nvme-cli smartmontools >/dev/null 2>&1
-        yum install -y nvme-cli smartmontools >/dev/null 2>&1
-    fi
-    if [[ -z $nvme ]] && [[ ! -e /usr/sbin/smartctl ]]; then
-        echo -e "${bold}正在更新系统源 ...${normal}"
-        apt-get update >/dev/null 2>&1
-        yum update >/dev/null 2>&1
-        echo -e "${bold}正在安装 smartmontools ...${normal}"
-        DEBIAN_FRONTEND=noninteractive apt-get -y install smartmontools >/dev/null 2>&1
-        yum install -y smartmontools >/dev/null 2>&1
-    fi
+    echo -e "${bold}正在安装 smartmontools ...${normal}"
+    get_app_static smartctl
     disk_check_raid
 else
     disk_check_no_root
@@ -196,20 +187,7 @@ function _show_disk_info () {
 
 
 
-# https://github.com/n-st/nench
-Bps_to_MiBps()   { awk '{ printf "%.2f MiB/s\n", $0 / 1024 / 1024 } END { if (NR == 0) { print "error" } }' ; }
-Bps_to_MBps()    { awk '{ printf "%.0f MB/s\n", $0 / 1000 / 1000  } END { if (NR == 0) { print "error" } }' ; }
-Bps_to_MBps_1f() { awk '{ printf "%.1f MB/s\n", $0 / 1000 / 1000  } END { if (NR == 0) { print "error" } }' ; }
-dd_benchmark()   {
-    LC_ALL=C dd if=/dev/zero of=test_$$ bs=64k count=16k conv=fdatasync 2>&1 | awk -F, '
-        { io=$NF ; }
-        END { if (io ~ /TB\/s/) {printf("%.0f\n", 1000*1000*1000*1000*io)}
-        else if (io ~ /GB\/s/) {printf("%.0f\n", 1000*1000*1000*io)}
-        else if (io ~ /MB\/s/) {printf("%.0f\n", 1000*1000*io)}
-        else if (io ~ /KB\/s/) {printf("%.0f\n", 1000*io)}
-        else { printf("%.0f", 1*io)} ; }'
-    rm -f test_$$
-}
+
 
 io_bench() {
     if [[ $test_iops == 1 ]] || [[ $raidcard == NVMe ]]; then
@@ -320,5 +298,3 @@ echo -e  "  ${jiacu}当前脚本版本          $ScriptVersion${normal}"
 [[ $show_ipip == 1 ]] && echo -e "${bold}正在检查 ASN 等信息 ...${normal}" && ip_ipapi
 _menu
 [[ $test_io == 1 ]] && io_bench
-
-cancel
