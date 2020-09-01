@@ -8,7 +8,7 @@
 # https://www.oldking.net/599.html
 # https://teddysun.com/444.html
 
-ScriptVersion=1.4.0
+ScriptVersion=1.4.0.1
 SCRIPTUPDATE=2020.09.01
 
 ########################################################################################################
@@ -67,6 +67,7 @@ CW="${bold}${baihongse} ERROR ${jiacu}";ZY="${baihongse}${bold} ATTENTION ${jiac
 
 # Ctrl+C 时恢复样式，删除无用文件
 _cancel() {
+    echo -e "${normal}退出脚本 ..."
     rm -rf $HOME/.abench
     rm -f  test_file_*   1   $HOME/ipapi
     exit
@@ -101,8 +102,9 @@ disk_used_size=$( calc_disk ${disk_size2[@]} )
 
 # 事实上 VPS 可能也有独立的硬盘，不过我懒得管他了...
 if [[ $EUID = 0 ]] && [[ "$virtual" == "No Virtualization Detected" ]]; then
-    echo -e "${bold}正在安装 smartmontools ...${normal}"
+    echo -n "${bold}"
     get_app_static smartctl
+    echo -n "检查硬盘信息 ..."
     disk_check_raid
 else
     disk_check_no_root
