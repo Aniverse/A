@@ -8,8 +8,8 @@
 # https://www.oldking.net/599.html
 # https://teddysun.com/444.html
 
-ScriptVersion=1.4.0.4
-SCRIPTUPDATE=2020.09.01
+ScriptVersion=1.4.0.5
+SCRIPTUPDATE=2020.09.02
 
 ########################################################################################################
 
@@ -113,7 +113,7 @@ fi
 
 
 function sed_disk_num () {
-    while read line ; do  echo "$line" | sed -e "s|^disk-|  第 |g" -e "s|text \([0-9]\{1,\}\)|块硬盘            ${cyan}通电 \1 小时，型号|g" -e "s|$|&${jiacu}|g"; done
+    while read line ; do  echo "$line" | sed -e "s|^disk-|  第 |g" -e "s|text \([0-9]\{1,\}\)|块硬盘          ${cyan}通电 \1 小时，型号|g" -e "s|$|&${jiacu}|g"; done
 }
 
 function _show_disk_info () {
@@ -187,6 +187,7 @@ io_bench() {
         # 去掉了最高值和最低值后的平均速度
         echo -n "  顺序写入 (avg)        " ; echo -e "${yellow}$(echo $ddavg | Bps_to_MBps_1f)${normal}"
     fi
+    echo
 }
 
 
