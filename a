@@ -8,8 +8,8 @@
 # https://www.oldking.net/599.html
 # https://teddysun.com/444.html
 
-ScriptVersion=1.4.0.6
-SCRIPTUPDATE=2020.09.07
+ScriptVersion=1.4.1
+SCRIPTUPDATE=2020.09.08
 
 ########################################################################################################
 
@@ -244,7 +244,7 @@ echo -e  "  盒子域名              ${green}$serverfqdn${jiacu}"
             fi
 
             if [[ $show_ipip == 1 ]] && [[ -n $asnnnnn ]]; then
-echo -e  "  ASN 信息              ${green}$asnnnnn, $isppppp${jiacu}"
+echo -e  "  运营商                ${green}$asnnnnn${jiacu}"
 echo -e  "  地理位置              ${green}$country, $regionn, $cityyyy${jiacu}"
             fi
 
@@ -269,7 +269,7 @@ echo -e  "  ${jiacu}当前脚本版本          $ScriptVersion${normal}"
 # 结构 ----------------------------------------------------------------------------------------------
 
 [[ $show_ip   == 1 ]] && { ipv4_check ; ipv6_check ; }
-[[ $show_ipip == 1 ]] && echo -e "${bold}正在检查 ASN 等信息 ...${normal}" && ip_ipapi
+[[ $show_ipip == 1 ]] && echo -e "${bold}正在检查 ASN 等信息 ...${normal}" && ip_ipinfo_aniverse
 _menu
 [[ $test_io == 1 ]] && io_bench
 [[ $delete == 1 ]] && rm -rf $HOME/.abench test_file_* $HOME/ipapi
