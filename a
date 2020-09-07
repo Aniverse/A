@@ -8,8 +8,8 @@
 # https://www.oldking.net/599.html
 # https://teddysun.com/444.html
 
-ScriptVersion=1.4.0.5
-SCRIPTUPDATE=2020.09.02
+ScriptVersion=1.4.0.6
+SCRIPTUPDATE=2020.09.07
 
 ########################################################################################################
 
@@ -36,7 +36,7 @@ full_ip=0
 
 # 运行参数 --------------------------------------------------------------------------------------------------------
 
-OPTS=$(getopt -n "$0" -o abcdfghij --long "debug,no-ip,no-ipip,no-io,full-ip,iops" -- "$@")
+OPTS=$(getopt -n "$0" -o abcdfghij --long "debug,no-ip,no-ipip,no-io,full-ip,iops,delete" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -47,6 +47,7 @@ while true; do
     -d | --debug       ) debug=1         ; shift ;;
     -f | --full-ip     ) full_ip=1       ; shift ;;
     -j | --iops        ) test_iops=1     ; shift ;;
+         --delete      ）delete=1        ; shift ;;
     -- ) shift; break ;;
      * ) break ;;
   esac
@@ -271,3 +272,4 @@ echo -e  "  ${jiacu}当前脚本版本          $ScriptVersion${normal}"
 [[ $show_ipip == 1 ]] && echo -e "${bold}正在检查 ASN 等信息 ...${normal}" && ip_ipapi
 _menu
 [[ $test_io == 1 ]] && io_bench
+[[ $delete == 1 ]] && rm -rf $HOME/.abench test_file_* $HOME/ipapi
