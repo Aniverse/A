@@ -47,7 +47,7 @@ while true; do
     -d | --debug       ) debug=1         ; shift ;;
     -f | --full-ip     ) full_ip=1       ; shift ;;
     -j | --iops        ) test_iops=1     ; shift ;;
-         --delete      ）delete=1        ; shift ;;
+         --delete      ) delete=1        ; shift ;;
     -- ) shift; break ;;
      * ) break ;;
   esac
