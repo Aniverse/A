@@ -8,8 +8,8 @@
 # https://www.oldking.net/599.html
 # https://teddysun.com/444.html
 
-ScriptVersion=1.4.1
-SCRIPTUPDATE=2020.09.08
+ScriptVersion=1.4.1.1
+SCRIPTUPDATE=2020.09.15
 
 ########################################################################################################
 
@@ -114,7 +114,7 @@ fi
 
 
 function sed_disk_num () {
-    while read line ; do  echo "$line" | sed -e "s|^disk-|  第 |g" -e "s|text \([0-9]\{1,\}\)|块硬盘          ${cyan}通电 \1 小时，型号|g" -e "s|$|&${jiacu}|g"; done
+    while read line ; do echo "$line" | sed -e "s|^disk-|  第 |g" -e "s|text \([0-9]\{1,\}\)|块硬盘           ${cyan}通电 \1 小时，型号|g" -e "s|$|&${jiacu}|g" ; done
 }
 
 function _show_disk_info () {
@@ -126,7 +126,7 @@ function _show_disk_info () {
         #   echo -e  "  第一块硬盘            ${cyan}通电 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '1p' | awk '{print $3}') 小时，型号 $(cat $HOME/.abench/disk.info 2>/dev/null | sed -n '1p' | awk '{print $4,$5,$6,$7}')${jiacu}"
             cat $HOME/.abench/disk.info | sed_disk_num
         fi
-    else
+    else # 这个写得太矬了，以后再改
         if [[ $disk_model_num == 1 ]]; then
             echo -e  "  硬盘型号              ${cyan}$(cat $HOME/.abench/disk.info.2 2>/dev/null | sed -n '1p' | sed 's/$/                  /' | cut -c -27)${cyan} × $disk_model_1_num${jiacu}"
         elif [[ $disk_model_num -ge 2 ]]; then
